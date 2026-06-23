@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 @import 'tailwindcss';
 @import 'uniwind';
@@ -6,160 +6,103 @@
 @import 'heroui-native/styles';
 
 /*
- * HeroUI Native + Uniwind tokens
- *
- * Component variants compile to Tailwind utilities (e.g. Button primary → bg-accent,
- * Button secondary → bg-default, Alert → text-foreground). Those classes only work when
- * the matching Tailwind color tokens exist.
- *
- * heroui-native/styles/theme.css maps semantic tokens to --color-* utilities.
- * Uncomment the HeroUI default theme block below to override.
- *
- * Docs: https://docs.uniwind.dev/theming/global-css
- *       https://heroui.com/docs/native/getting-started/colors
+ * GAMI WALLET — ARCADE theme
+ * Dark-only. Cyber-arcade: deep base, purple→magenta gradient glows, sticker accents.
  */
 
-/*
 @layer base {
-  HeroUI Default Theme
-  :root {
-    color-scheme: light;
+  :root,
+  .dark,
+  [data-theme='dark'] {
+    color-scheme: dark;
 
-    == Common Variables ==
-
-    Primitive Colors (Do not change between light and dark)
     --white: oklch(100% 0 0);
     --black: oklch(0% 0 0);
-    --snow: oklch(0.9911 0 0);
-    --eclipse: oklch(0.2103 0.0059 285.89);
 
-    Spacing scale
     --spacing: 0.25rem;
-
-    Border
     --border-width: 1px;
-    --field-border-width: 0px;
-    --disabled-opacity: 0.5;
-
-    Ring offset - Used for focus ring
+    --field-border-width: 1px;
+    --disabled-opacity: 0.4;
     --ring-offset-width: 2px;
 
-    Cursor
-    --cursor-interactive: pointer;
-    --cursor-disabled: not-allowed;
+    --radius: 1.25rem;
+    --field-radius: 0.875rem;
 
-    Radius
-    --radius: 0.5rem;
-    --field-radius: calc(var(--radius) * 1.5);
+    /* Base */
+    --background: oklch(0.16 0.02 287);
+    --foreground: oklch(0.96 0.02 300);
 
-    == Light Theme Variables ==
-
-    Base Colors
-    --background: oklch(0.9702 0 0);
-    --foreground: var(--eclipse);
-
-    Surface
-    --surface: var(--white);
+    --surface: oklch(0.2 0.02 287);
     --surface-foreground: var(--foreground);
 
-    Overlay
-    --overlay: var(--white);
+    --overlay: oklch(0.2 0.02 287);
     --overlay-foreground: var(--foreground);
 
-    --muted: oklch(0.5517 0.0138 285.94);
-    --scrollbar: oklch(87.1% 0.006 286.286);
+    --muted: oklch(0.7 0.03 295);
+    --scrollbar: oklch(0.4 0.02 287);
 
-    --default: oklch(94% 0.001 286.375);
-    --default-foreground: var(--eclipse);
+    --default: oklch(0.26 0.02 287);
+    --default-foreground: var(--foreground);
 
-    --accent: oklch(0.6204 0.195 253.83);
-    --accent-foreground: var(--snow);
+    /* Brand purple */
+    --accent: oklch(0.56 0.24 295);
+    --accent-foreground: oklch(0.98 0.01 300);
 
-    Form Field Defaults - Colors
-    --field-background: var(--white);
-    --field-foreground: oklch(0.2103 0.0059 285.89);
-    --field-placeholder: var(--muted);
-    --field-border: transparent;
-
-    Status Colors
-    --success: oklch(0.7329 0.1935 150.81);
-    --success-foreground: var(--eclipse);
-
-    --warning: oklch(0.7819 0.1585 72.33);
-    --warning-foreground: var(--eclipse);
-
-    --danger: oklch(0.6532 0.2328 25.74);
-    --danger-foreground: var(--snow);
-
-    Component Colors
-    --segment: var(--white);
-    --segment-foreground: var(--eclipse);
-
-    Misc Colors
-    --border: oklch(92% 0.004 286.32);
-    --separator: oklch(92% 0.004 286.32);
-    --focus: var(--accent);
-    --link: var(--foreground);
-
-    Backdrop
-    --backdrop: rgba(0, 0, 0, 0.5);
-
-    Shadows
-    --surface-shadow:
-      0 2px 4px 0 rgba(0, 0, 0, 0.04), 0 1px 2px 0 rgba(0, 0, 0, 0.06),
-      0 0 1px 0 rgba(0, 0, 0, 0.06);
-    --overlay-shadow: 0 4px 16px 0 rgba(24, 24, 27, 0.08), 0 8px 24px 0 rgba(24, 24, 27, 0.09);
-    --field-shadow:
-      0 2px 4px 0 rgba(0, 0, 0, 0.04), 0 1px 2px 0 rgba(0, 0, 0, 0.06),
-      0 0 1px 0 rgba(0, 0, 0, 0.06);
-    --skeleton-animation: shimmer;
-  }
-
-  .dark,
-  [data-theme="dark"] {
-    color-scheme: dark;
-    == Dark Theme Variables ==
-
-    Base Colors
-    --background: oklch(12% 0.005 285.823);
-    --foreground: var(--snow);
-
-    --surface: oklch(0.2103 0.0059 285.89);
-    --surface-foreground: var(--foreground);
-
-    --overlay: oklch(0.22 0.0059 285.89);
-    --overlay-foreground: var(--foreground);
-
-    --muted: oklch(70.5% 0.015 286.067);
-    --scrollbar: oklch(70.5% 0.015 286.067);
-
-    --default: oklch(27.4% 0.006 286.033);
-    --default-foreground: var(--snow);
-
-    --field-background: var(--default);
+    --field-background: oklch(0.22 0.02 287);
     --field-foreground: var(--foreground);
+    --field-placeholder: oklch(0.55 0.03 295);
+    --field-border: oklch(0.32 0.02 287);
 
-    --warning: oklch(0.8203 0.1388 76.34);
-    --warning-foreground: var(--eclipse);
+    --success: oklch(0.82 0.18 162);
+    --success-foreground: oklch(0.16 0.02 287);
 
-    --danger: oklch(0.594 0.1967 24.63);
-    --danger-foreground: var(--snow);
+    --warning: oklch(0.85 0.16 90);
+    --warning-foreground: oklch(0.16 0.02 287);
 
-    --segment: oklch(0.3964 0.01 285.93);
+    --danger: oklch(0.65 0.24 12);
+    --danger-foreground: oklch(0.98 0.01 300);
+
+    --segment: oklch(0.26 0.02 287);
     --segment-foreground: var(--foreground);
 
-    --border: oklch(22% 0.006 286.033);
-    --separator: oklch(22% 0.006 286.033);
+    --border: oklch(0.3 0.02 287);
+    --separator: oklch(0.3 0.02 287);
     --focus: var(--accent);
     --link: var(--foreground);
 
-    --backdrop: rgba(0, 0, 0, 0.6);
+    --backdrop: rgba(0, 0, 0, 0.7);
 
-    --surface-shadow: 0 0 0 0 transparent inset;
-    --overlay-shadow: 0 0 0 0 transparent inset;
-    --field-shadow: 0 0 0 0 transparent inset;
+    --surface-shadow: 0 0 0 0 transparent;
+    --overlay-shadow: 0 0 0 0 transparent;
+    --field-shadow: 0 0 0 0 transparent;
+    --skeleton-animation: shimmer;
   }
 }
-*/
+
+/*
+ * ARCADE palette → utility colors (bg-*, text-*, border-*)
+ */
+@theme {
+  --color-bg: #0e0e12;
+  --color-surface: #16161e;
+  --color-surface-2: #1e1e2a;
+  --color-hairline: #2a2a38;
+
+  --color-purple: #6e3cfb;
+  --color-purple-lo: #9a6bff;
+
+  --color-magenta: #ff3d8b;
+  --color-green: #3df5a0;
+  --color-yellow: #ffd23d;
+  --color-cyan: #3dd6f5;
+
+  --color-ink: #f4f2ff;
+  --color-ink-dim: #a09cb8;
+  --color-ink-mute: #6b6880;
+
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
 
 @source './node_modules/heroui-native/lib';
