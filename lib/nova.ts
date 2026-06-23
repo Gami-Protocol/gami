@@ -1,6 +1,8 @@
 import { type NovaTone } from '@/lib/config';
 import { statsFromXP } from '@/lib/gami-sdk';
 import { useOnboardingStore } from '@/lib/store';
+import { FUNCTIONS_URL, SUPABASE_ANON_KEY } from '@/lib/supabase';
+import { INTERESTS } from '@/lib/config';
 
 export interface ChatMessage {
   id: string;
@@ -29,9 +31,9 @@ export const NOVA_SUGGESTIONS = [
 ];
 
 /**
- * Scripted NOVA brain. Reads real wallet state from the store and answers with
- * a rule-based response (no network). The real Anthropic-backed NOVA drops in
- * behind this same signature later.
+ * Scripted NOVA brain (offline fallback). Reads real wallet state from the
+ * store and answers with a rule-based response — used if the live Claude
+ * call fails or the backend is unreachable.
  */
 export function novaReply(input: string): string {
   const q = input.toLowerCase().trim();
@@ -62,4 +64,68 @@ export function novaReply(input: string): string {
     return tone === 'hype' ? 'ANYTIME 🔥 go stack more XP!' : 'anytime. go stack some XP.';
   }
   return `Good question${bang} I can check your level, balances, find quests, or prep a send. Try one of the suggestions below, or ask away.`;
+}
+
+interface LiveTurn {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+/** Build the wallet context payload sent to the Edge Function. */
+function buildContext() {
+  const state = useOnboardingStore.getState();
+  const stats = statsFromXP(state.xp);
+  const interestLabels = state.interests
+    .map((id) => INTERESTS.find((i) => i.id === id)?.label ?? id)
+    .slice(0, 12);
+  return {
+    handle: state.handle || undefined,
+    level: stats.level,
+    totalXP: stats.totalXP,
+    xpToNextLevel: stats.xpToNextLevel,
+    gamiBalance: stats.gamiBalance,
+    points: stats.points,
+    rank: stats.rank,
+    interests: interestLabels,
+  };
+}
+
+/**
+ * Live NOVA reply via the `nova-chat` Supabase Edge Function (Anthropic Claude).
+ * Falls back to the scripted {@link novaReply} on any error so the chat never
+ * dead-ends. `history` is the prior conversation (excluding the new input).
+ */
+export async function novaReplyLive(input: string, history: ChatMessage[]): Promise<string> {
+  const tone = useOnboardingStore.getState().novaTone;
+
+  if (!FUNCTIONS_URL) return novaReply(input);
+
+  const turns: LiveTurn[] = history
+    .filter((m) => m.text.trim().length > 0)
+    .map((m) => ({ role: m.role === 'nova' ? 'assistant' : 'user', content: m.text }));
+  turns.push({ role: 'user', content: input });
+
+  try {
+    const res = await fetch(`${FUNCTIONS_URL}/nova-chat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        apikey: SUPABASE_ANON_KEY,
+      },
+      body: JSON.stringify({ messages: turns, tone, context: buildContext() }),
+    });
+
+    if (!res.ok) return novaReply(input);
+
+    const data: unknown = await res.json();
+    let reply = '';
+    if (typeof data === 'object' && data !== null && 'reply' in data) {
+      const raw = (data as Record<'reply', unknown>).reply;
+      if (typeof raw === 'string') reply = raw.trim();
+    }
+    return reply.length > 0 ? reply : novaReply(input);
+  } catch {
+    return novaReply(input);
+  }
 }

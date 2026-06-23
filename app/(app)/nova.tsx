@@ -12,7 +12,7 @@ import {
 
 import { GScreen, NovaMascot } from '@/components/gami';
 import { haptics } from '@/lib/haptics';
-import { type ChatMessage, NOVA_SUGGESTIONS, novaOpener, novaReply } from '@/lib/nova';
+import { type ChatMessage, NOVA_SUGGESTIONS, novaOpener, novaReplyLive } from '@/lib/nova';
 
 let idSeq = 0;
 const nextId = () => `m${(idSeq += 1)}`;
@@ -52,15 +52,29 @@ export default function Nova() {
     if (!clean) return;
     haptics.light();
     const userMsg: ChatMessage = { id: nextId(), role: 'user', text: clean };
+    const history = messages;
     setMessages((m) => [...m, userMsg]);
     setInput('');
     setTyping(true);
     scrollEnd();
-    setTimeout(() => {
-      setMessages((m) => [...m, { id: nextId(), role: 'nova', text: novaReply(clean) }]);
-      setTyping(false);
-      scrollEnd();
-    }, 650);
+    void novaReplyLive(clean, history)
+      .then((reply) => {
+        setMessages((m) => [...m, { id: nextId(), role: 'nova', text: reply }]);
+      })
+      .catch(() => {
+        setMessages((m) => [
+          ...m,
+          {
+            id: nextId(),
+            role: 'nova',
+            text: 'my brain glitched for a sec — try that again?',
+          },
+        ]);
+      })
+      .finally(() => {
+        setTyping(false);
+        scrollEnd();
+      });
   };
 
   return (
