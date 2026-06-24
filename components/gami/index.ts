@@ -1,5 +1,4 @@
 export { GScreen } from './GScreen';
-export { GStatusBar } from './GStatusBar';
 export { GHeading, GBody, GMono, Accent } from './Typography';
 export { GButtonPrimary, GButtonGhost } from './GButton';
 export { GSticker } from './GSticker';

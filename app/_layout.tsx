@@ -155,8 +155,9 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      {/* Hide the real OS status bar app-wide; the mock 9:41 GStatusBar replaces it per the ARCADE mockups. */}
-      <StatusBar hidden />
+      {/* Real OS status bar, light glyphs over the dark ARCADE base. */}
+      {/* eslint-disable-next-line react/style-prop-object -- expo-status-bar's `style` prop is a string enum ("light"|"dark"|"auto"|"inverted"), not a style object */}
+      <StatusBar style="light" />
       <HeroUINativeProvider>
         <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#0E0E12' } }}>
           <Stack.Screen name="index" />

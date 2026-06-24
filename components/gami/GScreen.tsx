@@ -3,11 +3,9 @@ import { type ReactNode } from 'react';
 import { Platform, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { GStatusBar } from './GStatusBar';
-
 interface GScreenProps {
   children: ReactNode;
-  /** Show the mock 9:41 status bar. Default true. */
+  /** Reserve top safe-area spacing. Default true. */
   statusBar?: boolean;
   /** Extra padding classes for the content container. */
   className?: string;
@@ -51,7 +49,6 @@ export function GScreen({ children, statusBar = true, className, noTopGlow }: GS
           paddingBottom: insets.bottom,
         }}
       >
-        {statusBar && <GStatusBar />}
         {children}
       </View>
     </View>
