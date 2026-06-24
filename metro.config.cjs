@@ -255,18 +255,18 @@ config.server = {
   },
 };
 
-// Stub out react-native-maps when running in Expo Go (no native module available)
-// In dev builds with EXPO_PLATFORM=native, the real module is used.
-if (process.env.EXPO_PLATFORM !== 'native') {
-  config.resolver.resolveRequest = (context, moduleName, platform) => {
-    if (moduleName === 'react-native-maps') {
-      return {
-        type: 'empty',
-      };
-    }
-    return context.resolveRequest(context, moduleName, platform);
-  };
-}
+// Stub out react-native-maps everywhere — the package is not installed and the
+// app does not use native maps. components/MapView.tsx dynamically imports it and
+// falls back to the Leaflet WebView when the module resolves empty. Keeping the
+// pod out of the build avoids App Store archive failures.
+config.resolver.resolveRequest = (context, moduleName, platform) => {
+  if (moduleName === 'react-native-maps') {
+    return {
+      type: 'empty',
+    };
+  }
+  return context.resolveRequest(context, moduleName, platform);
+};
 
 module.exports = withUniwindConfig(config, {
   cssEntryFile: './global.css',
