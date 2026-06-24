@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Text, View } from 'react-native';
+import { Image, Text, View } from 'react-native';
 import Animated, {
   FadeInUp,
   useAnimatedStyle,
@@ -8,7 +8,7 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 
-import { GLogo, GProgressBar, GScreen, NovaMascot } from '@/components/gami';
+import { GProgressBar, GScreen, NovaMascot } from '@/components/gami';
 import { useOnboardingStore } from '@/lib/store';
 
 export default function Splash() {
@@ -46,7 +46,7 @@ export default function Splash() {
         <View className="items-center">
           <Animated.View style={cardStyle} className="relative">
             <View
-              className="h-32 w-32 items-center justify-center rounded-3xl bg-white"
+              className="overflow-hidden rounded-3xl"
               style={{
                 shadowColor: '#6E3CFB',
                 shadowOffset: { width: 0, height: 0 },
@@ -55,7 +55,11 @@ export default function Splash() {
                 elevation: 16,
               }}
             >
-              <GLogo size={84} color="#6E3CFB" />
+              <Image
+                source={require('@/assets/icon.png')}
+                style={{ width: 128, height: 128 }}
+                resizeMode="cover"
+              />
             </View>
             {/* mascot peeking over top-right */}
             <View className="absolute -top-5 -right-5">
