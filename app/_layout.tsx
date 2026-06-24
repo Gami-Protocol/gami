@@ -25,6 +25,7 @@ import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { Platform } from 'react-native';
 import { useEffect } from 'react';
 import * as DevClient from 'expo-dev-client';
+import { StatusBar } from 'expo-status-bar';
 import { HeroUINativeProvider } from 'heroui-native';
 import { Uniwind } from 'uniwind';
 import {
@@ -154,6 +155,8 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
+      {/* Hide the real OS status bar app-wide; the mock 9:41 GStatusBar replaces it per the ARCADE mockups. */}
+      <StatusBar hidden />
       <HeroUINativeProvider>
         <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#0E0E12' } }}>
           <Stack.Screen name="index" />

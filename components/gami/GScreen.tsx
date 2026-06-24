@@ -45,7 +45,9 @@ export function GScreen({ children, statusBar = true, className, noTopGlow }: GS
         className={className}
         style={{
           flex: 1,
-          paddingTop: insets.top + (Platform.OS === 'web' ? 12 : 4),
+          paddingTop: statusBar
+            ? Math.max(insets.top, Platform.OS === 'web' ? 24 : 12)
+            : insets.top + (Platform.OS === 'web' ? 12 : 4),
           paddingBottom: insets.bottom,
         }}
       >
