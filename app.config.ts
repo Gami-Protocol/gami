@@ -15,6 +15,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     newArchEnabled: true,
     version: process.env.BILT_APP_VERSION ?? '1.0.0',
     orientation: 'portrait',
+    icon: './assets/icon.png',
     userInterfaceStyle: 'automatic',
     scheme: 'gami',
     runtimeVersion: {
@@ -25,10 +26,15 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
       },
+      icon: './assets/icon.png',
       supportsTablet: true,
       bundleIdentifier: process.env.BILT_IOS_BUNDLE_ID ?? 'com.yourcompany.yourapp',
     },
     android: {
+      adaptiveIcon: {
+        foregroundImage: './assets/icon.png',
+        backgroundColor: '#6E3CFB',
+      },
       package: process.env.BILT_ANDROID_PACKAGE ?? 'com.yourcompany.yourapp',
     },
     extra: {
