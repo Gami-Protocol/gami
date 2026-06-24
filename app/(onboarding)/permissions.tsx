@@ -14,6 +14,7 @@ import {
   GToggleRow,
 } from '@/components/gami';
 import { haptics } from '@/lib/haptics';
+import { syncProfile } from '@/lib/auth';
 import { useOnboardingStore } from '@/lib/store';
 
 export default function Permissions() {
@@ -30,6 +31,8 @@ export default function Permissions() {
   const finish = () => {
     setOnboarded(true);
     advanceStep(11);
+    // Persist the finished profile (handle, wallet, XP, prefs) to the server.
+    void syncProfile();
     router.replace('/(app)/home');
   };
 

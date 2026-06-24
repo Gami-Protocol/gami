@@ -41,6 +41,21 @@ export const INTERESTS: Interest[] = [
 
 export type AvatarColorId = 'magenta' | 'purple' | 'cyan' | 'green' | 'yellow' | 'slate';
 
+const AVATAR_COLOR_IDS: readonly AvatarColorId[] = [
+  'magenta',
+  'purple',
+  'cyan',
+  'green',
+  'yellow',
+  'slate',
+];
+
+/** Narrow an unknown string to AvatarColorId, falling back to 'slate'. */
+export function toAvatarColorId(v: string): AvatarColorId {
+  const found = AVATAR_COLOR_IDS.find((id): id is AvatarColorId => id === v);
+  return found ?? 'slate';
+}
+
 export interface AvatarSwatch {
   id: AvatarColorId;
   /** Tailwind-ish hex for gradient/solid fills */
@@ -62,6 +77,14 @@ export function swatchById(id: AvatarColorId): AvatarSwatch {
 }
 
 export type NovaTone = 'shy' | 'chill' | 'hype';
+
+const NOVA_TONES: readonly NovaTone[] = ['shy', 'chill', 'hype'];
+
+/** Narrow an unknown string to NovaTone, falling back to 'chill'. */
+export function toNovaTone(v: string): NovaTone {
+  const found = NOVA_TONES.find((t): t is NovaTone => t === v);
+  return found ?? 'chill';
+}
 
 /** Brand gradient used across hero elements (135deg). */
 export const BRAND_GRADIENT = ['#6E3CFB', '#B14BFF', '#FF3D8B'] as const;

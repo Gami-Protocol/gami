@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { GButtonGhost, GMono, GScreen, GToggleRow } from '@/components/gami';
+import { signOut as authSignOut } from '@/lib/auth';
 import { haptics } from '@/lib/haptics';
 import { truncateAddress, useOnboardingStore } from '@/lib/store';
 
@@ -61,7 +62,6 @@ export default function Settings() {
     setHideBalances,
     setNovaAssistant,
     setSound,
-    resetSession,
   } = useOnboardingStore();
   const [confirm, setConfirm] = useState(false);
 
@@ -71,9 +71,9 @@ export default function Settings() {
     haptics.success();
   };
 
-  const signOut = () => {
-    resetSession();
-    router.replace('/(onboarding)/welcome');
+  const signOut = async () => {
+    await authSignOut();
+    router.replace('/(onboarding)/login');
   };
 
   return (
@@ -135,11 +135,16 @@ export default function Settings() {
           {confirm ? (
             <View className="border-danger/40 bg-surface gap-3 rounded-2xl border p-4">
               <Text className="font-body text-ink text-center text-[14px]">
-                Sign out? Your on-device key stays safe — you can sign back in anytime.
+                Sign out? You can sign back in anytime with your email code to restore your wallet.
               </Text>
               <View className="flex-row gap-3">
                 <GButtonGhost className="flex-1" label="CANCEL" onPress={() => setConfirm(false)} />
-                <GButtonGhost className="flex-1" label="SIGN OUT" destructive onPress={signOut} />
+                <GButtonGhost
+                  className="flex-1"
+                  label="SIGN OUT"
+                  destructive
+                  onPress={() => void signOut()}
+                />
               </View>
             </View>
           ) : (

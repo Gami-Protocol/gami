@@ -13,4 +13,5 @@ export { GAvatar } from './GAvatar';
 export { GLogo } from './GLogo';
 export { GRing } from './GRing';
 export { GOnboardHeader } from './GOnboardHeader';
+export { GCodeInput } from './GCodeInput';
 export { useStaggerIn, useStickerPop } from './useStaggerIn';

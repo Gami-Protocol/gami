@@ -18,6 +18,8 @@ export interface OnboardingState {
   novaAssistantEnabled: boolean;
   soundEnabled: boolean;
   email: string;
+  /** Supabase auth user id, or null when signed out. */
+  userId: string | null;
   walletAddress: string | null;
   xp: number;
   /** $GAMI sent out via the Send flow (subtracted from the derived balance). */
@@ -43,6 +45,21 @@ export interface OnboardingState {
   setNovaAssistant: (v: boolean) => void;
   setSound: (v: boolean) => void;
   setWalletAddress: (addr: string) => void;
+  setEmail: (email: string) => void;
+  setAuthUser: (userId: string | null, email?: string) => void;
+  /** Replace the whole local profile from a server row (login relink). */
+  hydrateFromProfile: (p: {
+    handle?: string | null;
+    walletAddress?: string | null;
+    xp?: number;
+    spentGami?: number;
+    avatarId?: AvatarColorId;
+    novaTone?: NovaTone;
+    interests?: string[];
+    onboarded?: boolean;
+  }) => void;
+  /** Wipe local profile + session entirely (full sign-out). */
+  signOutLocal: () => void;
   addXP: (amount: number) => void;
   spendGami: (amount: number) => void;
   setOnboarded: (v: boolean) => void;
@@ -64,6 +81,7 @@ const initial = {
   novaAssistantEnabled: true,
   soundEnabled: true,
   email: 'nox@gami.xyz',
+  userId: null as string | null,
   walletAddress: null as string | null,
   xp: 0,
   spentGami: 0,
@@ -95,6 +113,20 @@ export const useOnboardingStore = create<OnboardingState>()(
       setNovaAssistant: (novaAssistantEnabled) => set({ novaAssistantEnabled }),
       setSound: (soundEnabled) => set({ soundEnabled }),
       setWalletAddress: (walletAddress) => set({ walletAddress }),
+      setEmail: (email) => set({ email }),
+      setAuthUser: (userId, email) => set((s) => ({ userId, email: email ?? s.email })),
+      hydrateFromProfile: (p) =>
+        set((s) => ({
+          handle: p.handle ?? s.handle,
+          walletAddress: p.walletAddress ?? s.walletAddress,
+          xp: p.xp ?? s.xp,
+          spentGami: p.spentGami ?? s.spentGami,
+          avatarId: p.avatarId ?? s.avatarId,
+          novaTone: p.novaTone ?? s.novaTone,
+          interests: p.interests ?? s.interests,
+          onboarded: p.onboarded ?? s.onboarded,
+        })),
+      signOutLocal: () => set({ ...initial }),
       addXP: (amount) => set((s) => ({ xp: s.xp + amount })),
       spendGami: (amount) => set((s) => ({ spentGami: s.spentGami + amount })),
       setOnboarded: (onboarded) => set({ onboarded }),

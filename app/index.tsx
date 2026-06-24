@@ -9,6 +9,9 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { GProgressBar, GScreen, NovaMascot } from '@/components/gami';
+import { currentUserId, wireProfileSync } from '@/lib/auth';
+import { fetchProfile, hasBackend } from '@/lib/supabase';
+import { toAvatarColorId, toNovaTone } from '@/lib/config';
 import { useOnboardingStore } from '@/lib/store';
 
 export default function Splash() {
@@ -23,6 +26,7 @@ export default function Splash() {
   }));
 
   useEffect(() => {
+    wireProfileSync();
     cardScale.value = withSpring(1, { damping: 12, stiffness: 150 });
     const start = Date.now();
     const tick = setInterval(() => {
@@ -31,10 +35,43 @@ export default function Splash() {
       if (pct >= 1) clearInterval(tick);
     }, 60);
 
-    const timer = setTimeout(() => {
-      router.replace(onboarded ? '/(app)/home' : '/(onboarding)/welcome');
-    }, 1600);
+    let cancelled = false;
+
+    const route = async () => {
+      const store = useOnboardingStore.getState();
+      const userId = await currentUserId();
+
+      // Signed in with a real backend session — restore profile from server.
+      if (userId && hasBackend && !userId.startsWith('local-')) {
+        store.setAuthUser(userId, store.email);
+        const profile = await fetchProfile(userId);
+        if (profile) {
+          store.hydrateFromProfile({
+            handle: profile.handle,
+            walletAddress: profile.wallet_address,
+            xp: profile.xp,
+            spentGami: profile.spent_gami,
+            avatarId: toAvatarColorId(profile.avatar_id),
+            novaTone: toNovaTone(profile.nova_tone),
+            interests: profile.interests,
+            onboarded: profile.onboarded,
+          });
+        }
+        if (cancelled) return;
+        // Resume onboarding if they bailed before finishing, else go home.
+        router.replace(profile?.onboarded ? '/(app)/home' : '/(onboarding)/welcome');
+        return;
+      }
+
+      if (cancelled) return;
+      // No session. If a local-only onboarded session exists, honour it.
+      const signedInLocally = Boolean(store.userId) && onboarded;
+      router.replace(signedInLocally ? '/(app)/home' : '/(onboarding)/welcome');
+    };
+
+    const timer = setTimeout(() => void route(), 1600);
     return () => {
+      cancelled = true;
       clearInterval(tick);
       clearTimeout(timer);
     };

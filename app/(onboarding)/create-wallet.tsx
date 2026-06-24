@@ -20,6 +20,7 @@ import {
   GScreen,
 } from '@/components/gami';
 import { createGamiWallet } from '@/lib/gami-sdk';
+import { syncProfile } from '@/lib/auth';
 import { haptics } from '@/lib/haptics';
 import { useOnboardingStore } from '@/lib/store';
 
@@ -63,6 +64,8 @@ export default function CreateWallet() {
         // step 3 → real SDK call
         createGamiWallet()
           .then(() => {
+            // Link the freshly created wallet address to the account row.
+            void syncProfile();
             haptics.success();
             advanceStep(5);
             setTimeout(() => router.replace('/(onboarding)/face-id'), 500);

@@ -5,7 +5,6 @@ import Animated from 'react-native-reanimated';
 
 import {
   GBody,
-  GButtonGhost,
   GButtonPrimary,
   GHeading,
   GOnboardHeader,
@@ -13,15 +12,15 @@ import {
   GSticker,
   useStaggerIn,
 } from '@/components/gami';
-import { signUpWithEmail } from '@/lib/auth';
+import { signInWithEmail } from '@/lib/auth';
 import { haptics } from '@/lib/haptics';
 import { useOnboardingStore } from '@/lib/store';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export default function Auth() {
+export default function Login() {
   const router = useRouter();
-  const { advanceStep, setEmail } = useOnboardingStore();
+  const setEmail = useOnboardingStore((s) => s.setEmail);
   const head = useStaggerIn(0);
   const body = useStaggerIn(1);
 
@@ -31,12 +30,12 @@ export default function Auth() {
 
   const valid = EMAIL_RE.test(email.trim());
 
-  const createWallet = async () => {
+  const sendCode = async () => {
     if (!valid || busy) return;
     setBusy(true);
     setError(null);
     const clean = email.trim().toLowerCase();
-    const res = await signUpWithEmail(clean);
+    const res = await signInWithEmail(clean);
     setBusy(false);
     if (!res.ok) {
       haptics.error();
@@ -45,8 +44,7 @@ export default function Auth() {
     }
     haptics.success();
     setEmail(clean);
-    advanceStep(3);
-    router.push({ pathname: '/(onboarding)/verify', params: { email: clean, mode: 'signup' } });
+    router.push({ pathname: '/(onboarding)/verify', params: { email: clean, mode: 'login' } });
   };
 
   return (
@@ -58,9 +56,15 @@ export default function Auth() {
       >
         <View className="flex-1 px-6">
           <Animated.View style={head} className="mt-6">
-            <GHeading size="2xl">Claim your{'\n'}account.</GHeading>
+            <GSticker color="cyan" tilt={-6}>
+              WELCOME BACK
+            </GSticker>
+            <GHeading size="2xl" className="mt-4">
+              Sign back{'\n'}in.
+            </GHeading>
             <GBody className="mt-3">
-              Drop your email — we&apos;ll send a 6-digit code to lock it to your wallet.
+              Enter the email tied to your wallet. We&apos;ll send a 6-digit code and restore your
+              account.
             </GBody>
           </Animated.View>
 
@@ -81,43 +85,32 @@ export default function Auth() {
                 textContentType="emailAddress"
                 className="text-ink flex-1 py-4 text-[16px]"
                 style={{ fontFamily: 'Inter_500Medium' }}
-                onSubmitEditing={createWallet}
+                onSubmitEditing={sendCode}
               />
             </View>
             {error ? (
               <Text className="text-magenta mt-2 font-mono text-[11px]">{error}</Text>
             ) : (
               <Text className="text-ink-mute mt-2 font-mono text-[11px]">
-                no passwords · just a code
+                your wallet, XP and badges come right back
               </Text>
             )}
 
             <View className="mt-7">
               <GButtonPrimary
-                label={busy ? 'SENDING CODE…' : '+ CREATE NEW WALLET'}
-                onPress={createWallet}
+                label={busy ? 'SENDING CODE…' : 'SEND ME A CODE →'}
+                onPress={sendCode}
                 disabled={!valid || busy}
-                badge={
-                  <View className="absolute -top-2 -right-2 z-10">
-                    <GSticker color="green" tilt={6}>
-                      NEW
-                    </GSticker>
-                  </View>
-                }
               />
             </View>
 
-            <View className="my-7 flex-row items-center gap-3">
-              <View className="bg-hairline h-px flex-1" />
-              <Text className="text-ink-mute font-mono text-[11px] tracking-widest">OR</Text>
-              <View className="bg-hairline h-px flex-1" />
-            </View>
-
-            <GButtonGhost
-              label="↻ I ALREADY HAVE A WALLET"
-              sublabel="sign in with your email"
-              onPress={() => router.push('/(onboarding)/login')}
-            />
+            <Text
+              onPress={() => router.back()}
+              className="text-ink-dim mt-6 text-center text-[14px]"
+              style={{ fontFamily: 'Inter_500Medium' }}
+            >
+              New here? Create a wallet
+            </Text>
           </Animated.View>
         </View>
       </KeyboardAvoidingView>
