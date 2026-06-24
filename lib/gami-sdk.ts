@@ -134,9 +134,11 @@ export function questComplete(
   // Optimistic local XP bump (source of truth remains the edge/chain).
   useOnboardingStore.getState().addXP(xp);
 
-  // Supervisor advances the envelope off the UI thread.
-  setTimeout(() => onUpdate({ ...envelope, status: 'settling' }), 900);
-  setTimeout(() => onUpdate({ ...envelope, status: 'settled' }), 2600);
+  // Supervisor advances the envelope off the UI thread:
+  // queued (returned now) -> settling -> settled.
+  setTimeout(() => onUpdate({ ...envelope, status: 'queued' }), 700);
+  setTimeout(() => onUpdate({ ...envelope, status: 'settling' }), 1500);
+  setTimeout(() => onUpdate({ ...envelope, status: 'settled' }), 2900);
 
   return envelope;
 }

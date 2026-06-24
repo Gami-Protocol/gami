@@ -10,9 +10,12 @@ import { type EnvelopeStatus, questComplete } from '@/lib/gami-sdk';
 import { haptics } from '@/lib/haptics';
 import { useOnboardingStore } from '@/lib/store';
 
-const LIFECYCLE: Record<Exclude<EnvelopeStatus, 'queued'> | 'submitting', string> = {
+type CardStatus = EnvelopeStatus | 'submitting';
+
+const LIFECYCLE: Record<EnvelopeStatus | 'submitting', string> = {
   submitting: '… SUBMITTING TO GAMI-AGENT',
-  settling: 'QUEUED · SETTLING',
+  queued: 'QUEUED · GAMI-AGENT',
+  settling: 'SETTLING ON-CHAIN',
   settled: 'SETTLED',
   failed: 'FAILED · RETRY',
 };
@@ -23,7 +26,7 @@ function QuestCard({
   onClaim,
 }: {
   quest: Quest;
-  status: EnvelopeStatus | 'submitting' | null;
+  status: CardStatus | null;
   onClaim: () => void;
 }) {
   const settled = status === 'settled';
@@ -75,7 +78,7 @@ function QuestCard({
             <Text className="text-cyan font-mono text-[12px] font-bold">
               {status === 'submitting'
                 ? LIFECYCLE.submitting
-                : `${LIFECYCLE.settling} · +${quest.reward} XP`}
+                : `${LIFECYCLE[status]} · +${quest.reward} XP`}
             </Text>
           </View>
         )}
@@ -86,7 +89,7 @@ function QuestCard({
 
 export default function Quests() {
   const firstQuestClaimed = useOnboardingStore((s) => s.firstQuestClaimed);
-  const [statuses, setStatuses] = useState<Record<string, EnvelopeStatus | 'submitting'>>({});
+  const [statuses, setStatuses] = useState<Record<string, CardStatus>>({});
   const [confetti, setConfetti] = useState(false);
 
   const claim = (quest: Quest) => {
@@ -95,6 +98,8 @@ export default function Quests() {
     // Show the submit-to-agent state before the envelope returns.
     setStatuses((p) => ({ ...p, [quest.id]: 'submitting' }));
     setTimeout(() => {
+      // questComplete returns a queued envelope; the supervisor callback then
+      // walks it queued -> settling -> settled. We never set state ourselves.
       questComplete(quest.id, quest.reward, (env) => {
         setStatuses((p) => ({ ...p, [quest.id]: env.status }));
         if (env.status === 'settled') {
@@ -102,8 +107,6 @@ export default function Quests() {
           setTimeout(() => setConfetti(false), 1500);
         }
       });
-      // questComplete returns queued immediately; reflect SETTLING in the card.
-      setStatuses((p) => ({ ...p, [quest.id]: 'settling' }));
     }, 600);
   };
 
