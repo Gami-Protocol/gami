@@ -91,6 +91,56 @@ useOnboardingStore.subscribe((state, prev) => {
   }
 });
 
+/**
+ * Outbox envelope for any state-changing action (guardrail #5).
+ *
+ * The client NEVER mutates chain state synchronously. A write intent returns a
+ * `queued` envelope; an off-app supervisor (`gami-agent`) performs the real
+ * write and the status advances QUEUED -> SETTLING -> SETTLED. XP shown before
+ * settlement is purely optimistic and the edge/chain stays the source of truth.
+ */
+export type EnvelopeStatus = 'queued' | 'settling' | 'settled' | 'failed';
+
+export interface ChainActionEnvelope {
+  envelopeId: string;
+  status: EnvelopeStatus;
+  action: { type: 'quest_complete'; questId: string; xp: number };
+}
+
+export type EnvelopeListener = (envelope: ChainActionEnvelope) => void;
+
+function envelopeId(): string {
+  return `env_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+}
+
+/**
+ * Submit a quest-completion write intent. Returns a `queued` envelope
+ * immediately (the write is NOT applied here), then advances the envelope to
+ * `settling` and finally `settled` via the `onUpdate` callback to mimic the
+ * off-app gami-agent supervisor. XP is applied optimistically at queue time and
+ * never re-applied on settle.
+ */
+export function questComplete(
+  questId: string,
+  xp: number,
+  onUpdate: EnvelopeListener,
+): ChainActionEnvelope {
+  const envelope: ChainActionEnvelope = {
+    envelopeId: envelopeId(),
+    status: 'queued',
+    action: { type: 'quest_complete', questId, xp },
+  };
+
+  // Optimistic local XP bump (source of truth remains the edge/chain).
+  useOnboardingStore.getState().addXP(xp);
+
+  // Supervisor advances the envelope off the UI thread.
+  setTimeout(() => onUpdate({ ...envelope, status: 'settling' }), 900);
+  setTimeout(() => onUpdate({ ...envelope, status: 'settled' }), 2600);
+
+  return envelope;
+}
+
 export interface GamiWallet {
   address: string;
   checkMyLevel(): Promise<LevelStats>;

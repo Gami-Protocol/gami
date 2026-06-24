@@ -1,24 +1,32 @@
 import { FlashList } from '@shopify/flash-list';
-import { Check, Clock, Sparkles } from 'lucide-react-native';
+import { Check, Clock, Loader, Sparkles } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { Text, View } from 'react-native';
 
 import { GCard, GConfetti, GMono, GScreen, GSticker } from '@/components/gami';
 import { GButtonPrimary } from '@/components/gami/GButton';
 import { QUESTS, type Quest } from '@/lib/config';
-import { createGamiWallet } from '@/lib/gami-sdk';
+import { type EnvelopeStatus, questComplete } from '@/lib/gami-sdk';
 import { haptics } from '@/lib/haptics';
 import { useOnboardingStore } from '@/lib/store';
 
+const LIFECYCLE: Record<Exclude<EnvelopeStatus, 'queued'> | 'submitting', string> = {
+  submitting: '… SUBMITTING TO GAMI-AGENT',
+  settling: 'QUEUED · SETTLING',
+  settled: 'SETTLED',
+  failed: 'FAILED · RETRY',
+};
+
 function QuestCard({
   quest,
-  claimed,
+  status,
   onClaim,
 }: {
   quest: Quest;
-  claimed: boolean;
+  status: EnvelopeStatus | 'submitting' | null;
   onClaim: () => void;
 }) {
+  const settled = status === 'settled';
   return (
     <GCard className="mb-3">
       <View className="flex-row items-start justify-between">
@@ -46,19 +54,30 @@ function QuestCard({
             </View>
           </View>
         </View>
-        <GSticker color={claimed ? 'green' : 'magenta'} tilt={-4}>
+        <GSticker color={settled ? 'green' : 'magenta'} tilt={-4}>
           +{quest.reward} XP
         </GSticker>
       </View>
 
       <View className="mt-3">
-        {claimed ? (
+        {status === null ? (
+          <GButtonPrimary label={`COMPLETE · +${quest.reward} XP`} onPress={onClaim} />
+        ) : settled ? (
           <View className="border-green/40 flex-row items-center justify-center gap-2 rounded-2xl border py-3">
             <Check size={16} color="#3DF5A0" strokeWidth={3} />
-            <Text className="text-green font-mono text-[13px] font-bold">CLAIMED</Text>
+            <Text className="text-green font-mono text-[13px] font-bold">
+              SETTLED · +{quest.reward} XP
+            </Text>
           </View>
         ) : (
-          <GButtonPrimary label={`CLAIM +${quest.reward} XP`} onPress={onClaim} />
+          <View className="border-cyan/40 flex-row items-center justify-center gap-2 rounded-2xl border py-3">
+            <Loader size={15} color="#3DD6F5" />
+            <Text className="text-cyan font-mono text-[12px] font-bold">
+              {status === 'submitting'
+                ? LIFECYCLE.submitting
+                : `${LIFECYCLE.settling} · +${quest.reward} XP`}
+            </Text>
+          </View>
         )}
       </View>
     </GCard>
@@ -67,19 +86,25 @@ function QuestCard({
 
 export default function Quests() {
   const firstQuestClaimed = useOnboardingStore((s) => s.firstQuestClaimed);
-  const [claimedIds, setClaimedIds] = useState<Set<string>>(new Set());
+  const [statuses, setStatuses] = useState<Record<string, EnvelopeStatus | 'submitting'>>({});
   const [confetti, setConfetti] = useState(false);
 
-  const isClaimed = (id: string) => claimedIds.has(id);
-
-  const claim = async (quest: Quest) => {
-    if (claimedIds.has(quest.id)) return;
-    setConfetti(true);
+  const claim = (quest: Quest) => {
+    if (statuses[quest.id]) return;
     haptics.success();
-    const wallet = await createGamiWallet();
-    await wallet.awardXP(quest.reward);
-    setClaimedIds((prev) => new Set(prev).add(quest.id));
-    setTimeout(() => setConfetti(false), 1500);
+    // Show the submit-to-agent state before the envelope returns.
+    setStatuses((p) => ({ ...p, [quest.id]: 'submitting' }));
+    setTimeout(() => {
+      questComplete(quest.id, quest.reward, (env) => {
+        setStatuses((p) => ({ ...p, [quest.id]: env.status }));
+        if (env.status === 'settled') {
+          setConfetti(true);
+          setTimeout(() => setConfetti(false), 1500);
+        }
+      });
+      // questComplete returns queued immediately; reflect SETTLING in the card.
+      setStatuses((p) => ({ ...p, [quest.id]: 'settling' }));
+    }, 600);
   };
 
   const data = useMemo(() => QUESTS, []);
@@ -106,7 +131,7 @@ export default function Quests() {
         keyExtractor={(q) => q.id}
         contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 24 }}
         renderItem={({ item }) => (
-          <QuestCard quest={item} claimed={isClaimed(item.id)} onClaim={() => claim(item)} />
+          <QuestCard quest={item} status={statuses[item.id] ?? null} onClaim={() => claim(item)} />
         )}
       />
     </GScreen>

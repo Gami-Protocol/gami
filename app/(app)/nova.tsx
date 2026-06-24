@@ -95,6 +95,12 @@ export default function Nova() {
         </View>
       </View>
 
+      <View className="border-hairline bg-surface/40 border-b px-5 py-2">
+        <Text className="text-ink-mute font-mono text-[10px] leading-4">
+          NOVA suggests — you approve. It never moves funds or signs.
+        </Text>
+      </View>
+
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={88}
