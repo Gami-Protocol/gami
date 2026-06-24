@@ -123,21 +123,30 @@ export default function Nova() {
         </ScrollView>
 
         {messages.length <= 1 ? (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 16, gap: 8, paddingBottom: 8 }}
-          >
-            {NOVA_SUGGESTIONS.map((s) => (
-              <Pressable
-                key={s}
-                onPress={() => send(s)}
-                className="border-hairline bg-surface rounded-full border px-3.5 py-2"
-              >
-                <Text className="text-ink-dim font-mono text-[12px]">{s}</Text>
-              </Pressable>
-            ))}
-          </ScrollView>
+          <View className="shrink-0">
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{
+                paddingHorizontal: 16,
+                gap: 8,
+                paddingBottom: 8,
+                alignItems: 'center',
+              }}
+            >
+              {NOVA_SUGGESTIONS.map((s) => (
+                <Pressable
+                  key={s}
+                  onPress={() => send(s)}
+                  className="border-hairline bg-surface self-start rounded-full border px-3.5 py-2"
+                >
+                  <Text numberOfLines={1} className="text-ink-dim font-mono text-[12px]">
+                    {s}
+                  </Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
         ) : null}
 
         <View className="border-hairline flex-row items-center gap-2 border-t px-4 py-3">
