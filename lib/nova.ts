@@ -1,5 +1,5 @@
 import { type NovaTone } from '@/lib/config';
-import { statsFromXP } from '@/lib/gami-sdk';
+import { currentStats } from '@/lib/gami-sdk';
 import { useOnboardingStore } from '@/lib/store';
 import { FUNCTIONS_URL, SUPABASE_ANON_KEY } from '@/lib/supabase';
 import { INTERESTS } from '@/lib/config';
@@ -38,7 +38,7 @@ export const NOVA_SUGGESTIONS = [
 export function novaReply(input: string): string {
   const q = input.toLowerCase().trim();
   const state = useOnboardingStore.getState();
-  const stats = statsFromXP(state.xp);
+  const stats = currentStats();
   const tone = state.novaTone;
   const bang = tone === 'hype' ? '!' : '.';
 
@@ -74,7 +74,7 @@ interface LiveTurn {
 /** Build the wallet context payload sent to the Edge Function. */
 function buildContext() {
   const state = useOnboardingStore.getState();
-  const stats = statsFromXP(state.xp);
+  const stats = currentStats();
   const interestLabels = state.interests
     .map((id) => INTERESTS.find((i) => i.id === id)?.label ?? id)
     .slice(0, 12);

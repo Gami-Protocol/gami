@@ -45,22 +45,29 @@ export function levelForXP(totalXP: number): number {
   return level;
 }
 
-export function statsFromXP(totalXP: number): LevelStats {
+export function statsFromXP(totalXP: number, spentGami = 0): LevelStats {
   const level = levelForXP(totalXP);
   const floor = xpForLevel(level);
   const ceil = xpForLevel(level + 1);
   const span = ceil - floor || 1;
   const xpThisLevel = totalXP - floor;
+  const gamiBalance = Math.max(0, Number((totalXP * 0.002 - spentGami).toFixed(2)));
   return {
     level,
     totalXP,
     xpToNextLevel: Math.max(0, ceil - totalXP),
     xpThisLevel,
     progress: Math.min(1, xpThisLevel / span),
-    gamiBalance: Number((totalXP * 0.002).toFixed(2)),
+    gamiBalance,
     points: totalXP,
     rank: Math.max(1, 18420 - totalXP * 4),
   };
+}
+
+/** Pull current stats straight from the store (XP + spend). */
+export function currentStats(): LevelStats {
+  const s = useOnboardingStore.getState();
+  return statsFromXP(s.xp, s.spentGami);
 }
 
 function randomAddress(): string {
@@ -109,19 +116,19 @@ export async function createGamiWallet(): Promise<GamiWallet> {
   return {
     address,
     async checkMyLevel() {
-      return statsFromXP(useOnboardingStore.getState().xp);
+      return currentStats();
     },
     subscribeToLevelUps(cb: LevelUpListener) {
       listeners.add(cb);
       return () => listeners.delete(cb);
     },
     async getBalance(denom) {
-      const stats = statsFromXP(useOnboardingStore.getState().xp);
+      const stats = currentStats();
       return denom === 'gami' ? stats.gamiBalance : stats.points;
     },
     async awardXP(amount: number) {
       useOnboardingStore.getState().addXP(amount);
-      return statsFromXP(useOnboardingStore.getState().xp);
+      return currentStats();
     },
   };
 }

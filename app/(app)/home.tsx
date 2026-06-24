@@ -1,10 +1,10 @@
 import { useRouter } from 'expo-router';
-import { ArrowDown, ArrowUp, ScanLine, Target } from 'lucide-react-native';
+import { ArrowDown, ArrowUp, Layers, Target } from 'lucide-react-native';
 import { type ReactNode, useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { GBody, GCard, GConfetti, GMono, GScreen, GSticker } from '@/components/gami';
-import { createGamiWallet, type LevelStats, statsFromXP } from '@/lib/gami-sdk';
+import { createGamiWallet, currentStats, type LevelStats } from '@/lib/gami-sdk';
 import { useOnboardingStore } from '@/lib/store';
 
 function QuickAction({
@@ -28,9 +28,16 @@ function QuickAction({
 
 export default function Home() {
   const router = useRouter();
-  const { handle, xp, hideBalances, homeRevealSeen, markHomeRevealSeen, firstQuestClaimed } =
-    useOnboardingStore();
-  const [stats, setStats] = useState<LevelStats>(statsFromXP(xp));
+  const {
+    handle,
+    xp,
+    spentGami,
+    hideBalances,
+    homeRevealSeen,
+    markHomeRevealSeen,
+    firstQuestClaimed,
+  } = useOnboardingStore();
+  const [stats, setStats] = useState<LevelStats>(currentStats());
   const [confetti, setConfetti] = useState(false);
 
   useEffect(() => {
@@ -40,7 +47,7 @@ export default function Home() {
       const s = await wallet.checkMyLevel();
       if (mounted) setStats(s);
       unsub = wallet.subscribeToLevelUps(() => {
-        if (mounted) setStats(statsFromXP(useOnboardingStore.getState().xp));
+        if (mounted) setStats(currentStats());
       });
     });
     return () => {
@@ -49,10 +56,10 @@ export default function Home() {
     };
   }, []);
 
-  // keep stats in sync with store xp
+  // keep stats in sync with store xp / spend
   useEffect(() => {
-    setStats(statsFromXP(xp));
-  }, [xp]);
+    setStats(currentStats());
+  }, [xp, spentGami]);
 
   useEffect(() => {
     if (!homeRevealSeen) {
@@ -117,12 +124,12 @@ export default function Home() {
           <QuickAction
             icon={<ArrowUp size={20} color="#9A6BFF" />}
             label="SEND"
-            onPress={() => {}}
+            onPress={() => router.push('/(app)/send')}
           />
           <QuickAction
             icon={<ArrowDown size={20} color="#3DF5A0" />}
             label="RECEIVE"
-            onPress={() => {}}
+            onPress={() => router.push('/(app)/receive')}
           />
           <QuickAction
             icon={<Target size={20} color="#FF3D8B" />}
@@ -130,9 +137,9 @@ export default function Home() {
             onPress={() => router.push('/(app)/quests')}
           />
           <QuickAction
-            icon={<ScanLine size={20} color="#3DD6F5" />}
-            label="SCAN"
-            onPress={() => {}}
+            icon={<Layers size={20} color="#3DD6F5" />}
+            label="STASH"
+            onPress={() => router.push('/(app)/badges')}
           />
         </View>
 

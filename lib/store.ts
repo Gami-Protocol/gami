@@ -20,6 +20,8 @@ export interface OnboardingState {
   email: string;
   walletAddress: string | null;
   xp: number;
+  /** $GAMI sent out via the Send flow (subtracted from the derived balance). */
+  spentGami: number;
   /** True once the user finished onboarding and reached the app. */
   onboarded: boolean;
   /** Has the home reveal confetti already played. */
@@ -42,6 +44,7 @@ export interface OnboardingState {
   setSound: (v: boolean) => void;
   setWalletAddress: (addr: string) => void;
   addXP: (amount: number) => void;
+  spendGami: (amount: number) => void;
   setOnboarded: (v: boolean) => void;
   markHomeRevealSeen: () => void;
   claimFirstQuest: () => void;
@@ -63,6 +66,7 @@ const initial = {
   email: 'nox@gami.xyz',
   walletAddress: null as string | null,
   xp: 0,
+  spentGami: 0,
   onboarded: false,
   homeRevealSeen: false,
   firstQuestClaimed: false,
@@ -92,6 +96,7 @@ export const useOnboardingStore = create<OnboardingState>()(
       setSound: (soundEnabled) => set({ soundEnabled }),
       setWalletAddress: (walletAddress) => set({ walletAddress }),
       addXP: (amount) => set((s) => ({ xp: s.xp + amount })),
+      spendGami: (amount) => set((s) => ({ spentGami: s.spentGami + amount })),
       setOnboarded: (onboarded) => set({ onboarded }),
       markHomeRevealSeen: () => set({ homeRevealSeen: true }),
       claimFirstQuest: () => set({ firstQuestClaimed: true }),

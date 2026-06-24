@@ -128,3 +128,40 @@ export const QUESTS: Quest[] = [
     tag: 'MULTI-CHAIN',
   },
 ];
+
+export interface Badge {
+  id: string;
+  label: string;
+  icon: string;
+  color: AvatarColorId;
+  /** XP threshold at which the badge unlocks (0 = earned at signup). */
+  unlockXp: number;
+}
+
+/** 24-badge collection shown on the profile / badges grid. */
+export const BADGES: Badge[] = [
+  { id: 'starter', label: 'Starter', icon: 'sparkles', color: 'yellow', unlockXp: 0 },
+  { id: 'first-swap', label: 'First Swap', icon: 'repeat', color: 'cyan', unlockXp: 500 },
+  { id: 'streak-7', label: '7-Day', icon: 'flame', color: 'magenta', unlockXp: 750 },
+  { id: 'holder', label: 'Holder', icon: 'gem', color: 'purple', unlockXp: 1000 },
+  { id: 'minter', label: 'Minter', icon: 'image', color: 'green', unlockXp: 1500 },
+  { id: 'referral', label: 'Recruiter', icon: 'user-plus', color: 'magenta', unlockXp: 2000 },
+  { id: 'bridger', label: 'Bridger', icon: 'milestone', color: 'cyan', unlockXp: 2500 },
+  { id: 'dao-voter', label: 'Voter', icon: 'vote', color: 'purple', unlockXp: 3000 },
+  { id: 'trader', label: 'Trader', icon: 'trending-up', color: 'green', unlockXp: 3500 },
+  { id: 'creator', label: 'Creator', icon: 'palette', color: 'yellow', unlockXp: 4000 },
+  { id: 'whale', label: 'Whale', icon: 'waves', color: 'cyan', unlockXp: 5000 },
+  { id: 'og', label: 'OG', icon: 'crown', color: 'yellow', unlockXp: 6000 },
+  { id: 'collector', label: 'Collector', icon: 'layers', color: 'purple', unlockXp: 7000 },
+  { id: 'streak-30', label: '30-Day', icon: 'calendar-check', color: 'magenta', unlockXp: 8000 },
+  { id: 'diamond', label: 'Diamond', icon: 'diamond', color: 'cyan', unlockXp: 9000 },
+  { id: 'pioneer', label: 'Pioneer', icon: 'compass', color: 'green', unlockXp: 10000 },
+  { id: 'legend', label: 'Legend', icon: 'star', color: 'yellow', unlockXp: 12000 },
+  { id: 'guardian', label: 'Guardian', icon: 'shield', color: 'purple', unlockXp: 14000 },
+  { id: 'maxi', label: 'Maxi', icon: 'zap', color: 'magenta', unlockXp: 16000 },
+  { id: 'sage', label: 'Sage', icon: 'graduation-cap', color: 'cyan', unlockXp: 18000 },
+  { id: 'titan', label: 'Titan', icon: 'mountain', color: 'green', unlockXp: 21000 },
+  { id: 'mythic', label: 'Mythic', icon: 'flame', color: 'magenta', unlockXp: 25000 },
+  { id: 'ascended', label: 'Ascended', icon: 'rocket', color: 'purple', unlockXp: 30000 },
+  { id: 'gami-god', label: 'Gami God', icon: 'crown', color: 'yellow', unlockXp: 40000 },
+];

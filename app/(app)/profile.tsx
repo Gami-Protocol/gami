@@ -9,10 +9,11 @@ import {
   Users,
   Wallet,
 } from 'lucide-react-native';
-import { ScrollView, Share, Text, View } from 'react-native';
+import { Pressable, ScrollView, Share, Text, View } from 'react-native';
 
 import { GAvatar, GCard, GListRow, GMono, GScreen, GSticker } from '@/components/gami';
-import { statsFromXP } from '@/lib/gami-sdk';
+import { BADGES } from '@/lib/config';
+import { currentStats } from '@/lib/gami-sdk';
 import { haptics } from '@/lib/haptics';
 import { monogram, truncateAddress, useOnboardingStore } from '@/lib/store';
 
@@ -28,8 +29,9 @@ function Stat({ label, value }: { label: string; value: string }) {
 export default function Profile() {
   const router = useRouter();
   const { handle, avatarId, walletAddress, xp, hideBalances } = useOnboardingStore();
-  const stats = statsFromXP(xp);
+  const stats = currentStats();
   const mono = monogram(handle || 'NX');
+  const earnedBadges = BADGES.filter((b) => xp >= b.unlockXp).length;
 
   const onShare = () => {
     haptics.light();
@@ -94,7 +96,7 @@ export default function Profile() {
             title="Connected wallets"
             meta="1"
             chevron
-            onPress={() => {}}
+            onPress={() => router.push('/(app)/receive')}
           />
           <GListRow
             icon={<Bell size={18} color="#9A6BFF" />}
@@ -106,7 +108,7 @@ export default function Profile() {
             icon={<Users size={18} color="#9A6BFF" />}
             title="Linked socials"
             chevron
-            onPress={() => {}}
+            onPress={onShare}
           />
           <GListRow
             icon={<Share2 size={18} color="#9A6BFF" />}
@@ -118,14 +120,22 @@ export default function Profile() {
             icon={<HelpCircle size={18} color="#9A6BFF" />}
             title="Help & support"
             chevron
-            onPress={() => {}}
+            onPress={() => router.push('/(app)/nova')}
           />
         </View>
 
-        <View className="mt-6 flex-row items-center justify-center gap-2 opacity-50">
-          <Award size={14} color="#6B6880" />
-          <Text className="text-ink-mute font-mono text-[11px]">1 of 24 badges earned</Text>
-        </View>
+        <Pressable
+          onPress={() => {
+            haptics.light();
+            router.push('/(app)/badges');
+          }}
+          className="mt-6 flex-row items-center justify-center gap-2"
+        >
+          <Award size={14} color="#9A6BFF" />
+          <Text className="text-ink-dim font-mono text-[11px]">
+            {earnedBadges} of {BADGES.length} badges · VIEW ALL →
+          </Text>
+        </Pressable>
       </ScrollView>
     </GScreen>
   );
