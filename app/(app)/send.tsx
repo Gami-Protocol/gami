@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowUp, Check, X } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import {
@@ -20,9 +20,12 @@ const QUICK = [0.25, 0.5, 1] as const;
 
 export default function Send() {
   const router = useRouter();
+  const params = useLocalSearchParams();
   const { hideBalances, spendGami } = useOnboardingStore();
   const stats = currentStats();
-  const [recipient, setRecipient] = useState('');
+  const [recipient, setRecipient] = useState(
+    Array.isArray(params.to) ? (params.to[0] ?? '') : (params.to ?? ''),
+  );
   const [amount, setAmount] = useState('');
   const [sent, setSent] = useState(false);
 

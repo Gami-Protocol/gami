@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { ArrowDown, ArrowUp, Layers, Target } from 'lucide-react-native';
+import { ArrowDown, ArrowUp, Layers, ScanLine, Target } from 'lucide-react-native';
 import { type ReactNode, useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
@@ -137,9 +137,9 @@ export default function Home() {
             onPress={() => router.push('/(app)/quests')}
           />
           <QuickAction
-            icon={<Layers size={20} color="#3DD6F5" />}
-            label="STASH"
-            onPress={() => router.push('/(app)/badges')}
+            icon={<ScanLine size={20} color="#3DD6F5" />}
+            label="SCAN"
+            onPress={() => router.push('/(app)/scan')}
           />
         </View>
 
@@ -177,6 +177,22 @@ export default function Home() {
             </View>
           </GCard>
         )}
+
+        {/* stash / badges */}
+        <GCard className="mt-4" onPress={() => router.push('/(app)/badges')}>
+          <View className="flex-row items-center justify-between">
+            <View className="flex-1 pr-3">
+              <Text
+                className="font-display text-ink text-[16px] font-bold"
+                style={{ fontFamily: 'SpaceGrotesk_700Bold' }}
+              >
+                Your stash
+              </Text>
+              <GBody className="mt-0.5">Badges, stickers & collectibles</GBody>
+            </View>
+            <Layers size={22} color="#3DD6F5" />
+          </View>
+        </GCard>
       </ScrollView>
     </GScreen>
   );
