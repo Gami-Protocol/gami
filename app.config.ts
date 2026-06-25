@@ -39,6 +39,10 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     },
     extra: {
       appStoreAppId: process.env.BILT_APP_STORE_APP_ID,
+      // Embed the Supabase config into the native build so it is available even
+      // if EXPO_PUBLIC_* inlining is missed. Read at runtime via expo-constants.
+      supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL,
+      supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
     },
     plugins: [
       'expo-router',

@@ -32,33 +32,65 @@ function message(e: unknown, fallback: string): string {
   return fallback;
 }
 
+/** Shown when no Supabase backend is reachable from this build. */
+function offlineBackendError(): AuthResult {
+  return {
+    ok: false,
+    error: "Can't reach the Gami backend. Check your connection and try again.",
+  };
+}
+
+/** Map a thrown network/fetch failure to a human message. */
+function networkError(e: unknown): string {
+  return message(e, 'Network error. Check your connection and try again.');
+}
+
+/** Map a Supabase auth error to friendlier copy (rate limits are common). */
+function friendlyAuthError(e: unknown): string {
+  const raw = message(e, '');
+  if (/rate limit|too many|seconds/i.test(raw)) {
+    return 'Too many attempts. Wait a minute, then try again.';
+  }
+  if (/expired/i.test(raw)) return 'That code expired. Tap resend for a new one.';
+  if (/invalid|incorrect|token/i.test(raw)) return 'That code did not match. Try again.';
+  return raw.length > 0 ? raw : 'Could not send your code.';
+}
+
 /** Send a signup code to a new email. */
 export async function signUpWithEmail(email: string): Promise<AuthResult> {
-  if (!hasBackend) return { ok: true };
-  const { error } = await supabase.auth.signInWithOtp({
-    email: email.trim().toLowerCase(),
-    options: { shouldCreateUser: true },
-  });
-  if (error) return { ok: false, error: message(error, 'Could not send your code.') };
-  return { ok: true };
+  if (!hasBackend) return offlineBackendError();
+  try {
+    const { error } = await supabase.auth.signInWithOtp({
+      email: email.trim().toLowerCase(),
+      options: { shouldCreateUser: true },
+    });
+    if (error) return { ok: false, error: friendlyAuthError(error) };
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: networkError(e) };
+  }
 }
 
 /** Send a login code to an existing email. */
 export async function signInWithEmail(email: string): Promise<AuthResult> {
-  if (!hasBackend) return { ok: true };
-  const { error } = await supabase.auth.signInWithOtp({
-    email: email.trim().toLowerCase(),
-    options: { shouldCreateUser: false },
-  });
-  if (error) {
-    // Supabase returns variants of these when the email has no account yet.
-    const raw = message(error, '');
-    if (/not allowed|not found|no user|signups? not allowed|otp_disabled/i.test(raw)) {
-      return { ok: false, error: 'No account with that email. Create a wallet first.' };
+  if (!hasBackend) return offlineBackendError();
+  try {
+    const { error } = await supabase.auth.signInWithOtp({
+      email: email.trim().toLowerCase(),
+      options: { shouldCreateUser: false },
+    });
+    if (error) {
+      // Supabase returns variants of these when the email has no account yet.
+      const raw = message(error, '');
+      if (/not allowed|not found|no user|signups? not allowed|otp_disabled/i.test(raw)) {
+        return { ok: false, error: 'No account with that email. Create a wallet first.' };
+      }
+      return { ok: false, error: friendlyAuthError(error) };
     }
-    return { ok: false, error: message(error, 'Could not send your code.') };
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: networkError(e) };
   }
-  return { ok: true };
 }
 
 /** Verify a 6-digit code. `mode` decides whether we relink an existing profile. */
@@ -70,22 +102,30 @@ export async function verifyCode(
   const store = useOnboardingStore.getState();
 
   if (!hasBackend) {
-    // No backend configured — treat as a local-only account.
-    store.setAuthUser(`local-${Date.now()}`, email.trim().toLowerCase());
-    return { ok: true, onboarded: mode === 'login' ? store.onboarded : false };
+    return {
+      ok: false,
+      error: "Can't reach the Gami backend. Check your connection and try again.",
+    };
   }
 
-  const { data, error } = await supabase.auth.verifyOtp({
-    email: email.trim().toLowerCase(),
-    token: token.trim(),
-    type: 'email',
-  });
-  if (error || !data.session || !data.user) {
-    return { ok: false, error: message(error, 'That code did not match. Try again.') };
+  let userId: string;
+  let userEmail: string;
+  try {
+    const res = await supabase.auth.verifyOtp({
+      email: email.trim().toLowerCase(),
+      token: token.trim(),
+      type: 'email',
+    });
+    if (res.error || !res.data.session || !res.data.user) {
+      return { ok: false, error: friendlyAuthError(res.error) };
+    }
+    userId = res.data.user.id;
+    userEmail = res.data.user.email ?? email;
+  } catch (e) {
+    return { ok: false, error: networkError(e) };
   }
 
-  const userId = data.user.id;
-  store.setAuthUser(userId, data.user.email ?? email);
+  store.setAuthUser(userId, userEmail);
 
   if (mode === 'login') {
     // Relink the wallet from the server profile. The signup trigger creates the

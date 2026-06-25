@@ -1,8 +1,18 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
+import Constants from 'expo-constants';
 
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
-const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? '';
+// Resolve config from EXPO_PUBLIC_* (inlined at build time) first, falling back
+// to app.config.ts `extra` (embedded in the native binary). The fallback means
+// a native build still finds the backend even if env inlining was missed.
+const extra = (Constants.expoConfig?.extra ?? {}) as {
+  supabaseUrl?: string;
+  supabaseAnonKey?: string;
+};
+
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? extra.supabaseUrl ?? '';
+const supabaseAnonKey =
+  process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? extra.supabaseAnonKey ?? '';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
