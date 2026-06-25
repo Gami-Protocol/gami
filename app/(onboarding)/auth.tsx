@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, Text, TextInput, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import {
@@ -58,10 +58,8 @@ export default function Auth() {
       >
         <View className="flex-1 px-6">
           <Animated.View style={head} className="mt-6">
-            <GHeading size="2xl">Claim your{'\n'}account.</GHeading>
-            <GBody className="mt-3">
-              Drop your email — we&apos;ll send a 6-digit code to lock it to your wallet.
-            </GBody>
+            <GHeading size="2xl">Choose your{'\n'}start.</GHeading>
+            <GBody className="mt-3">New here or bringing a wallet with you?</GBody>
           </Animated.View>
 
           <Animated.View style={body} className="mt-9">
@@ -107,17 +105,32 @@ export default function Auth() {
               />
             </View>
 
+            <View className="mt-4 flex-row gap-3">
+              <GButtonGhost
+                className="flex-1"
+                label="⇩ IMPORT"
+                sublabel="seed / private key"
+                onPress={() => router.push('/(onboarding)/login')}
+              />
+              <GButtonGhost
+                className="flex-1"
+                label="⟁ APPLE"
+                sublabel="one-tap"
+                onPress={createWallet}
+              />
+            </View>
+
             <View className="my-7 flex-row items-center gap-3">
               <View className="bg-hairline h-px flex-1" />
               <Text className="text-ink-mute font-mono text-[11px] tracking-widest">OR</Text>
               <View className="bg-hairline h-px flex-1" />
             </View>
 
-            <GButtonGhost
-              label="↻ I ALREADY HAVE A WALLET"
-              sublabel="sign in with your email"
-              onPress={() => router.push('/(onboarding)/login')}
-            />
+            <Pressable onPress={() => router.push('/(onboarding)/login')}>
+              <Text className="text-ink-dim text-center font-mono text-[12px]">
+                I already have a Gami handle
+              </Text>
+            </Pressable>
           </Animated.View>
         </View>
       </KeyboardAvoidingView>

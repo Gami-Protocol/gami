@@ -11,7 +11,7 @@ import {
 } from 'lucide-react-native';
 import { Pressable, ScrollView, Share, Text, View } from 'react-native';
 
-import { GAvatar, GCard, GListRow, GMono, GScreen, GSticker } from '@/components/gami';
+import { GAvatar, GCard, GChip, GListRow, GMono, GScreen, GSticker } from '@/components/gami';
 import { BADGES } from '@/lib/config';
 import { currentStats } from '@/lib/gami-sdk';
 import { haptics } from '@/lib/haptics';
@@ -75,6 +75,16 @@ export default function Profile() {
             <Stat label="RANK" value={`#${stats.rank.toLocaleString()}`} />
           </View>
         </GCard>
+
+        <View className="mt-3 flex-row items-center gap-2.5">
+          <GChip label="EDIT" onPress={() => router.push('/(app)/settings')} />
+          <GChip label="SHARE" onPress={onShare} />
+          <View className="flex-1 items-end">
+            <GSticker color="purple" tilt={-6}>
+              LVL {stats.level}
+            </GSticker>
+          </View>
+        </View>
 
         <Text className="text-ink-mute mt-7 font-mono text-[11px] tracking-widest">ACCOUNT</Text>
         <View className="mt-3 gap-2.5">
