@@ -5,6 +5,7 @@ import { ScrollView, Text, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import {
+  GBackendBanner,
   GBody,
   GButtonPrimary,
   GCard,
@@ -81,6 +82,7 @@ export default function Welcome() {
       </ScrollView>
 
       <View className="px-6 pb-6">
+        <GBackendBanner className="mb-4" />
         <GButtonPrimary
           label="LET'S GO →"
           onPress={() => {

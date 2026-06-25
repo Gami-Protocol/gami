@@ -4,6 +4,7 @@ import { KeyboardAvoidingView, Platform, Text, TextInput, View } from 'react-nat
 import Animated from 'react-native-reanimated';
 
 import {
+  GBackendBanner,
   GBody,
   GButtonPrimary,
   GHeading,
@@ -69,6 +70,7 @@ export default function Login() {
           </Animated.View>
 
           <Animated.View style={body} className="mt-9">
+            <GBackendBanner className="mb-5" />
             <Text className="text-ink-mute mb-2 font-mono text-[11px] tracking-widest">EMAIL</Text>
             <View className="border-hairline bg-surface flex-row items-center rounded-2xl border px-4">
               <TextInput

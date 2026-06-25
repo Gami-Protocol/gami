@@ -14,4 +14,5 @@ export { GLogo } from './GLogo';
 export { GRing } from './GRing';
 export { GOnboardHeader } from './GOnboardHeader';
 export { GCodeInput } from './GCodeInput';
+export { GBackendBanner } from './GBackendBanner';
 export { useStaggerIn, useStickerPop } from './useStaggerIn';
