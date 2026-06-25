@@ -18,6 +18,12 @@ import { useOnboardingStore } from '@/lib/store';
 
 export type AuthResult = { ok: true } | { ok: false; error: string };
 
+/**
+ * Result of verifying a code. On success we report whether the relinked
+ * profile has finished onboarding so the caller can route correctly.
+ */
+export type VerifyResult = { ok: true; onboarded: boolean } | { ok: false; error: string };
+
 function message(e: unknown, fallback: string): string {
   if (e && typeof e === 'object' && 'message' in e) {
     const m = (e as { message?: unknown }).message;
@@ -45,9 +51,9 @@ export async function signInWithEmail(email: string): Promise<AuthResult> {
     options: { shouldCreateUser: false },
   });
   if (error) {
-    // Supabase returns "Signups not allowed for otp" when the email is unknown.
+    // Supabase returns variants of these when the email has no account yet.
     const raw = message(error, '');
-    if (/not allowed|not found|no user/i.test(raw)) {
+    if (/not allowed|not found|no user|signups? not allowed|otp_disabled/i.test(raw)) {
       return { ok: false, error: 'No account with that email. Create a wallet first.' };
     }
     return { ok: false, error: message(error, 'Could not send your code.') };
@@ -60,13 +66,13 @@ export async function verifyCode(
   email: string,
   token: string,
   mode: 'signup' | 'login',
-): Promise<AuthResult> {
+): Promise<VerifyResult> {
   const store = useOnboardingStore.getState();
 
   if (!hasBackend) {
     // No backend configured — treat as a local-only account.
     store.setAuthUser(`local-${Date.now()}`, email.trim().toLowerCase());
-    return { ok: true };
+    return { ok: true, onboarded: mode === 'login' ? store.onboarded : false };
   }
 
   const { data, error } = await supabase.auth.verifyOtp({
@@ -74,7 +80,7 @@ export async function verifyCode(
     token: token.trim(),
     type: 'email',
   });
-  if (error || !data.user) {
+  if (error || !data.session || !data.user) {
     return { ok: false, error: message(error, 'That code did not match. Try again.') };
   }
 
@@ -82,7 +88,10 @@ export async function verifyCode(
   store.setAuthUser(userId, data.user.email ?? email);
 
   if (mode === 'login') {
-    const profile = await fetchProfile(userId);
+    // Relink the wallet from the server profile. The signup trigger creates the
+    // row, but on a fresh verify the read can land before the insert is visible,
+    // so retry briefly before giving up.
+    const profile = await fetchProfileWithRetry(userId);
     if (profile) {
       store.hydrateFromProfile({
         handle: profile.handle,
@@ -94,10 +103,23 @@ export async function verifyCode(
         interests: profile.interests,
         onboarded: profile.onboarded,
       });
+      return { ok: true, onboarded: profile.onboarded };
     }
+    // Signed in but no profile yet — send them through onboarding to create one.
+    return { ok: true, onboarded: false };
   }
 
-  return { ok: true };
+  return { ok: true, onboarded: false };
+}
+
+/** Fetch the profile row, retrying a few times to ride out trigger lag. */
+async function fetchProfileWithRetry(userId: string) {
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const profile = await fetchProfile(userId);
+    if (profile) return profile;
+    await new Promise((r) => setTimeout(r, 250));
+  }
+  return null;
 }
 
 /** Push the current local profile/wallet/XP up to the server row. */

@@ -48,8 +48,9 @@ export default function Verify() {
     }
     haptics.success();
     if (mode === 'login') {
-      // Returning user — wallet/handle/xp already relinked from their profile.
-      router.replace('/(app)/home');
+      // Returning user — go home if their wallet is fully set up, otherwise
+      // resume onboarding so they can finish (or re-create) their profile.
+      router.replace(res.onboarded ? '/(app)/home' : '/(onboarding)/welcome');
     } else {
       advanceStep(4);
       router.replace('/(onboarding)/create-wallet');
