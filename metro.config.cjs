@@ -46,6 +46,11 @@ config.resolver = {
   sourceExts: [...config.resolver.sourceExts, 'mjs', 'cjs'].filter(
     (ext, index, arr) => arr.indexOf(ext) === index,
   ), // Remove duplicates
+  // Resolve package "exports"/"browser" conditions so libraries that ship a
+  // browser build (e.g. `jose`, pulled in by @privy-io/js-sdk-core) pick the
+  // Web Crypto path instead of importing Node's built-in `crypto`.
+  unstable_enablePackageExports: true,
+  unstable_conditionNames: ['browser', 'require', 'react-native'],
 };
 
 // Configure transformer for proper asset processing
@@ -261,6 +266,16 @@ config.server = {
 // pod out of the build avoids App Store archive failures.
 config.resolver.resolveRequest = (context, moduleName, platform) => {
   if (moduleName === 'react-native-maps') {
+    return {
+      type: 'empty',
+    };
+  }
+  // `jose` (via @privy-io/js-sdk-core) has a Node code path that imports the
+  // built-in `crypto` module, which does not exist in React Native / Metro.
+  // The browser build (selected via unstable_conditionNames above) uses Web
+  // Crypto instead, so this Node import is never executed at runtime. Stub it
+  // out to keep the bundle resolvable.
+  if (moduleName === 'crypto' || moduleName === 'node:crypto') {
     return {
       type: 'empty',
     };
