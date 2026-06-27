@@ -1,18 +1,27 @@
 /**
- * Local mock of `@gami/wallet-sdk`.
+ * Gami wallet SDK.
  *
- * Mirrors the documented surface from the Gami Protocol build spec so the real
- * SDK can drop in later without screen changes:
+ * Mirrors the documented surface from the Gami Protocol build spec:
  *
  *   import { createGamiWallet } from '@gami/wallet-sdk';
  *   const wallet = await createGamiWallet();
  *   const stats = await wallet.checkMyLevel();           // { level, totalXP, xpToNextLevel }
  *   const off   = wallet.subscribeToLevelUps((user, newLevel, totalXP) => {});
  *
- * Backed by the persisted onboardingStore so XP changes are reflected here and
- * level-up callbacks fire when XP crosses a threshold.
+ * When EXPO_PUBLIC_GAMI_RPC_URL is set the wallet reads real XP, level and
+ * budget data from the Gami Protocol chain via the IGamiXP and IGamiTreasury
+ * precompiles (see lib/chain-client.ts). Without an RPC URL it falls back to
+ * the persisted onboardingStore so the UI keeps working in dev / Expo Go.
  */
 
+import type { Address } from 'viem';
+
+import {
+  checkAgentBudget as chainCheckAgentBudget,
+  getOnChainXP,
+  type AgentBudget,
+  watchLevelUpEvents,
+} from '@/lib/chain-client';
 import { useOnboardingStore } from '@/lib/store';
 
 export interface LevelStats {
@@ -150,6 +159,11 @@ export interface GamiWallet {
   getBalance(denom: 'gami' | 'points'): Promise<number>;
   /** Award XP through the (mock) reward path. */
   awardXP(amount: number): Promise<LevelStats>;
+  /**
+   * Check whether an AI agent address has remaining Treasury budget.
+   * When no chain RPC URL is configured returns a mock "always allowed" result.
+   */
+  checkAgentBudget(agentAddress: string, amount: bigint): Promise<AgentBudget>;
 }
 
 /** Create (or recover) the on-device Gami wallet. */
@@ -168,14 +182,55 @@ export async function createGamiWallet(preferredAddress?: string | null): Promis
   }
   lastNotifiedLevel = levelForXP(useOnboardingStore.getState().xp);
 
+  // Attempt to sync XP from the chain when an RPC URL is configured.
+  const rpcUrl = process.env.EXPO_PUBLIC_GAMI_RPC_URL ?? '';
+  if (rpcUrl) {
+    const onChainXP = await getOnChainXP(address as Address, rpcUrl);
+    if (onChainXP !== null) {
+      const xpNum = Number(onChainXP);
+      // Only advance local XP — never roll it back — to keep optimistic updates.
+      if (xpNum > useOnboardingStore.getState().xp) {
+        useOnboardingStore.getState().addXP(xpNum - useOnboardingStore.getState().xp);
+      }
+    }
+  }
+
   return {
     address,
     async checkMyLevel() {
+      // When the chain is reachable, re-read XP so stats stay in sync.
+      if (rpcUrl) {
+        const onChainXP = await getOnChainXP(address as Address, rpcUrl);
+        if (onChainXP !== null) {
+          const xpNum = Number(onChainXP);
+          if (xpNum > useOnboardingStore.getState().xp) {
+            useOnboardingStore.getState().addXP(xpNum - useOnboardingStore.getState().xp);
+          }
+        }
+      }
       return currentStats();
     },
     subscribeToLevelUps(cb: LevelUpListener) {
       listeners.add(cb);
-      return () => listeners.delete(cb);
+      // Also subscribe to real on-chain LevelUp events when RPC is available.
+      let unwatchChain = () => {};
+      if (rpcUrl) {
+        unwatchChain = watchLevelUpEvents(
+          address as Address,
+          rpcUrl,
+          (newLevel, totalXP) => {
+            const xpNum = Number(totalXP);
+            if (xpNum > useOnboardingStore.getState().xp) {
+              useOnboardingStore.getState().addXP(xpNum - useOnboardingStore.getState().xp);
+            }
+            cb(address, Number(newLevel), xpNum);
+          },
+        );
+      }
+      return () => {
+        listeners.delete(cb);
+        unwatchChain();
+      };
     },
     async getBalance(denom) {
       const stats = currentStats();
@@ -184,6 +239,14 @@ export async function createGamiWallet(preferredAddress?: string | null): Promis
     async awardXP(amount: number) {
       useOnboardingStore.getState().addXP(amount);
       return currentStats();
+    },
+    async checkAgentBudget(agentAddress: string, amount: bigint) {
+      if (rpcUrl) {
+        const result = await chainCheckAgentBudget(agentAddress as Address, amount, rpcUrl);
+        if (result) return result;
+      }
+      // Mock fallback: always allowed with a generous remaining budget.
+      return { allowed: true, remaining: BigInt(1_000_000_000) };
     },
   };
 }
