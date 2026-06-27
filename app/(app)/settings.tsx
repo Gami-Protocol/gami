@@ -6,6 +6,8 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { GButtonGhost, GMono, GScreen, GToggleRow } from '@/components/gami';
 import { signOut as authSignOut } from '@/lib/auth';
+import { privyEnabled } from '@/lib/privy';
+import { usePrivyBridge } from '@/lib/privy-bridge';
 import { haptics } from '@/lib/haptics';
 import { truncateAddress, useOnboardingStore } from '@/lib/store';
 
@@ -64,6 +66,7 @@ export default function Settings() {
     setSound,
   } = useOnboardingStore();
   const [confirm, setConfirm] = useState(false);
+  const privy = usePrivyBridge();
 
   const copyAddress = async () => {
     if (!walletAddress) return;
@@ -72,6 +75,7 @@ export default function Settings() {
   };
 
   const signOut = async () => {
+    if (privyEnabled) await privy.logout();
     await authSignOut();
     router.replace('/(onboarding)/login');
   };

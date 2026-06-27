@@ -13,7 +13,7 @@ import {
   GScreen,
   useStaggerIn,
 } from '@/components/gami';
-import { signInWithEmail, signUpWithEmail, verifyCode } from '@/lib/auth';
+import { useAuth } from '@/lib/useAuth';
 import { haptics } from '@/lib/haptics';
 import { useOnboardingStore } from '@/lib/store';
 
@@ -24,6 +24,7 @@ export default function Verify() {
   const email = rawEmail.toLowerCase();
   const mode: 'signup' | 'login' = params.mode === 'login' ? 'login' : 'signup';
   const advanceStep = useOnboardingStore((s) => s.advanceStep);
+  const { verify: verifyAuth, sendLoginCode, sendSignupCode } = useAuth();
 
   const head = useStaggerIn(0);
   const body = useStaggerIn(1);
@@ -38,7 +39,7 @@ export default function Verify() {
     if (token.length !== 6 || busy) return;
     setBusy(true);
     setError(null);
-    const res = await verifyCode(email, token, mode);
+    const res = await verifyAuth(email, token, mode);
     if (!res.ok) {
       setBusy(false);
       setCode('');
@@ -59,7 +60,7 @@ export default function Verify() {
 
   const resend = async () => {
     setError(null);
-    const res = mode === 'login' ? await signInWithEmail(email) : await signUpWithEmail(email);
+    const res = mode === 'login' ? await sendLoginCode(email) : await sendSignupCode(email);
     if (res.ok) {
       setResent(true);
       haptics.light();

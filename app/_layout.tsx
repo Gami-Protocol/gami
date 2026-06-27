@@ -1,5 +1,10 @@
 // oxlint-disable-next-line eslint-plugin-import/no-unassigned-import
 import '../global.css';
+// Polyfills required by Privy's embedded-wallet crypto (no-op on web).
+// oxlint-disable-next-line eslint-plugin-import/no-unassigned-import
+import 'fast-text-encoding';
+// oxlint-disable-next-line eslint-plugin-import/no-unassigned-import
+import 'react-native-get-random-values';
 
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import {
@@ -37,6 +42,7 @@ import {
 
 import { initPostHog } from '@/lib/posthog';
 import { reportErrorToParent } from '@/lib/reportPreviewError';
+import { AuthProvider } from '@/components/AuthProvider';
 
 /**
  * Custom ErrorBoundary that reports React render errors to the parent window (Bilt preview iframe)
@@ -158,13 +164,17 @@ export default function RootLayout() {
       {/* Real OS status bar, light glyphs over the dark ARCADE base. */}
       {/* eslint-disable-next-line react/style-prop-object -- expo-status-bar's `style` prop is a string enum ("light"|"dark"|"auto"|"inverted"), not a style object */}
       <StatusBar style="light" />
-      <HeroUINativeProvider>
-        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#0E0E12' } }}>
-          <Stack.Screen name="index" />
-          <Stack.Screen name="(onboarding)" />
-          <Stack.Screen name="(app)" />
-        </Stack>
-      </HeroUINativeProvider>
+      <AuthProvider>
+        <HeroUINativeProvider>
+          <Stack
+            screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#0E0E12' } }}
+          >
+            <Stack.Screen name="index" />
+            <Stack.Screen name="(onboarding)" />
+            <Stack.Screen name="(app)" />
+          </Stack>
+        </HeroUINativeProvider>
+      </AuthProvider>
     </GestureHandlerRootView>
   );
 }

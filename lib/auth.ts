@@ -127,6 +127,20 @@ export async function verifyCode(
 
   store.setAuthUser(userId, userEmail);
 
+  return relinkProfile(userId, mode);
+}
+
+/**
+ * After a successful auth (Supabase OR Privy), hydrate the local store from the
+ * server `profiles` row. On login we relink an existing wallet/profile; on
+ * signup the row may not exist yet, so the caller continues onboarding.
+ */
+export async function relinkProfile(
+  userId: string,
+  mode: 'signup' | 'login',
+): Promise<VerifyResult> {
+  const store = useOnboardingStore.getState();
+
   if (mode === 'login') {
     // Relink the wallet from the server profile. The signup trigger creates the
     // row, but on a fresh verify the read can land before the insert is visible,

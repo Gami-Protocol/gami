@@ -21,6 +21,7 @@ import {
 } from '@/components/gami';
 import { createGamiWallet } from '@/lib/gami-sdk';
 import { syncProfile } from '@/lib/auth';
+import { useAuth } from '@/lib/useAuth';
 import { haptics } from '@/lib/haptics';
 import { useOnboardingStore } from '@/lib/store';
 
@@ -46,6 +47,7 @@ function Spinner() {
 export default function CreateWallet() {
   const router = useRouter();
   const advanceStep = useOnboardingStore((s) => s.advanceStep);
+  const { walletAddress } = useAuth();
   const [done, setDone] = useState(-1);
   const [failed, setFailed] = useState(false);
   const ran = useRef(false);
@@ -61,8 +63,9 @@ export default function CreateWallet() {
       i += 1;
       setDone(i - 1);
       if (i === STEPS.length) {
-        // step 3 → real SDK call
-        createGamiWallet()
+        // step 3 → SDK call. Prefer the Privy embedded wallet address when
+        // present; otherwise the mock generates one.
+        createGamiWallet(walletAddress)
           .then(() => {
             // Link the freshly created wallet address to the account row.
             void syncProfile();
@@ -76,7 +79,7 @@ export default function CreateWallet() {
       setTimeout(advance, 650);
     };
     setTimeout(advance, 500);
-  }, [advanceStep, router]);
+  }, [advanceStep, router, walletAddress]);
 
   useEffect(() => {
     pulse.value = withRepeat(

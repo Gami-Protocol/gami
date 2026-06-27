@@ -153,14 +153,17 @@ export interface GamiWallet {
 }
 
 /** Create (or recover) the on-device Gami wallet. */
-export async function createGamiWallet(): Promise<GamiWallet> {
+export async function createGamiWallet(preferredAddress?: string | null): Promise<GamiWallet> {
   // Simulate on-device keygen latency.
   await new Promise((r) => setTimeout(r, 350));
 
   const store = useOnboardingStore.getState();
-  let address = store.walletAddress;
+  let address = preferredAddress ?? store.walletAddress;
   if (!address) {
     address = randomAddress();
+  }
+  // Persist whichever address we settled on (Privy embedded or mock).
+  if (address !== store.walletAddress) {
     store.setWalletAddress(address);
   }
   lastNotifiedLevel = levelForXP(useOnboardingStore.getState().xp);

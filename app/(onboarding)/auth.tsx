@@ -14,7 +14,7 @@ import {
   GSticker,
   useStaggerIn,
 } from '@/components/gami';
-import { signUpWithEmail } from '@/lib/auth';
+import { useAuth } from '@/lib/useAuth';
 import { haptics } from '@/lib/haptics';
 import { useOnboardingStore } from '@/lib/store';
 
@@ -23,6 +23,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export default function Auth() {
   const router = useRouter();
   const { advanceStep, setEmail } = useOnboardingStore();
+  const { sendSignupCode } = useAuth();
   const head = useStaggerIn(0);
   const body = useStaggerIn(1);
 
@@ -37,7 +38,7 @@ export default function Auth() {
     setBusy(true);
     setError(null);
     const clean = email.trim().toLowerCase();
-    const res = await signUpWithEmail(clean);
+    const res = await sendSignupCode(clean);
     setBusy(false);
     if (!res.ok) {
       haptics.error();

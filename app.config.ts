@@ -43,10 +43,16 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       // if EXPO_PUBLIC_* inlining is missed. Read at runtime via expo-constants.
       supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL,
       supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+      // Privy embedded-wallet auth. Read at runtime via expo-constants as a
+      // fallback when EXPO_PUBLIC_* inlining is missed in a native build.
+      privyAppId: process.env.EXPO_PUBLIC_PRIVY_APP_ID,
+      privyClientId: process.env.EXPO_PUBLIC_PRIVY_CLIENT_ID,
     },
     plugins: [
       'expo-router',
       'expo-font',
+      'expo-secure-store',
+      'expo-web-browser',
       [
         'expo-camera',
         {
