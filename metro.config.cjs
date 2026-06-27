@@ -46,11 +46,12 @@ config.resolver = {
   sourceExts: [...config.resolver.sourceExts, 'mjs', 'cjs'].filter(
     (ext, index, arr) => arr.indexOf(ext) === index,
   ), // Remove duplicates
-  // Resolve package "exports"/"browser" conditions so libraries that ship a
-  // browser build (e.g. `jose`, pulled in by @privy-io/js-sdk-core) pick the
-  // Web Crypto path instead of importing Node's built-in `crypto`.
-  unstable_enablePackageExports: true,
-  unstable_conditionNames: ['browser', 'require', 'react-native'],
+  // NOTE: we deliberately do NOT set `unstable_enablePackageExports`.
+  // Turning it on globally makes Metro honor every package's `exports`
+  // map, which breaks `react-native-web` (its map omits internal files like
+  // ./createOrderedCSSStyleSheet) and uniwind on the web bundle. The
+  // `jose` -> Node `crypto` problem from @privy-io/js-sdk-core is handled
+  // instead by the `crypto`/`node:crypto` stub in resolveRequest below.
 };
 
 // Configure transformer for proper asset processing
@@ -272,9 +273,10 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   }
   // `jose` (via @privy-io/js-sdk-core) has a Node code path that imports the
   // built-in `crypto` module, which does not exist in React Native / Metro.
-  // The browser build (selected via unstable_conditionNames above) uses Web
-  // Crypto instead, so this Node import is never executed at runtime. Stub it
-  // out to keep the bundle resolvable.
+  // Privy's wallet crypto actually runs through its native/WebView bridge, so
+  // this Node import is never executed at runtime. Stub it out so the bundle
+  // stays resolvable without enabling global package "exports" resolution
+  // (which breaks react-native-web on the web bundle).
   if (moduleName === 'crypto' || moduleName === 'node:crypto') {
     return {
       type: 'empty',
