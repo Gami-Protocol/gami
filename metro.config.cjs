@@ -260,30 +260,32 @@ config.server = {
   },
 };
 
-// Stub out react-native-maps everywhere — the package is not installed and the
-// app does not use native maps. components/MapView.tsx dynamically imports it and
-// falls back to the Leaflet WebView when the module resolves empty. Keeping the
-// pod out of the build avoids App Store archive failures.
-config.resolver.resolveRequest = (context, moduleName, platform) => {
-  if (moduleName === 'react-native-maps') {
-    return {
-      type: 'empty',
-    };
-  }
-  // `jose` (via @privy-io/js-sdk-core) has a Node code path that imports the
-  // built-in `crypto` module, which does not exist in React Native / Metro.
-  // The browser build (selected via unstable_conditionNames above) uses Web
-  // Crypto instead, so this Node import is never executed at runtime. Stub it
-  // out to keep the bundle resolvable.
-  if (moduleName === 'crypto' || moduleName === 'node:crypto') {
-    return {
-      type: 'empty',
-    };
-  }
-  return context.resolveRequest(context, moduleName, platform);
-};
-
-module.exports = withUniwindConfig(config, {
+const finalConfig = withUniwindConfig(config, {
   cssEntryFile: './global.css',
   dtsFile: './uniwind-types.d.ts',
 });
+
+// Apply request stubs on the final config so they survive wrappers that mutate
+// resolver internals.
+const stubbedModules = new Set(['react-native-maps', 'crypto', 'node:crypto']);
+const upstreamResolveRequest = finalConfig.resolver?.resolveRequest;
+finalConfig.resolver = {
+  ...finalConfig.resolver,
+  resolveRequest: (context, moduleName, platform) => {
+    // Stub out react-native-maps everywhere — the package is not installed and
+    // the app does not use native maps. components/MapView.tsx dynamically
+    // imports it and falls back to the Leaflet WebView when the module resolves
+    // empty. Keeping the pod out of the build avoids App Store archive failures.
+    if (stubbedModules.has(moduleName)) {
+      return {
+        type: 'empty',
+      };
+    }
+    if (upstreamResolveRequest) {
+      return upstreamResolveRequest(context, moduleName, platform);
+    }
+    return context.resolveRequest(context, moduleName, platform);
+  },
+};
+
+module.exports = finalConfig;
