@@ -303,7 +303,13 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   ]);
   if (joseNodeBuiltins.has(moduleName)) {
     const origin = context.originModulePath || '';
-    if (origin.includes(`${path.sep}jose${path.sep}dist${path.sep}node${path.sep}`)) {
+    // Match jose's node build regardless of path separator style (Windows vs
+    // POSIX) and regardless of nesting. Any import of a Node built-in coming
+    // from inside the `jose` package is safe to stub: jose's wallet/crypto
+    // work in this app runs through Privy's native/WebView bridge, so these
+    // Node-only code paths are never executed at runtime.
+    const normalizedOrigin = origin.split(path.sep).join('/');
+    if (normalizedOrigin.includes('/jose/')) {
       return {
         type: 'empty',
       };
