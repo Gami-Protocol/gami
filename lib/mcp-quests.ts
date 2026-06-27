@@ -24,7 +24,6 @@ import type { Address } from 'viem';
 import { checkAgentBudget as chainCheckAgentBudget, type AgentBudget } from '@/lib/chain-client';
 import { QUESTS, type Quest } from '@/lib/config';
 import {
-  type ChainActionEnvelope,
   currentStats,
   type LevelStats,
   questComplete,
@@ -96,7 +95,7 @@ export const MCP_QUEST_TOOLS: McpToolDefinition[] = [
         },
         amount: {
           type: 'string',
-          description: 'Budget amount to check, in wei, as a decimal string (e.g. "1000000000000000000").',
+          description: 'Budget amount to check, in wei, as an integer string (e.g. "1000000000000000000").',
         },
       },
       required: ['agentAddress', 'amount'],
@@ -130,15 +129,11 @@ function handleCompleteQuest(
   if (!quest) return { ok: false, error: `Quest "${questId}" not found.` };
 
   // questComplete applies optimistic XP immediately and returns a queued envelope.
-  let latestEnvelope: ChainActionEnvelope = {
-    envelopeId: '',
-    status: 'queued',
-    action: { type: 'quest_complete', questId, xp: quest.reward },
-  };
-  const env = questComplete(quest.id, quest.reward, (update) => {
-    latestEnvelope = update;
+  // The onUpdate callback fires asynchronously (queued → settling → settled) after
+  // this function returns, so we only surface the initial queued state here.
+  const env = questComplete(quest.id, quest.reward, () => {
+    // Status advances are handled by the quests screen listener; no action needed here.
   });
-  latestEnvelope = env;
 
   return {
     ok: true,

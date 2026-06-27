@@ -161,6 +161,16 @@ export async function novaReplyLive(input: string, history: ChatMessage[]): Prom
         if (toolName === 'list_quests') {
           return formatQuestList(toolResult.data as Parameters<typeof formatQuestList>[0]);
         }
+        if (toolName === 'complete_quest') {
+          const d = toolResult.data as { questTitle: string; xp: number; status: string };
+          return `"${d.questTitle}" submitted — +${d.xp} XP${d.status === 'queued' ? ' (queued with gami-agent)' : ''}.`;
+        }
+        if (toolName === 'check_agent_budget') {
+          const d = toolResult.data as { allowed: boolean; remaining: bigint };
+          return d.allowed
+            ? `Agent budget OK — ${d.remaining.toLocaleString()} wei remaining.`
+            : 'Agent budget exhausted. Treasury allocation needed.';
+        }
       }
       return novaReply(input);
     }
