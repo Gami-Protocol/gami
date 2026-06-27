@@ -59,6 +59,18 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           cameraPermission: 'GAMI uses the camera to scan wallet QR codes for sending $GAMI.',
         },
       ],
+      // react-native-passkeys (pulled in by @privy-io/expo) compiles native
+      // Swift that uses ASAuthorizationPlatformPublicKeyCredentialProvider,
+      // which is only available on iOS 15+. Without pinning the deployment
+      // target the Pod fails to compile and `xcodebuild archive` exits 65.
+      [
+        'expo-build-properties',
+        {
+          ios: {
+            deploymentTarget: '15.1',
+          },
+        },
+      ],
       ...nativePlugins,
     ],
     experiments: {
