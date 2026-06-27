@@ -1,4 +1,5 @@
 /** @type {import('expo/metro-config').MetroConfig} */
+const path = require('node:path');
 const { getDefaultConfig } = require('expo/metro-config');
 const { withUniwindConfig } = require('uniwind/metro');
 
@@ -271,16 +272,42 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
       type: 'empty',
     };
   }
-  // `jose` (via @privy-io/js-sdk-core) has a Node code path that imports the
-  // built-in `crypto` module, which does not exist in React Native / Metro.
-  // Privy's wallet crypto actually runs through its native/WebView bridge, so
-  // this Node import is never executed at runtime. Stub it out so the bundle
-  // stays resolvable without enabling global package "exports" resolution
-  // (which breaks react-native-web on the web bundle).
+  // `crypto` was already stubbed globally in a prior fix that is known to work
+  // (Privy's only `crypto` consumer is jose's node build, and its wallet crypto
+  // runs through the native/WebView bridge, so the import never executes at
+  // runtime). Keep that behavior to avoid regressing it.
   if (moduleName === 'crypto' || moduleName === 'node:crypto') {
     return {
       type: 'empty',
     };
+  }
+  // `jose` (via @privy-io/js-sdk-core) ships a Node code path
+  // (jose/dist/node/...) that also imports other Node built-ins (`zlib`,
+  // `util`, `stream`, `buffer`, `process`) which do not exist in React
+  // Native / Metro. Stub them out ONLY when the import originates from jose's
+  // node build, so we don't clobber the RN/web polyfills (`buffer`, `process`,
+  // etc.) that other packages legitimately rely on. This also avoids enabling
+  // global package "exports" resolution (which breaks react-native-web on the
+  // web bundle).
+  const joseNodeBuiltins = new Set([
+    'zlib',
+    'node:zlib',
+    'util',
+    'node:util',
+    'stream',
+    'node:stream',
+    'buffer',
+    'node:buffer',
+    'process',
+    'node:process',
+  ]);
+  if (joseNodeBuiltins.has(moduleName)) {
+    const origin = context.originModulePath || '';
+    if (origin.includes(`${path.sep}jose${path.sep}dist${path.sep}node${path.sep}`)) {
+      return {
+        type: 'empty',
+      };
+    }
   }
   return context.resolveRequest(context, moduleName, platform);
 };
