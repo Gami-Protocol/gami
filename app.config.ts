@@ -25,6 +25,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     ios: {
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
+        NSFaceIDUsageDescription:
+          'GAMI uses Face ID to secure your wallet and confirm transactions.',
       },
       icon: './assets/icon.png',
       supportsTablet: true,
@@ -53,6 +55,23 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       'expo-font',
       'expo-secure-store',
       'expo-web-browser',
+      [
+        'expo-splash-screen',
+        {
+          backgroundColor: '#0E0E12',
+          image: './assets/icon.png',
+          imageWidth: 200,
+          resizeMode: 'contain',
+        },
+      ],
+      [
+        'expo-notifications',
+        {
+          icon: './assets/icon.png',
+          color: '#6E3CFB',
+          defaultChannel: 'default',
+        },
+      ],
       [
         'expo-camera',
         {
