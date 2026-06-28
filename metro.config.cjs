@@ -300,6 +300,12 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
     'node:buffer',
     'process',
     'node:process',
+    'http',
+    'node:http',
+    'https',
+    'node:https',
+    'events',
+    'node:events',
   ]);
   if (joseNodeBuiltins.has(moduleName)) {
     const origin = context.originModulePath || '';
