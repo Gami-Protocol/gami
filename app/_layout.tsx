@@ -1,4 +1,6 @@
 // oxlint-disable-next-line eslint-plugin-import/no-unassigned-import
+import '@/lib/polyfills';
+// oxlint-disable-next-line eslint-plugin-import/no-unassigned-import
 import '../global.css';
 // Polyfills required by Privy's embedded-wallet crypto (no-op on web).
 // oxlint-disable-next-line eslint-plugin-import/no-unassigned-import
