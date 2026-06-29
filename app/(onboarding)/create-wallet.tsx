@@ -47,7 +47,7 @@ function Spinner() {
 export default function CreateWallet() {
   const router = useRouter();
   const advanceStep = useOnboardingStore((s) => s.advanceStep);
-  const { walletAddress } = useAuth();
+  const { ensureWallet } = useAuth();
   const [done, setDone] = useState(-1);
   const [failed, setFailed] = useState(false);
   const ran = useRef(false);
@@ -63,9 +63,11 @@ export default function CreateWallet() {
       i += 1;
       setDone(i - 1);
       if (i === STEPS.length) {
-        // step 3 → SDK call. Prefer the Privy embedded wallet address when
-        // present; otherwise the mock generates one.
-        createGamiWallet(walletAddress)
+        // step 3 → resolve the real embedded wallet address (creating it via
+        // Privy if needed) before handing it to the SDK. On the fallback path
+        // ensureWallet returns the stored/mock address (or null → mock gen).
+        ensureWallet()
+          .then((address) => createGamiWallet(address))
           .then(() => {
             // Link the freshly created wallet address to the account row.
             void syncProfile();
@@ -79,7 +81,7 @@ export default function CreateWallet() {
       setTimeout(advance, 650);
     };
     setTimeout(advance, 500);
-  }, [advanceStep, router, walletAddress]);
+  }, [advanceStep, router, ensureWallet]);
 
   useEffect(() => {
     pulse.value = withRepeat(

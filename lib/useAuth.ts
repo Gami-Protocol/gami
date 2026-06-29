@@ -36,6 +36,11 @@ export interface AuthApi {
   verify: (email: string, code: string, mode: 'signup' | 'login') => Promise<VerifyResult>;
   /** The active embedded/mock wallet address, if any. */
   walletAddress: string | null;
+  /**
+   * Resolve the embedded wallet address, creating it if Privy hasn't yet.
+   * Returns null on the fallback path (caller then lets the mock generate one).
+   */
+  ensureWallet: () => Promise<string | null>;
   /** Whether the Privy backend is the active path (vs. Supabase fallback). */
   usingPrivy: boolean;
 }
@@ -70,11 +75,17 @@ export function useAuth(): AuthApi {
     [privy, setAuthUser],
   );
 
+  const ensureWallet = useCallback(
+    () => (privyEnabled ? privy.ensureWallet() : Promise.resolve(storeWallet)),
+    [privy, storeWallet],
+  );
+
   return {
     sendSignupCode,
     sendLoginCode,
     verify,
     walletAddress: privyEnabled ? (privy.walletAddress ?? storeWallet) : storeWallet,
+    ensureWallet,
     usingPrivy: privyEnabled,
   };
 }

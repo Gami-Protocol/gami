@@ -17,6 +17,7 @@ export interface PrivyBridge {
   sendCode: (email: string) => Promise<AuthResult>;
   loginWithCode: (email: string, code: string) => Promise<PrivyVerify>;
   walletAddress: string | null;
+  ensureWallet: () => Promise<string | null>;
   logout: () => Promise<void>;
 }
 
@@ -25,6 +26,7 @@ export function usePrivyBridge(): PrivyBridge {
     sendCode: async () => ({ ok: false, error: 'Privy is unavailable on web.' }),
     loginWithCode: async () => ({ ok: false, error: 'Privy is unavailable on web.' }),
     walletAddress: null,
+    ensureWallet: async () => null,
     logout: async () => {},
   };
 }
