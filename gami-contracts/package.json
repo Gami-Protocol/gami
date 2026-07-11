@@ -5,7 +5,11 @@
   "scripts": {
     "compile": "hardhat compile",
     "test": "hardhat test",
-    "deploy:sepolia": "hardhat run scripts/deploy.ts --network baseSepolia",
+    "deploy:sepolia": "hardhat run scripts/deploy-sepolia.ts --network baseSepolia",
+    "configure:sale": "hardhat run scripts/configure-sale.ts --network baseSepolia",
+    "finalize:sale": "hardhat run scripts/finalize-sale.ts --network baseSepolia",
+    "merkle:whitelist": "hardhat run scripts/merkle-whitelist.ts --network baseSepolia",
+    "test:e2e": "hardhat run scripts/e2e-testnet.ts --network hardhat",
     "deploy:mainnet": "hardhat run scripts/deploy-mainnet.ts --network base",
     "verify": "hardhat verify"
   },
@@ -14,7 +18,8 @@
     "@openzeppelin/contracts": "^5.3.0",
     "dotenv": "^16.4.7",
     "hardhat": "^2.22.17",
-    "typescript": "^5.7.3",
-    "ts-node": "^10.9.2"
+    "merkletreejs": "^0.4.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3"
   }
 }

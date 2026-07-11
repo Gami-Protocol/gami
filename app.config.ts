@@ -29,6 +29,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       icon: './assets/icon.png',
       supportsTablet: true,
       bundleIdentifier: process.env.BILT_IOS_BUNDLE_ID ?? 'com.yourcompany.yourapp',
+      associatedDomains: process.env.EXPO_PUBLIC_APP_DOMAIN
+        ? [`applinks:${process.env.EXPO_PUBLIC_APP_DOMAIN}`]
+        : [],
     },
     android: {
       adaptiveIcon: {
@@ -36,6 +39,22 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         backgroundColor: '#6E3CFB',
       },
       package: process.env.BILT_ANDROID_PACKAGE ?? 'com.yourcompany.yourapp',
+      intentFilters: process.env.EXPO_PUBLIC_APP_DOMAIN
+        ? [
+            {
+              action: 'VIEW',
+              autoVerify: true,
+              data: [
+                {
+                  scheme: 'https',
+                  host: process.env.EXPO_PUBLIC_APP_DOMAIN,
+                  pathPrefix: '/wallet',
+                },
+              ],
+              category: ['BROWSABLE', 'DEFAULT'],
+            },
+          ]
+        : undefined,
     },
     extra: {
       appStoreAppId: process.env.BILT_APP_STORE_APP_ID,

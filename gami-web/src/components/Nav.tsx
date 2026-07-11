@@ -1,5 +1,7 @@
 import Link from 'next/link';
 
+import { ConnectWallet } from '@/components/ConnectWallet';
+
 const LINKS = [
   { href: '/', label: 'Home' },
   { href: '/tokenomics', label: 'Tokenomics' },
@@ -17,12 +19,13 @@ export function Nav() {
           <span className="text-white">GAMI</span>
           <span className="text-primary"> Protocol</span>
         </Link>
-        <div className="flex gap-6 text-sm">
+        <div className="flex items-center gap-6 text-sm">
           {LINKS.map((l) => (
             <Link key={l.href} href={l.href} className="text-muted hover:text-white transition">
               {l.label}
             </Link>
           ))}
+          <ConnectWallet />
         </div>
       </div>
     </nav>

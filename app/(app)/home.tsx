@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { ArrowDown, ArrowUp, Gift, Layers, ScanLine, Share2, Target } from 'lucide-react-native';
+import { ArrowDown, ArrowUp, Coins, Gift, Layers, ScanLine, Share2, Target } from 'lucide-react-native';
 import { type ReactNode, useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
@@ -189,7 +189,23 @@ export default function Home() {
           </GCard>
         )}
 
-        {/* ICO / referral */}
+        {/* ICO / sale */}
+        <GCard className="mt-4" onPress={() => router.push('/(app)/sale')}>
+          <View className="flex-row items-center justify-between">
+            <View className="flex-1 pr-3">
+              <Text
+                className="font-display text-ink text-[16px] font-bold"
+                style={{ fontFamily: 'SpaceGrotesk_700Bold' }}
+              >
+                Token sale
+              </Text>
+              <GBody className="mt-0.5">KYC, contribute USDC, track the raise</GBody>
+            </View>
+            <Coins size={22} color="#FFD23D" />
+          </View>
+        </GCard>
+
+        {/* Referral */}
         <GCard className="mt-4" onPress={() => router.push('/(app)/referral')}>
           <View className="flex-row items-center justify-between">
             <View className="flex-1 pr-3">

@@ -4,9 +4,11 @@ import { Gift, ExternalLink } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 
+import { PrivyClaimButton } from '@/components/ico/PrivyClaimButton';
 import { GBody, GButtonGhost, GButtonPrimary, GCard, GConfetti, GMono, GScreen, GSticker } from '@/components/gami';
 import { createGamiWallet } from '@/lib/gami-sdk';
 import { getActiveChain, getVestingAddress } from '@/lib/chain';
+import { privyEnabled } from '@/lib/privy';
 import { useOnboardingStore } from '@/lib/store';
 
 const ICO_CLAIM_URL = process.env.EXPO_PUBLIC_ICO_CLAIM_URL ?? 'https://gami.xyz/claim';
@@ -14,8 +16,11 @@ const ICO_CLAIM_URL = process.env.EXPO_PUBLIC_ICO_CLAIM_URL ?? 'https://gami.xyz
 export default function ClaimScreen() {
   const router = useRouter();
   const walletAddress = useOnboardingStore((s) => s.walletAddress);
+  const addXP = useOnboardingStore((s) => s.addXP);
+
   const [claimable, setClaimable] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [claiming, setClaiming] = useState(false);
   const [confetti, setConfetti] = useState(false);
   const vestingConfigured = Boolean(getVestingAddress(getActiveChain()));
 
@@ -35,6 +40,13 @@ export default function ClaimScreen() {
 
   const openWebClaim = () => {
     void WebBrowser.openBrowserAsync(ICO_CLAIM_URL);
+  };
+
+  const onClaimSuccess = () => {
+    setConfetti(true);
+    addXP(1000);
+    setClaimable(0);
+    setTimeout(() => setConfetti(false), 2000);
   };
 
   return (
@@ -71,15 +83,17 @@ export default function ClaimScreen() {
         </GCard>
 
         {claimable !== null && claimable > 0 ? (
-          <GButtonPrimary
-            className="mt-6"
-            label="CLAIM NOW →"
-            onPress={() => {
-              setConfetti(true);
-              openWebClaim();
-              setTimeout(() => setConfetti(false), 2000);
-            }}
-          />
+          privyEnabled ? (
+            <PrivyClaimButton
+              claimable={claimable}
+              claiming={claiming}
+              setClaiming={setClaiming}
+              onSuccess={onClaimSuccess}
+              onFallback={openWebClaim}
+            />
+          ) : (
+            <GButtonPrimary className="mt-6" label="CLAIM ON WEB →" onPress={openWebClaim} />
+          )
         ) : (
           <GCard className="mt-6 p-4">
             <GBody>
