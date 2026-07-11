@@ -1,6 +1,6 @@
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
 
-export function ConnectWallet() {
+export function ConnectWallet({ light = false }: { light?: boolean }) {
   const { address, isConnected } = useAccount();
   const { connect, connectors, isPending } = useConnect();
   const { disconnect } = useDisconnect();
@@ -10,7 +10,12 @@ export function ConnectWallet() {
       <button
         type="button"
         onClick={() => disconnect()}
-        className="border border-white/20 px-3 py-1.5 font-mono text-xs transition hover:border-primary"
+        title="Disconnect wallet"
+        className={`border-2 px-3 py-2 font-mono text-[10px] font-bold transition ${
+          light
+            ? 'border-black bg-[#67f5a1] text-black hover:bg-[#ffeb55]'
+            : 'border-white/20 hover:border-primary'
+        }`}
       >
         {address.slice(0, 6)}…{address.slice(-4)}
       </button>
@@ -23,7 +28,11 @@ export function ConnectWallet() {
       type="button"
       disabled={!connector || isPending}
       onClick={() => connector && connect({ connector })}
-      className="bg-primary px-3 py-1.5 font-mono text-xs font-bold uppercase disabled:opacity-50"
+      className={`px-3 py-2 font-mono text-[10px] font-bold uppercase disabled:opacity-50 ${
+        light
+          ? 'border-2 border-black bg-[#7047eb] text-white shadow-[3px_3px_0_#131118]'
+          : 'bg-primary'
+      }`}
     >
       {isPending ? 'Connecting…' : 'Connect Wallet'}
     </button>
