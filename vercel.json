@@ -1,0 +1,7 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "npm ci --prefix gami-web",
+  "buildCommand": "npm run build --prefix gami-web",
+  "outputDirectory": "gami-web/dist",
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}

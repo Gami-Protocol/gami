@@ -45,8 +45,15 @@ Deploy contracts first (`cd gami-contracts && npm run deploy:sepolia`), then cop
 
 ## Deploy (Vercel)
 
-1. Import this repo in Vercel and set **Root Directory** to `gami-web`
-2. Add the `VITE_*` environment variables from `.env.example`
-3. Deploy — `vercel.json` configures the Vite build and SPA rewrites
+**Option A — Root Directory = `gami-web` (recommended)**
+
+1. In Vercel project settings, set **Root Directory** to `gami-web`
+2. Set **Framework Preset** to **Other** (do not use the Vite preset — it runs `vite build` directly and can conflict with monorepo installs)
+3. Add the `VITE_*` environment variables from `.env.example`
+4. Build/install/output are configured in `gami-web/vercel.json`
+
+**Option B — Repository root**
+
+If Root Directory is left empty, the root `vercel.json` installs and builds from `gami-web/` automatically.
 
 The Expo wallet app at the repo root is not deployed to Vercel; only this Vite portal is.
