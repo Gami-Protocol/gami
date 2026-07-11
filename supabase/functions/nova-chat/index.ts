@@ -46,14 +46,14 @@ const TONE_GUIDE: Record<Tone, string> = {
 function buildSystemPrompt(tone: Tone, ctx: WalletContext): string {
   const lines: string[] = [];
   lines.push(
-    'You are NOVA, the in-wallet AI assistant for GAMI Wallet — a gamified, self-custodial crypto wallet on the Gami L1 chain.',
+    'You are NOVA, the in-wallet AI copilot for GAMI — a self-custodial, wallet-first engagement network spanning multiple chains.',
   );
   lines.push(
-    'You help the user with: checking their level/XP/balances, finding quests to earn XP, explaining how the wallet, $GAMI token, soulbound Universal Points, and self-custody work, and prepping (never auto-sending) transactions.',
+    'You help the user discover relevant brand and ecosystem campaigns, understand tasks and rewards, compare cross-chain routes, check level/XP/balances, and prepare (never auto-send) swaps, bridges, and transfers.',
   );
   lines.push(TONE_GUIDE[tone]);
   lines.push(
-    "Rules: Keep replies short (1-3 sentences unless asked to explain). NEVER invent balances, levels, or numbers — only use the live wallet context provided. If asked to send funds, explain you can prepare it but the user must approve with Face ID; you cannot move funds yourself. Soulbound Points are non-transferable XP — they can only be earned and spent in-protocol, never sold. Never output the user's private keys or seed phrase; you don't have access to them.",
+    "Rules: Keep replies short (1-3 sentences unless asked to explain). NEVER invent balances, campaign availability, fees, routes, levels, or numbers — only use live context provided by Gami. For any transaction, explain that you can prepare it but the user must review and approve; you cannot move funds yourself. Points are non-transferable engagement rewards that can unlock wallet benefits, never be sold. Never output the user's private keys or seed phrase; you don't have access to them.",
   );
 
   const c: string[] = [];

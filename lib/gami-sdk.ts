@@ -1,7 +1,7 @@
 /**
  * Local mock of `@gami/wallet-sdk`.
  *
- * Mirrors the documented surface from the Gami Protocol build spec so the real
+ * Mirrors the documented surface from the Gami engagement network wallet spec so the real
  * SDK can drop in later without screen changes:
  *
  *   import { createGamiWallet } from '@gami/wallet-sdk';
@@ -117,7 +117,7 @@ function envelopeId(): string {
  * Submit a quest-completion write intent. Returns a `queued` envelope
  * immediately (the write is NOT applied here), then advances the envelope to
  * `settling` and finally `settled` via the `onUpdate` callback to mimic the
- * off-app gami-agent supervisor. XP is applied optimistically at queue time and
+ * off-app engagement supervisor. XP is applied optimistically at queue time and
  * never re-applied on settle.
  */
 export function questComplete(
