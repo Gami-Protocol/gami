@@ -10,7 +10,8 @@ import { type EnvelopeStatus, questComplete } from '@/lib/gami-sdk';
 
 export default function CampaignPage() {
   const router = useRouter();
-  const { campaignId } = useLocalSearchParams() as { campaignId?: string };
+  const params = useLocalSearchParams();
+  const campaignId = typeof params.campaignId === 'string' ? params.campaignId : undefined;
   const campaign = campaignById(campaignId ?? '');
   const [status, setStatus] = useState<EnvelopeStatus | 'submitting' | null>(null);
   const [confetti, setConfetti] = useState(false);
