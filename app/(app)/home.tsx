@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { ArrowDown, ArrowUp, Layers, ScanLine, Target } from 'lucide-react-native';
+import { ArrowDown, ArrowUp, Gift, Layers, ScanLine, Share2, Target } from 'lucide-react-native';
 import { type ReactNode, useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
@@ -107,6 +107,9 @@ export default function Home() {
             <View>
               <Text className="font-mono text-[11px] text-white/70">$GAMI</Text>
               <GMono className="text-[24px] font-bold text-white">{balance}</GMono>
+              {stats.balanceSource === 'chain' ? (
+                <Text className="font-mono text-[9px] text-green">on-chain</Text>
+              ) : null}
             </View>
             <View className="items-end">
               <View className="flex-row items-center gap-1">
@@ -117,6 +120,14 @@ export default function Home() {
               <GMono className="text-[20px] font-bold text-white">{xpDisplay}</GMono>
             </View>
           </View>
+          {stats.claimableGami > 0 ? (
+            <Pressable onPress={() => router.push('/(app)/claim')} className="mt-4 flex-row items-center gap-2">
+              <Gift size={14} color="#FFD23D" />
+              <Text className="font-mono text-[11px] text-yellow">
+                {stats.claimableGami.toFixed(2)} GAMI claimable →
+              </Text>
+            </Pressable>
+          ) : null}
         </GCard>
 
         {/* quick actions */}
@@ -177,6 +188,22 @@ export default function Home() {
             </View>
           </GCard>
         )}
+
+        {/* ICO / referral */}
+        <GCard className="mt-4" onPress={() => router.push('/(app)/referral')}>
+          <View className="flex-row items-center justify-between">
+            <View className="flex-1 pr-3">
+              <Text
+                className="font-display text-ink text-[16px] font-bold"
+                style={{ fontFamily: 'SpaceGrotesk_700Bold' }}
+              >
+                Refer & earn
+              </Text>
+              <GBody className="mt-0.5">Share your code · +100 XP per invite</GBody>
+            </View>
+            <Share2 size={22} color="#FF3D8B" />
+          </View>
+        </GCard>
 
         {/* stash / badges */}
         <GCard className="mt-4" onPress={() => router.push('/(app)/badges')}>

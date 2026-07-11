@@ -1,0 +1,36 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: #6e3cfb;
+  --secondary: #ff3d8b;
+  --background: #0e0e12;
+  --foreground: #ffffff;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: 'Inter', sans-serif;
+}
+
+.font-display {
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.sticker-shadow {
+  box-shadow: 6px 6px 0 #000;
+}
+
+.gradient-hero {
+  background: radial-gradient(ellipse at top left, rgba(110, 60, 251, 0.3), transparent 50%),
+    radial-gradient(ellipse at bottom right, rgba(255, 61, 139, 0.2), transparent 50%),
+    var(--background);
+}
