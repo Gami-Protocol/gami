@@ -40,3 +40,11 @@ NEXT_PUBLIC_TESTFLIGHT_URL=
 ```
 
 Deploy contracts first (`cd gami-contracts && npm run deploy:sepolia`), then copy addresses from `deployments/84532.json`.
+
+## Deploy (Vercel)
+
+1. Import this repo in Vercel and set **Root Directory** to `gami-web`
+2. Add the environment variables from `.env.example` in the Vercel project settings
+3. Deploy — `vercel.json` in this folder configures install/build for the monorepo
+
+The Expo wallet app at the repo root is not deployed to Vercel; only this Next.js portal is.
