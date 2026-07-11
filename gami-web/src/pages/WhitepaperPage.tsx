@@ -1,4 +1,4 @@
-export default function WhitepaperPage() {
+export function WhitepaperPage() {
   return (
     <div className="mx-auto max-w-3xl px-6 py-16">
       <h1 className="font-display text-4xl font-bold">Whitepaper</h1>

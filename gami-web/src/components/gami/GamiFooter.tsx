@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { Link } from 'react-router-dom';
 
 import { GamiLogo } from '@/components/gami/GamiLogo';
 
@@ -35,10 +35,10 @@ export function GamiFooter({ variant = 'default' }: { variant?: 'default' | 'ico
               Product
             </h4>
             <ul className={`space-y-4 text-sm ${isIco ? 'text-xs font-bold uppercase tracking-widest text-gray-500' : 'text-gray-500'}`}>
-              <li><Link href="/wallet" className="transition-colors hover:text-white">App Dashboard</Link></li>
-              <li><Link href="/wallet" className="transition-colors hover:text-white">AI Agents</Link></li>
-              <li><Link href="/wallet" className="transition-colors hover:text-white">{isIco ? 'Wallet' : 'Wallet Extension'}</Link></li>
-              <li><Link href="/whitepaper" className="transition-colors hover:text-white">Gami L2</Link></li>
+              <li><Link to="/wallet" className="transition-colors hover:text-white">App Dashboard</Link></li>
+              <li><Link to="/wallet" className="transition-colors hover:text-white">AI Agents</Link></li>
+              <li><Link to="/wallet" className="transition-colors hover:text-white">{isIco ? 'Wallet' : 'Wallet Extension'}</Link></li>
+              <li><Link to="/whitepaper" className="transition-colors hover:text-white">Gami L2</Link></li>
             </ul>
           </div>
 
@@ -47,10 +47,10 @@ export function GamiFooter({ variant = 'default' }: { variant?: 'default' | 'ico
               {isIco ? 'Devs' : 'Developers'}
             </h4>
             <ul className={`space-y-4 text-sm ${isIco ? 'text-xs font-bold uppercase tracking-widest text-gray-500' : 'text-gray-500'}`}>
-              <li><Link href="/whitepaper" className="transition-colors hover:text-white">Documentation</Link></li>
-              <li><Link href="/whitepaper" className="transition-colors hover:text-white">SDK Reference</Link></li>
-              <li><Link href="/whitepaper" className="transition-colors hover:text-white">API Keys</Link></li>
-              <li><Link href="/whitepaper" className="transition-colors hover:text-white">Status</Link></li>
+              <li><Link to="/whitepaper" className="transition-colors hover:text-white">Documentation</Link></li>
+              <li><Link to="/whitepaper" className="transition-colors hover:text-white">SDK Reference</Link></li>
+              <li><Link to="/whitepaper" className="transition-colors hover:text-white">API Keys</Link></li>
+              <li><Link to="/whitepaper" className="transition-colors hover:text-white">Status</Link></li>
             </ul>
           </div>
 
@@ -61,17 +61,17 @@ export function GamiFooter({ variant = 'default' }: { variant?: 'default' | 'ico
             <ul className={`space-y-4 text-sm ${isIco ? 'text-xs font-bold uppercase tracking-widest text-gray-500' : 'text-gray-500'}`}>
               {isIco ? (
                 <>
-                  <li><Link href="/waitlist" className="transition-colors hover:text-white">Token Sale</Link></li>
-                  <li><Link href="/sale" className="transition-colors hover:text-white">Staking</Link></li>
-                  <li><Link href="/whitepaper" className="transition-colors hover:text-white">Grants</Link></li>
-                  <li><Link href="/legal/terms" className="transition-colors hover:text-white">Terms</Link></li>
+                  <li><Link to="/waitlist" className="transition-colors hover:text-white">Token Sale</Link></li>
+                  <li><Link to="/sale" className="transition-colors hover:text-white">Staking</Link></li>
+                  <li><Link to="/whitepaper" className="transition-colors hover:text-white">Grants</Link></li>
+                  <li><Link to="/legal/terms" className="transition-colors hover:text-white">Terms</Link></li>
                 </>
               ) : (
                 <>
-                  <li><Link href="/whitepaper" className="transition-colors hover:text-white">About Us</Link></li>
-                  <li><Link href="/whitepaper" className="transition-colors hover:text-white">Careers</Link></li>
-                  <li><Link href="/legal/privacy" className="transition-colors hover:text-white">Privacy</Link></li>
-                  <li><Link href="/legal/terms" className="transition-colors hover:text-white">Terms</Link></li>
+                  <li><Link to="/whitepaper" className="transition-colors hover:text-white">About Us</Link></li>
+                  <li><Link to="/whitepaper" className="transition-colors hover:text-white">Careers</Link></li>
+                  <li><Link to="/legal/privacy" className="transition-colors hover:text-white">Privacy</Link></li>
+                  <li><Link to="/legal/terms" className="transition-colors hover:text-white">Terms</Link></li>
                 </>
               )}
             </ul>

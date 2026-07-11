@@ -1,14 +1,12 @@
-'use client';
-
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import { Link } from 'react-router-dom';
 import { useReadContract } from 'wagmi';
 import { formatUnits } from 'viem';
 
 import { TOKEN_SALE_ABI, getContractAddress } from '@/lib/contracts';
 import { fetchSaleStats, type SaleStats } from '@/lib/sale';
 
-export default function SalePage() {
+export function SalePage() {
   const [stats, setStats] = useState<SaleStats | null>(null);
   const saleAddress = getContractAddress('TOKEN_SALE');
 
@@ -76,13 +74,13 @@ export default function SalePage() {
 
       <div className="mt-8 flex gap-4">
         <Link
-          href="/sale/contribute"
+          to="/sale/contribute"
           className="sticker-shadow bg-primary px-8 py-4 font-display font-bold uppercase"
         >
           Contribute Now
         </Link>
         <Link
-          href="/wallet"
+          to="/wallet"
           className="border-2 border-white/20 px-8 py-4 font-display font-bold uppercase hover:border-primary"
         >
           Download Wallet

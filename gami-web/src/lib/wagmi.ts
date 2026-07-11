@@ -2,8 +2,10 @@ import { createConfig, http } from 'wagmi';
 import { injected } from 'wagmi/connectors';
 import { base, baseSepolia } from 'viem/chains';
 
-const chainId = Number(process.env.NEXT_PUBLIC_CHAIN_ID ?? 84532);
-const chains = chainId === 8453 ? [base] as const : [baseSepolia] as const;
+import { env } from '@/lib/env';
+
+const chainId = env.chainId();
+const chains = chainId === 8453 ? ([base] as const) : ([baseSepolia] as const);
 
 export const wagmiConfig = createConfig({
   chains,
@@ -12,5 +14,4 @@ export const wagmiConfig = createConfig({
     [base.id]: http(),
     [baseSepolia.id]: http(),
   },
-  ssr: true,
 });

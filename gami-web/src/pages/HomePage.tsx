@@ -1,15 +1,9 @@
-import type { Metadata } from 'next';
-import Link from 'next/link';
+import { Link } from 'react-router-dom';
 
 import { GamiFooter } from '@/components/gami/GamiFooter';
 import { GamiLogo } from '@/components/gami/GamiLogo';
 import { QuestNotification } from '@/components/gami/QuestNotification';
 
-export const metadata: Metadata = {
-  title: 'Gami Protocol — Universal Gamification Infrastructure',
-  description:
-    'Earn XP, rewards, and tokens across apps and games using Gami Protocol\'s AI-powered gamification engine.',
-};
 
 const ECOSYSTEM_CARDS = [
   {
@@ -94,7 +88,7 @@ function CardIcon({ type }: { type: string }) {
   return null;
 }
 
-export default function HomePage() {
+export function HomePage() {
   return (
     <>
       {/* Hero */}
@@ -116,13 +110,13 @@ export default function HomePage() {
             </p>
             <div className="flex flex-wrap gap-6">
               <Link
-                href="/wallet"
+                to="/wallet"
                 className="gami-gradient neo-border px-8 py-4 font-display text-lg font-bold uppercase tracking-wider shadow-brutal transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none"
               >
                 Launch App
               </Link>
               <Link
-                href="/wallet"
+                to="/wallet"
                 className="border-2 border-white px-8 py-4 font-display text-lg font-bold uppercase tracking-wider transition-all hover:bg-white hover:text-black"
               >
                 Explore AI Agents
@@ -207,7 +201,7 @@ export default function HomePage() {
 
                 {card.cta && (
                   <Link
-                    href={card.href}
+                    to={card.href}
                     className={`block w-full py-3 text-center font-display font-bold uppercase transition-all ${
                       card.ctaStyle === 'primary'
                         ? 'gami-gradient neo-border shadow-brutal hover:shadow-none'
@@ -224,12 +218,12 @@ export default function HomePage() {
 
                 {card.icon === 'wallet' && (
                   <div className="flex gap-4">
-                    <Link href="/wallet" className="flex flex-1 items-center justify-center border border-white/20 py-3 hover:border-white">
+                    <Link to="/wallet" className="flex flex-1 items-center justify-center border border-white/20 py-3 hover:border-white">
                       <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M17.5 12c0 2.5-1.9 4.4-4.4 4.4-2.5 0-4.4-1.9-4.4-4.4 0-2.5 1.9-4.4 4.4-4.4 2.5 0 4.4 1.9 4.4 4.4z" />
                       </svg>
                     </Link>
-                    <Link href="/wallet" className="flex flex-1 items-center justify-center border border-white/20 py-3 hover:border-white">
+                    <Link to="/wallet" className="flex flex-1 items-center justify-center border border-white/20 py-3 hover:border-white">
                       <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" />
                       </svg>
@@ -338,7 +332,7 @@ export default function HomePage() {
               className="flex-1 bg-transparent p-4 font-bold text-white outline-none placeholder:text-gray-600"
             />
             <Link
-              href="/waitlist"
+              to="/waitlist"
               className="bg-white px-10 py-4 font-display font-bold uppercase text-black transition-all hover:bg-gami-accent hover:text-white"
             >
               Join Waitlist

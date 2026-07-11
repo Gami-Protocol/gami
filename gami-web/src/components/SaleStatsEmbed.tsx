@@ -1,7 +1,5 @@
-'use client';
-
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import { Link } from 'react-router-dom';
 
 import { fetchSaleStats } from '@/lib/sale';
 
@@ -25,7 +23,7 @@ export function SaleStatsEmbed() {
     <div className="sticker-shadow mx-auto max-w-2xl border-2 border-white/10 bg-surface p-6">
       <div className="flex items-center justify-between">
         <p className="font-mono text-xs text-muted">LIVE SALE · {phase.toUpperCase()}</p>
-        <Link href="/sale" className="font-mono text-xs text-primary hover:underline">
+        <Link to="/sale" className="font-mono text-xs text-primary hover:underline">
           View dashboard →
         </Link>
       </div>

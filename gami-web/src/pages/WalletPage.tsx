@@ -1,15 +1,14 @@
-'use client';
+import { useSearchParams } from 'react-router-dom';
 
-import { useSearchParams } from 'next/navigation';
-import { Suspense } from 'react';
+import { env } from '@/lib/env';
 
 const WALLET_DEEP_LINK = 'gami://onboarding/welcome';
-const APP_STORE_URL = process.env.NEXT_PUBLIC_APP_STORE_URL ?? '#';
-const PLAY_STORE_URL = process.env.NEXT_PUBLIC_PLAY_STORE_URL ?? '#';
-const TESTFLIGHT_URL = process.env.NEXT_PUBLIC_TESTFLIGHT_URL ?? '#';
+const APP_STORE_URL = env.appStoreUrl() ?? '#';
+const PLAY_STORE_URL = env.playStoreUrl() ?? '#';
+const TESTFLIGHT_URL = env.testflightUrl() ?? '#';
 
-function WalletContent() {
-  const params = useSearchParams();
+export function WalletPage() {
+  const [params] = useSearchParams();
   const ref = params.get('ref');
   const deepLink = ref ? `gami://ref/${ref}` : WALLET_DEEP_LINK;
   const webAppUrl = `https://app.bilt.me/project/73c82cd4-2f64-41e0-a0f2-3c4fa607c6bb/preview${ref ? `?ref=${ref}` : ''}`;
@@ -29,14 +28,13 @@ function WalletContent() {
         </div>
       )}
 
-      {/* QR-style download card */}
       <div className="sticker-shadow mx-auto mt-10 max-w-xs border-2 border-white/10 bg-white p-8 text-black">
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary text-2xl font-bold text-white">
           G
         </div>
         <p className="mt-4 font-display text-lg font-bold">Gami Wallet</p>
         <p className="text-sm text-gray-500">Scan to download</p>
-        <div className="mx-auto mt-4 h-32 w-32 bg-gray-100 flex items-center justify-center">
+        <div className="mx-auto mt-4 flex h-32 w-32 items-center justify-center bg-gray-100">
           <img
             src={`https://api.qrserver.com/v1/create-qr-code/?size=128x128&data=${encodeURIComponent(webAppUrl)}`}
             alt="Download QR"
@@ -49,10 +47,7 @@ function WalletContent() {
       <p className="mt-4 font-mono text-xs text-muted">Scan this code to open Gami Wallet</p>
 
       <div className="mt-8 space-y-3">
-        <a
-          href={deepLink}
-          className="sticker-shadow block bg-primary py-4 font-display font-bold uppercase"
-        >
+        <a href={deepLink} className="sticker-shadow block bg-primary py-4 font-display font-bold uppercase">
           Open in App
         </a>
         <a
@@ -75,13 +70,5 @@ function WalletContent() {
         </a>
       </div>
     </div>
-  );
-}
-
-export default function WalletPage() {
-  return (
-    <Suspense fallback={<div className="p-16 text-center">Loading...</div>}>
-      <WalletContent />
-    </Suspense>
   );
 }

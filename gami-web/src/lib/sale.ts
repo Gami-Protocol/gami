@@ -1,4 +1,5 @@
 import { getContractAddress, getFunctionsBase, getSupabaseUrl } from '@/lib/contracts';
+import { env } from '@/lib/env';
 
 export interface SaleEligibility {
   wallet_address: string;
@@ -25,7 +26,7 @@ export async function fetchSaleStats(): Promise<SaleStats | null> {
   const base = getFunctionsBase();
   if (!base) return null;
   try {
-    const res = await fetch(`${base}/sale-stats`, { next: { revalidate: 30 } });
+    const res = await fetch(`${base}/sale-stats`);
     if (!res.ok) return null;
     return (await res.json()) as SaleStats;
   } catch {
@@ -55,7 +56,7 @@ export async function joinWaitlist(input: {
   referral_code?: string;
 }): Promise<{ ok: boolean; error?: string }> {
   const base = getSupabaseUrl();
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const key = env.supabaseAnonKey();
   if (!base || !key) return { ok: false, error: 'Backend not configured' };
 
   const res = await fetch(`${base}/rest/v1/waitlist`, {

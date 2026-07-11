@@ -1,8 +1,5 @@
-'use client';
-
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   useAccount,
   useReadContract,
@@ -26,13 +23,14 @@ import {
   previewGamiAllocation,
   requestKycApproval,
 } from '@/lib/sale';
+import { env } from '@/lib/env';
 
 type Step = 'waitlist' | 'kyc' | 'eligibility' | 'contribute' | 'confirm';
 
 const STEPS: Step[] = ['waitlist', 'kyc', 'eligibility', 'contribute', 'confirm'];
 
-export default function ContributeClient() {
-  const searchParams = useSearchParams();
+export function ContributePage() {
+  const [searchParams] = useSearchParams();
   const referralCode = searchParams.get('ref') ?? undefined;
   const walletParam = searchParams.get('wallet') ?? undefined;
 
@@ -142,7 +140,7 @@ export default function ContributeClient() {
     }
     setStatus('loading');
 
-    const templateId = process.env.NEXT_PUBLIC_PERSONA_TEMPLATE_ID;
+    const templateId = env.personaTemplateId();
     if (templateId) {
       setMessage('Complete verification in the Persona modal (configure SDK with your template).');
       setStatus('idle');
@@ -289,7 +287,7 @@ export default function ContributeClient() {
         <div className="mt-8 space-y-4">
           {!saleConfigured && (
             <p className="text-sm text-yellow-400">
-              Set NEXT_PUBLIC_TOKEN_SALE_ADDRESS and NEXT_PUBLIC_USDC_ADDRESS to enable on-chain contributions.
+              Set VITE_TOKEN_SALE_ADDRESS and VITE_USDC_ADDRESS to enable on-chain contributions.
             </p>
           )}
           <div>
@@ -330,7 +328,7 @@ export default function ContributeClient() {
               View transaction
             </a>
           </div>
-          <Link href="/wallet" className="block text-center font-mono text-sm text-primary hover:underline">
+          <Link to="/wallet" className="block text-center font-mono text-sm text-primary hover:underline">
             → Download Gami Wallet for +50 XP
           </Link>
           <a href="gami://onboarding/welcome" className="block text-center font-mono text-xs text-muted">
@@ -345,7 +343,7 @@ export default function ContributeClient() {
         </p>
       )}
 
-      <Link href="/sale" className="mt-8 inline-block font-mono text-sm text-muted hover:text-white">
+      <Link to="/sale" className="mt-8 inline-block font-mono text-sm text-muted hover:text-white">
         ← Back to sale dashboard
       </Link>
     </div>

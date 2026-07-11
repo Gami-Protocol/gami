@@ -1,4 +1,4 @@
-export default function RiskPage() {
+export function RiskPage() {
   return (
     <>
       <h1 className="font-display text-3xl font-bold">Risk Factors Disclosure</h1>
@@ -12,8 +12,8 @@ export default function RiskPage() {
           <li>Operational risk — KYC delays or geo-restrictions may prevent participation or claims</li>
         </ul>
         <p>
-          Do not contribute funds you cannot afford to lose. Read the whitepaper and consult
-          independent advisors before participating.
+          Do not contribute funds you cannot afford to lose. Read the whitepaper and consult independent advisors before
+          participating.
         </p>
       </div>
     </>

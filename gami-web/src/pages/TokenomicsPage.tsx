@@ -1,6 +1,6 @@
 import allocation from '@/data/allocation.json';
 
-export default function TokenomicsPage() {
+export function TokenomicsPage() {
   return (
     <div className="mx-auto max-w-4xl px-6 py-16">
       <h1 className="font-display text-4xl font-bold">Tokenomics</h1>

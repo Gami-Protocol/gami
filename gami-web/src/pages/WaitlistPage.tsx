@@ -1,5 +1,3 @@
-'use client';
-
 import { useState } from 'react';
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
 
@@ -80,7 +78,7 @@ function UtilityIcon({ type }: { type: string }) {
   );
 }
 
-export default function WaitlistClient() {
+export function WaitlistPage() {
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [walletLinked, setWalletLinked] = useState(false);
   const [loading, setLoading] = useState(false);

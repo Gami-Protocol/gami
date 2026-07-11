@@ -1,5 +1,3 @@
-'use client';
-
 import { useEffect, useState } from 'react';
 import { useAccount, useReadContract, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
 import { formatEther } from 'viem';
@@ -7,7 +5,7 @@ import { formatEther } from 'viem';
 import { VESTING_ABI, getContractAddress, getExplorerTxUrl, getChainId } from '@/lib/contracts';
 import { logClaimEvent } from '@/lib/sale';
 
-export default function ClaimPage() {
+export function ClaimPage() {
   const { address, isConnected } = useAccount();
   const [wallet, setWallet] = useState('');
   const [claimableDisplay, setClaimableDisplay] = useState<string | null>(null);

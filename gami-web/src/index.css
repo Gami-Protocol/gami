@@ -81,3 +81,7 @@ body {
     filter: blur(60px);
   }
 }
+
+.sticker-shadow {
+  box-shadow: 6px 6px 0 #000;
+}
