@@ -71,9 +71,7 @@ function CampaignRow({ campaign }: { campaign: Campaign }) {
           </Text>
         </View>
         <View className="items-end gap-2">
-          <Text className="text-green font-mono text-[11px] font-bold">
-            +{campaign.reward} XP
-          </Text>
+          <Text className="text-green font-mono text-[11px] font-bold">+{campaign.reward} XP</Text>
           <ArrowRight size={16} color="#6B6880" />
         </View>
       </View>
@@ -83,15 +81,8 @@ function CampaignRow({ campaign }: { campaign: Campaign }) {
 
 export default function Home() {
   const router = useRouter();
-  const {
-    handle,
-    xp,
-    spentGami,
-    hideBalances,
-    homeRevealSeen,
-    markHomeRevealSeen,
-    addXP,
-  } = useOnboardingStore();
+  const { handle, xp, spentGami, hideBalances, homeRevealSeen, markHomeRevealSeen, addXP } =
+    useOnboardingStore();
   const [stats, setStats] = useState<LevelStats>(currentStats());
   const [confetti, setConfetti] = useState(false);
   const [dailyClaimed, setDailyClaimed] = useState(false);
@@ -140,9 +131,7 @@ export default function Home() {
       >
         <View className="mb-5 flex-row items-center justify-between">
           <View>
-            <Text className="text-ink-mute font-mono text-[10px] tracking-[2px]">
-              GAMI WALLET
-            </Text>
+            <Text className="text-ink-mute font-mono text-[10px] tracking-[2px]">GAMI WALLET</Text>
             <Text
               className="text-ink mt-1 text-[25px] font-bold"
               style={{ fontFamily: 'SpaceGrotesk_700Bold' }}

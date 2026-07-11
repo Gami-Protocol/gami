@@ -24,9 +24,17 @@ interface Prop {
 }
 
 const PROPS: Prop[] = [
-  { icon: <Compass size={20} color="#FFD23D" />, label: 'DISCOVER', sub: 'campaigns picked for you' },
+  {
+    icon: <Compass size={20} color="#FFD23D" />,
+    label: 'DISCOVER',
+    sub: 'campaigns picked for you',
+  },
   { icon: <KeyRound size={20} color="#3DF5A0" />, label: 'SELF-CUSTODY', sub: 'your keys only' },
-  { icon: <Link2 size={20} color="#3DD6F5" />, label: 'ANY CHAIN', sub: 'one wallet, every ecosystem' },
+  {
+    icon: <Link2 size={20} color="#3DD6F5" />,
+    label: 'ANY CHAIN',
+    sub: 'one wallet, every ecosystem',
+  },
   { icon: <Bot size={20} color="#9A6BFF" />, label: 'ASK NOVA', sub: 'your engagement copilot' },
 ];
 

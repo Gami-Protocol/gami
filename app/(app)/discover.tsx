@@ -71,9 +71,7 @@ export default function Discover() {
     () =>
       category === 'FOR YOU'
         ? CAMPAIGNS
-        : CAMPAIGNS.filter(
-            (campaign) => campaign.category === category || campaign.sponsored,
-          ),
+        : CAMPAIGNS.filter((campaign) => campaign.category === category || campaign.sponsored),
     [category],
   );
 
