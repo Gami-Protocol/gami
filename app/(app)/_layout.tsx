@@ -67,6 +67,8 @@ export default function AppTabLayout() {
       <Tabs.Screen name="receive" options={{ href: null }} />
       <Tabs.Screen name="badges" options={{ href: null }} />
       <Tabs.Screen name="scan" options={{ href: null }} />
+      <Tabs.Screen name="claim" options={{ href: null }} />
+      <Tabs.Screen name="referral" options={{ href: null }} />
     </Tabs>
   );
 }

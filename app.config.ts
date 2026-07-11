@@ -47,6 +47,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       // fallback when EXPO_PUBLIC_* inlining is missed in a native build.
       privyAppId: process.env.EXPO_PUBLIC_PRIVY_APP_ID,
       privyClientId: process.env.EXPO_PUBLIC_PRIVY_CLIENT_ID,
+      icoWebUrl: process.env.EXPO_PUBLIC_ICO_WEB_URL,
+      gamiTokenAddress: process.env.EXPO_PUBLIC_GAMI_TOKEN_ADDRESS,
+      vestingAddress: process.env.EXPO_PUBLIC_VESTING_ADDRESS,
     },
     plugins: [
       'expo-router',

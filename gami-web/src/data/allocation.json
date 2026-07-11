@@ -1,0 +1,33 @@
+{
+  "token": {
+    "name": "Gami Protocol",
+    "symbol": "GAMI",
+    "decimals": 18,
+    "totalSupply": "1000000000000000000000000000",
+    "chain": "base",
+    "chainId": 8453
+  },
+  "allocation": [
+    { "bucket": "public_sale", "percent": 18, "tokens": "180000000", "vesting": "15% TGE, 85% linear 12mo" },
+    { "bucket": "private_seed", "percent": 10, "tokens": "100000000", "vesting": "6mo cliff, 18mo linear" },
+    { "bucket": "ecosystem_quests", "percent": 28, "tokens": "280000000", "vesting": "48mo emissions" },
+    { "bucket": "treasury", "percent": 22, "tokens": "220000000", "vesting": "governance" },
+    { "bucket": "team_advisors", "percent": 17, "tokens": "170000000", "vesting": "12mo cliff, 36mo linear" },
+    { "bucket": "liquidity", "percent": 5, "tokens": "50000000", "vesting": "100% TGE, LP locked 12mo" }
+  ],
+  "feeRouting": {
+    "burn": 40,
+    "treasury": 30,
+    "staking": 20,
+    "liquidity": 10
+  },
+  "salePhases": [
+    { "id": "seed", "allocationTokens": "40000000", "priceUsd": 0.008, "hardCapUsd": 320000, "perWalletCapUsd": 5000 },
+    { "id": "private", "allocationTokens": "60000000", "priceUsd": 0.01, "hardCapUsd": 600000, "perWalletCapUsd": 10000 },
+    { "id": "public", "allocationTokens": "180000000", "priceUsd": 0.012, "hardCapUsd": 2160000, "perWalletCapUsd": 2500 }
+  ],
+  "tge": {
+    "publicUnlockPercent": 15,
+    "vestingMonths": 12
+  }
+}

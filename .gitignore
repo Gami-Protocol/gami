@@ -3,6 +3,10 @@
 # dependencies
 node_modules/
 .pnpm-store/
+gami-web/.next/
+gami-contracts/cache/
+gami-contracts/artifacts/
+gami-contracts/typechain-types/
 
 # Expo
 .expo/

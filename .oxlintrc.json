@@ -62,7 +62,9 @@
     "node_modules",
     "android/app/build",
     "uniwind-types.d.ts",
-    "supabase/functions"
+    "supabase/functions",
+    "gami-web/**",
+    "gami-contracts/**"
   ],
   "overrides": [
     {
