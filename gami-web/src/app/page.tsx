@@ -1,5 +1,33 @@
 import Link from 'next/link';
 
+import { SaleStatsEmbed } from '@/components/SaleStatsEmbed';
+
+const FAQ = [
+  {
+    q: 'Who can participate?',
+    a: 'Verified users outside restricted jurisdictions may join the public sale after completing KYC.',
+  },
+  {
+    q: 'What can I pay with?',
+    a: 'USDC on Base (Sepolia for testnet). ETH contributions are not enabled in this release.',
+  },
+  {
+    q: 'When do I receive tokens?',
+    a: '15% unlocks at TGE; the remainder vests linearly over 12 months. Claim in the Gami Wallet or web portal.',
+  },
+  {
+    q: 'Is there a wallet cap?',
+    a: 'Yes — $2,500 per wallet in the public phase unless otherwise announced.',
+  },
+];
+
+const ROADMAP = [
+  { phase: 'Q3 2026', title: 'Waitlist & KYC', detail: 'Register interest and verify identity' },
+  { phase: 'Q3 2026', title: 'Public Sale', detail: 'USDC contributions on Base' },
+  { phase: 'Q4 2026', title: 'TGE & Vesting', detail: 'Claim vested $GAMI in Gami Wallet' },
+  { phase: '2027', title: 'Ecosystem', detail: 'SDK partners, staking, and buyback engine' },
+];
+
 export default function HomePage() {
   return (
     <div className="mx-auto max-w-6xl px-6 py-16">
@@ -28,6 +56,10 @@ export default function HomePage() {
         </div>
       </section>
 
+      <section className="mt-16">
+        <SaleStatsEmbed />
+      </section>
+
       <section className="mt-24 grid gap-6 md:grid-cols-3">
         {[
           { title: '$GAMI', sub: 'Governance, staking, protocol utility' },
@@ -39,6 +71,19 @@ export default function HomePage() {
             <p className="mt-2 text-muted">{item.sub}</p>
           </div>
         ))}
+      </section>
+
+      <section className="mt-24">
+        <h2 className="font-display text-3xl font-bold">Roadmap</h2>
+        <div className="mt-8 grid gap-4 md:grid-cols-2">
+          {ROADMAP.map((item) => (
+            <div key={item.title} className="border border-white/10 p-4">
+              <p className="font-mono text-xs text-secondary">{item.phase}</p>
+              <p className="font-display font-bold">{item.title}</p>
+              <p className="mt-1 text-sm text-muted">{item.detail}</p>
+            </div>
+          ))}
+        </div>
       </section>
 
       <section className="mt-24">
@@ -62,6 +107,18 @@ export default function HomePage() {
         </div>
       </section>
 
+      <section className="mt-24">
+        <h2 className="font-display text-3xl font-bold">FAQ</h2>
+        <div className="mt-8 space-y-4">
+          {FAQ.map((item) => (
+            <div key={item.q} className="border border-white/10 p-4">
+              <p className="font-display font-bold">{item.q}</p>
+              <p className="mt-2 text-sm text-muted">{item.a}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
       <section className="mt-24 text-center">
         <p className="font-mono text-xs text-muted">PARTNERS</p>
         <div className="mt-4 flex justify-center gap-8 text-muted">
@@ -71,6 +128,19 @@ export default function HomePage() {
           <span>Dodo Payments</span>
         </div>
       </section>
+
+      <footer className="mt-24 border-t border-white/10 pt-8 text-center font-mono text-xs text-muted">
+        <Link href="/legal/terms" className="mx-2 hover:text-white">
+          Terms of Sale
+        </Link>
+        <Link href="/legal/privacy" className="mx-2 hover:text-white">
+          Privacy
+        </Link>
+        <Link href="/legal/risk" className="mx-2 hover:text-white">
+          Risk Disclosure
+        </Link>
+        <p className="mt-4">© {new Date().getFullYear()} Gami Protocol. Not financial advice.</p>
+      </footer>
     </div>
   );
 }

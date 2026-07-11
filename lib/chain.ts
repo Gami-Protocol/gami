@@ -2,7 +2,7 @@
  * Chain configuration and viem clients for $GAMI on Base.
  */
 
-import { createPublicClient, formatEther, http, type Address } from 'viem';
+import { createPublicClient, createWalletClient, custom, formatEther, http, type Address } from 'viem';
 import { base, baseSepolia } from 'viem/chains';
 
 export const GAMI_TOKEN_ABI = [
@@ -75,6 +75,15 @@ export function getGamiTokenAddress(chain: GamiChain): Address | null {
   return envKey as Address;
 }
 
+export function getTokenSaleAddress(chain: GamiChain): Address | null {
+  const envKey =
+    chain === 'baseSepolia'
+      ? process.env.EXPO_PUBLIC_TOKEN_SALE_ADDRESS_SEPOLIA
+      : process.env.EXPO_PUBLIC_TOKEN_SALE_ADDRESS;
+  if (!envKey || !envKey.startsWith('0x')) return null;
+  return envKey as Address;
+}
+
 export function getVestingAddress(chain: GamiChain): Address | null {
   const envKey =
     chain === 'baseSepolia'
@@ -139,4 +148,45 @@ export async function fetchClaimableGami(
   } catch {
     return null;
   }
+}
+
+type Eip1193Provider = {
+  request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
+};
+
+/** Execute vesting.claim() via an EIP-1193 provider (Privy embedded wallet). */
+export async function claimVestedTokens(
+  provider: Eip1193Provider,
+  account: Address,
+  chain: GamiChain = getActiveChain(),
+): Promise<`0x${string}`> {
+  const vestingAddress = getVestingAddress(chain);
+  if (!vestingAddress) throw new Error('Vesting contract not configured');
+
+  const walletClient = createWalletClient({
+    account,
+    chain: getChainConfig(chain),
+    transport: custom(provider),
+  });
+
+  return walletClient.writeContract({
+    address: vestingAddress,
+    abi: VESTING_ABI,
+    functionName: 'claim',
+  });
+}
+
+/** Log claim to Supabase edge function. */
+export async function logClaimToBackend(input: {
+  wallet_address: string;
+  amount: string;
+  tx_hash: string;
+}): Promise<void> {
+  const base = process.env.EXPO_PUBLIC_SUPABASE_URL;
+  if (!base) return;
+  await fetch(`${base}/functions/v1/log-claim`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  }).catch(() => undefined);
 }
