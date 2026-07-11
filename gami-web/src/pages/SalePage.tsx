@@ -37,6 +37,13 @@ const BENEFITS = [
   'Priority access to AI Agent tools',
 ];
 
+function walletErrorMessage(error: Error): string {
+  if ('shortMessage' in error && typeof error.shortMessage === 'string') {
+    return error.shortMessage;
+  }
+  return error.message;
+}
+
 export function SalePage() {
   const { address, isConnected } = useAccount();
   const [stats, setStats] = useState<SaleStats | null>(null);
@@ -133,7 +140,7 @@ export function SalePage() {
         args: [usdcAmount, eligibility?.merkle_proof ?? []],
       },
       {
-        onError: (error) => setMessage(error.shortMessage ?? error.message),
+        onError: (error) => setMessage(walletErrorMessage(error)),
       },
     );
   }, [
@@ -201,7 +208,7 @@ export function SalePage() {
         args: [saleAddress, usdcAmount],
       },
       {
-        onError: (error) => setMessage(error.shortMessage ?? error.message),
+        onError: (error) => setMessage(walletErrorMessage(error)),
       },
     );
   }
@@ -401,7 +408,7 @@ export function SalePage() {
                 Transactions settle on Base · Never share your seed phrase
               </p>
             </div>
-          </div>
+          </section>
         </div>
 
         <div className="mt-16 grid gap-8 lg:grid-cols-[0.8fr_1.2fr]">
