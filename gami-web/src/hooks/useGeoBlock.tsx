@@ -1,11 +1,11 @@
-'use client';
-
 import { useEffect, useState } from 'react';
+
+import { env } from '@/lib/env';
 
 const DEFAULT_BLOCKED = ['US', 'CU', 'IR', 'KP', 'SY'];
 
 function getBlockedCountries(): string[] {
-  const raw = process.env.NEXT_PUBLIC_BLOCKED_COUNTRIES;
+  const raw = env.blockedCountries();
   if (!raw) return DEFAULT_BLOCKED;
   return raw.split(',').map((c) => c.trim().toUpperCase()).filter(Boolean);
 }
@@ -52,8 +52,8 @@ export function GeoBlockBanner() {
     <div className="border border-red-500/40 bg-red-500/10 p-4 text-sm">
       <p className="font-bold text-red-300">Sale unavailable in your region</p>
       <p className="mt-1 text-muted">
-        Token sale participation is not available from {country ?? 'your location'}. This offering is
-        restricted per our compliance policy.
+        Token sale participation is not available from {country ?? 'your location'}. This offering is restricted per
+        our compliance policy.
       </p>
     </div>
   );

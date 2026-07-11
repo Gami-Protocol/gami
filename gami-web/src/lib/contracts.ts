@@ -1,5 +1,7 @@
 import { base, baseSepolia } from 'viem/chains';
 
+import { env } from '@/lib/env';
+
 export const GAMI_TOKEN_ABI = [
   {
     name: 'balanceOf',
@@ -135,7 +137,7 @@ export function phaseFromIndex(index: number): SalePhase {
 }
 
 export function getChainId(): number {
-  return Number(process.env.NEXT_PUBLIC_CHAIN_ID ?? 84532);
+  return env.chainId();
 }
 
 export function getActiveChain() {
@@ -146,10 +148,10 @@ export function getContractAddress(
   key: 'GAMI' | 'VESTING' | 'TOKEN_SALE' | 'USDC',
 ): `0x${string}` | null {
   const map: Record<string, string | undefined> = {
-    GAMI: process.env.NEXT_PUBLIC_GAMI_TOKEN_ADDRESS,
-    VESTING: process.env.NEXT_PUBLIC_VESTING_ADDRESS,
-    TOKEN_SALE: process.env.NEXT_PUBLIC_TOKEN_SALE_ADDRESS,
-    USDC: process.env.NEXT_PUBLIC_USDC_ADDRESS,
+    GAMI: env.gamiTokenAddress(),
+    VESTING: env.vestingAddress(),
+    TOKEN_SALE: env.tokenSaleAddress(),
+    USDC: env.usdcAddress(),
   };
   const addr = map[key];
   if (!addr || !addr.startsWith('0x')) return null;
@@ -157,11 +159,11 @@ export function getContractAddress(
 }
 
 export function getSupabaseUrl(): string | null {
-  return process.env.NEXT_PUBLIC_SUPABASE_URL ?? null;
+  return env.supabaseUrl() ?? null;
 }
 
 export function getFunctionsBase(): string | null {
-  const explicit = process.env.NEXT_PUBLIC_SUPABASE_FUNCTIONS_URL;
+  const explicit = env.supabaseFunctionsUrl();
   if (explicit) return explicit.replace(/\/$/, '');
   const supabase = getSupabaseUrl();
   return supabase ? `${supabase}/functions/v1` : null;

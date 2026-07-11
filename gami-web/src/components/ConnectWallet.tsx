@@ -1,5 +1,3 @@
-'use client';
-
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
 
 export function ConnectWallet() {
@@ -12,7 +10,7 @@ export function ConnectWallet() {
       <button
         type="button"
         onClick={() => disconnect()}
-        className="font-mono text-xs border border-white/20 px-3 py-1.5 hover:border-primary transition"
+        className="border border-white/20 px-3 py-1.5 font-mono text-xs transition hover:border-primary"
       >
         {address.slice(0, 6)}…{address.slice(-4)}
       </button>
@@ -25,7 +23,7 @@ export function ConnectWallet() {
       type="button"
       disabled={!connector || isPending}
       onClick={() => connector && connect({ connector })}
-      className="font-mono text-xs bg-primary px-3 py-1.5 font-bold uppercase disabled:opacity-50"
+      className="bg-primary px-3 py-1.5 font-mono text-xs font-bold uppercase disabled:opacity-50"
     >
       {isPending ? 'Connecting…' : 'Connect Wallet'}
     </button>
