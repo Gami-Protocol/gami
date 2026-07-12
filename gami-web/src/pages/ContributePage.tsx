@@ -9,8 +9,13 @@ import {
 } from 'wagmi';
 import { parseUnits } from 'viem';
 
+<<<<<<< HEAD
 import { ConnectWallet } from '@/components/ConnectWallet';
 import { SaleRaiseHeader } from '@/components/sale/SaleRaiseHeader';
+=======
+import { GamiFooter } from '@/components/gami/GamiFooter';
+import { GamiTokenLogo } from '@/components/gami/GamiTokenLogo';
+>>>>>>> origin/main
 import { GeoBlockBanner } from '@/hooks/useGeoBlock';
 import {
   TOKEN_SALE_ABI,
@@ -202,6 +207,7 @@ export function ContributePage() {
   const stepIndex = STEPS.indexOf(step);
 
   return (
+<<<<<<< HEAD
     <div className="min-h-screen bg-[#f0edff] text-[#131118]">
       <SaleRaiseHeader />
       <div className="sale-safe-bottom mx-auto max-w-lg px-4 py-8 sm:px-6 sm:py-10">
@@ -232,6 +238,13 @@ export function ContributePage() {
             Connect Wallet to Continue
           </button>
         )}
+=======
+    <>
+    <div className="mx-auto max-w-lg px-6 py-16">
+      <GamiTokenLogo className="mb-4 h-14 w-14" />
+      <h1 className="font-display text-3xl font-bold">Contribute</h1>
+      <p className="mt-2 text-muted">Join the waitlist, verify identity, and contribute USDC on Base.</p>
+>>>>>>> origin/main
 
       <GeoBlockBanner />
 
@@ -379,5 +392,7 @@ export function ContributePage() {
       </Link>
       </div>
     </div>
+    <GamiFooter variant="ico" />
+    </>
   );
 }

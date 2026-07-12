@@ -4,7 +4,12 @@ import { useAccount, useConnect, useReadContract, useWaitForTransactionReceipt, 
 import { formatUnits, parseUnits } from 'viem';
 
 import { ConnectWallet } from '@/components/ConnectWallet';
+<<<<<<< HEAD
 import { SaleRaiseHeader } from '@/components/sale/SaleRaiseHeader';
+=======
+import { GamiFooter } from '@/components/gami/GamiFooter';
+import { GamiTokenLogo } from '@/components/gami/GamiTokenLogo';
+>>>>>>> origin/main
 import {
   TOKEN_SALE_ABI,
   USDC_ABI,
@@ -241,12 +246,47 @@ export function SalePage() {
   }
 
   return (
+<<<<<<< HEAD
     <div className="relative min-h-screen w-full max-w-[100vw] overflow-x-hidden bg-[#f0edff] text-[#131118]">
+=======
+    <>
+    <div className="relative min-h-screen overflow-hidden bg-[#f0edff] pt-24 text-[#131118]">
+>>>>>>> origin/main
       <div className="raise-grid pointer-events-none absolute inset-0 opacity-60" />
       <div className="pointer-events-none absolute -left-24 top-44 hidden h-72 w-72 rounded-full bg-[#7047eb]/20 blur-3xl sm:block" />
       <div className="pointer-events-none absolute -right-16 top-12 hidden h-80 w-80 bg-[#ffeb55]/40 blur-3xl sm:block" />
 
+<<<<<<< HEAD
       <SaleRaiseHeader raised={raised} cap={cap} showProgress />
+=======
+      <header className="relative z-10 border-y-[3px] border-black bg-[#131118] text-white">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-4">
+          <div className="flex items-center gap-3 font-display font-bold">
+            <GamiTokenLogo className="h-11 w-11 rotate-3 border-2 border-white" />
+            <span className="leading-[0.85] tracking-tight">
+              GAMI
+              <br />
+              PROTOCOL
+            </span>
+          </div>
+          <div className="flex items-center gap-5 font-mono text-xs sm:text-sm">
+            <span className="border border-[#67f5a1] px-3 py-2 font-bold text-[#67f5a1]">
+              <span className="mr-2 animate-pulse">●</span>RAISE LIVE
+            </span>
+            <span className="font-bold">
+              ${raised.toLocaleString(undefined, { maximumFractionDigits: 0 })} / $
+              {cap.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+            </span>
+          </div>
+        </div>
+        <div className="h-2 bg-white/15">
+          <div
+            className="h-full bg-[#ffeb55] transition-all duration-700"
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+      </header>
+>>>>>>> origin/main
 
       <main className="sale-safe-bottom relative z-10 mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-10 lg:py-16">
         <div className="grid w-full gap-8 lg:grid-cols-[1.08fr_0.92fr] lg:items-start lg:gap-14">
@@ -304,6 +344,7 @@ export function SalePage() {
             <div className="absolute -right-2 -top-4 z-20 rotate-3 border-2 border-black bg-[#ffeb55] px-2 py-1 font-mono text-[9px] font-bold uppercase shadow-[3px_3px_0_#131118] sm:-right-4 sm:-top-5 sm:px-3 sm:py-2 sm:text-[10px]">
               {phase} round
             </div>
+<<<<<<< HEAD
             <div className="border-[3px] border-black bg-white p-4 shadow-[8px_8px_0_#131118] sm:p-6 lg:p-8 lg:shadow-[12px_12px_0_#131118]">
               <div className="flex flex-col gap-4 border-b-2 border-black pb-4 sm:flex-row sm:items-center sm:justify-between sm:pb-6">
                 <div className="flex items-center gap-3 sm:gap-4">
@@ -313,6 +354,15 @@ export function SalePage() {
                   <div className="min-w-0">
                     <p className="font-display text-lg font-bold sm:text-xl">$GAMI TOKEN</p>
                     <p className="font-mono text-[10px] uppercase text-[#77727e] sm:text-xs">Presale round 1</p>
+=======
+            <div className="border-[3px] border-black bg-white p-5 shadow-[12px_12px_0_#131118] sm:p-8">
+              <div className="flex items-center justify-between border-b-2 border-black pb-6">
+                <div className="flex items-center gap-4">
+                  <GamiTokenLogo className="h-14 w-14 border-2 border-black" />
+                  <div>
+                    <p className="font-display text-xl font-bold">$GAMI TOKEN</p>
+                    <p className="font-mono text-xs uppercase text-[#77727e]">Presale round 1</p>
+>>>>>>> origin/main
                   </div>
                 </div>
                 <div className="hidden sm:block">
@@ -526,5 +576,7 @@ export function SalePage() {
         </div>
       )}
     </div>
+    <GamiFooter variant="ico" />
+    </>
   );
 }
