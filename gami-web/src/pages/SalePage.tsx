@@ -4,6 +4,8 @@ import { useAccount, useReadContract, useWaitForTransactionReceipt, useWriteCont
 import { formatUnits, parseUnits } from 'viem';
 
 import { ConnectWallet } from '@/components/ConnectWallet';
+import { GamiFooter } from '@/components/gami/GamiFooter';
+import { GamiTokenLogo } from '@/components/gami/GamiTokenLogo';
 import {
   TOKEN_SALE_ABI,
   USDC_ABI,
@@ -232,6 +234,7 @@ export function SalePage() {
   ];
 
   return (
+    <>
     <div className="relative min-h-screen overflow-hidden bg-[#f0edff] pt-24 text-[#131118]">
       <div className="raise-grid pointer-events-none absolute inset-0 opacity-60" />
       <div className="pointer-events-none absolute -left-24 top-44 h-72 w-72 rounded-full bg-[#7047eb]/20 blur-3xl" />
@@ -240,9 +243,7 @@ export function SalePage() {
       <header className="relative z-10 border-y-[3px] border-black bg-[#131118] text-white">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-4">
           <div className="flex items-center gap-3 font-display font-bold">
-            <span className="flex h-11 w-11 rotate-3 items-center justify-center border-2 border-white bg-[#7047eb] text-2xl">
-              G
-            </span>
+            <GamiTokenLogo className="h-11 w-11 rotate-3 border-2 border-white" />
             <span className="leading-[0.85] tracking-tight">
               GAMI
               <br />
@@ -323,9 +324,7 @@ export function SalePage() {
             <div className="border-[3px] border-black bg-white p-5 shadow-[12px_12px_0_#131118] sm:p-8">
               <div className="flex items-center justify-between border-b-2 border-black pb-6">
                 <div className="flex items-center gap-4">
-                  <span className="flex h-14 w-14 items-center justify-center border-2 border-black bg-[#7047eb] font-display text-3xl font-bold text-white">
-                    G
-                  </span>
+                  <GamiTokenLogo className="h-14 w-14 border-2 border-black" />
                   <div>
                     <p className="font-display text-xl font-bold">$GAMI TOKEN</p>
                     <p className="font-mono text-xs uppercase text-[#77727e]">Presale round 1</p>
@@ -518,5 +517,7 @@ export function SalePage() {
         </div>
       )}
     </div>
+    <GamiFooter variant="ico" />
+    </>
   );
 }

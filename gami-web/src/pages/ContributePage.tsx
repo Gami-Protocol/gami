@@ -8,6 +8,8 @@ import {
 } from 'wagmi';
 import { parseUnits } from 'viem';
 
+import { GamiFooter } from '@/components/gami/GamiFooter';
+import { GamiTokenLogo } from '@/components/gami/GamiTokenLogo';
 import { GeoBlockBanner } from '@/hooks/useGeoBlock';
 import {
   TOKEN_SALE_ABI,
@@ -198,7 +200,9 @@ export function ContributePage() {
   const stepIndex = STEPS.indexOf(step);
 
   return (
+    <>
     <div className="mx-auto max-w-lg px-6 py-16">
+      <GamiTokenLogo className="mb-4 h-14 w-14" />
       <h1 className="font-display text-3xl font-bold">Contribute</h1>
       <p className="mt-2 text-muted">Join the waitlist, verify identity, and contribute USDC on Base.</p>
 
@@ -347,5 +351,7 @@ export function ContributePage() {
         ← Back to sale dashboard
       </Link>
     </div>
+    <GamiFooter variant="ico" />
+    </>
   );
 }
