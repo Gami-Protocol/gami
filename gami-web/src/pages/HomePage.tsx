@@ -15,52 +15,37 @@ const ECOSYSTEM_CARDS = [
     href: '/wallet',
   },
   {
-    title: 'AI AGENT PLATFORM',
-    description: 'Autonomous engagement agents that dynamically generate quests and optimize reward systems in real-time.',
-    icon: 'bolt',
-    cta: 'Open Agent Platform',
-    ctaStyle: 'primary' as const,
-    href: '/wallet',
-    featured: true,
-  },
-  {
-    title: 'GAMI WALLET',
-    description: 'Gamified crypto wallet that tracks rewards, XP progression, and on-chain identity.',
-    icon: 'wallet',
-    cta: null,
-    href: '/wallet',
-  },
-  {
-    title: 'DEV DASHBOARD',
-    description: 'Add quests and leaderboards to any app in minutes with the Gami SDK.',
-    icon: 'code',
-    cta: 'Documentation',
-    ctaStyle: 'muted' as const,
-    href: '/whitepaper',
-    code: true,
-  },
-  {
-    title: '$GAMI TOKEN',
-    description: 'Powering the universal rewards economy. Stake to multiply XP and govern the protocol.',
-    icon: 'token',
-    cta: 'View Launch',
-    ctaStyle: 'purple' as const,
-    href: '/waitlist',
-  },
-  {
     title: 'BROWSER EXT.',
-    description: 'Earn rewards while you browse. Gami Extension detects partner sites and logs interactions.',
+    description: 'Earn rewards while you browse. The Gami Extension will detect partner sites and log verified interactions automatically.',
     icon: 'ext',
-    cta: 'Install Now',
-    ctaStyle: 'outline' as const,
-    href: '/wallet',
+    cta: 'Coming Soon',
+    ctaStyle: 'muted' as const,
+    comingSoon: true,
   },
 ];
 
-const L2_STEPS = [
-  { num: '1', title: 'Event Bus', detail: 'User actions → Gami SDK → Event Bus' },
-  { num: '2', title: 'AI Orchestration', detail: 'AI determines rewards & logic in real-time' },
-  { num: '3', title: 'L2 Ledger Anchor', detail: 'Merkle proofs settled on-chain for verifiability' },
+const L1_STEPS = [
+  {
+    num: '1',
+    title: 'Universal Identity',
+    detail: 'One Gami handle, XP profile, and soulbound badges that travel across every partner app, game, and community.',
+  },
+  {
+    num: '2',
+    title: 'Event Bus & SDK',
+    detail: 'Partners emit verified actions — quests, purchases, workouts, referrals — through the Gami SDK without building custom reward infra.',
+  },
+  {
+    num: '3',
+    title: 'On-Chain Settlement',
+    detail: 'Merkle-anchored proofs settle on Base L2 for tamper-resistant claims, verifiable leaderboards, and near-zero fees.',
+  },
+];
+
+const L1_LAYERS = [
+  { label: 'Layer 1', name: '$GAMI', desc: 'Governance, staking, protocol fees, and treasury coordination.' },
+  { label: 'Layer 2', name: 'Universal Points', desc: 'Non-transferable XP earned across quests, shopping, fitness, and referrals.' },
+  { label: 'Layer 3', name: 'Stable Spend', desc: 'Auto-converted stable balance for real-world payments via Gami Wallet.' },
 ];
 
 function CardIcon({ type }: { type: string }) {
@@ -71,17 +56,10 @@ function CardIcon({ type }: { type: string }) {
       </svg>
     );
   }
-  if (type === 'bolt') {
+  if (type === 'ext') {
     return (
       <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-      </svg>
-    );
-  }
-  if (type === 'wallet') {
-    return (
-      <svg className="h-6 w-6 text-gami-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
       </svg>
     );
   }
@@ -165,98 +143,83 @@ export function HomePage() {
             <div className="mb-4 hidden h-1 w-1/3 bg-gami-purple md:block" />
           </div>
 
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
             {ECOSYSTEM_CARDS.map((card) => (
               <div
                 key={card.title}
-                className={`group bg-gami-bg p-8 neo-border shadow-brutal transition-all hover:shadow-brutal-purple ${
-                  card.featured ? 'z-10 lg:scale-105' : ''
-                }`}
+                className="group bg-gami-bg p-8 neo-border shadow-brutal transition-all hover:shadow-brutal-purple"
               >
-                {card.icon === 'grid' && (
-                  <div className="gami-gradient neo-border mb-6 flex h-12 w-12 items-center justify-center">
-                    <CardIcon type="grid" />
-                  </div>
-                )}
-                {card.icon === 'bolt' && (
-                  <div className="neo-border mb-6 flex h-12 w-12 items-center justify-center bg-white text-black">
-                    <CardIcon type="bolt" />
-                  </div>
-                )}
-                {card.icon === 'wallet' && (
-                  <div className="mb-6 flex h-12 w-12 items-center justify-center border-2 border-gami-accent">
-                    <CardIcon type="wallet" />
-                  </div>
-                )}
+                <div
+                  className={`neo-border mb-6 flex h-12 w-12 items-center justify-center ${
+                    card.icon === 'grid' ? 'gami-gradient' : 'border-2 border-gami-accent/50'
+                  }`}
+                >
+                  <CardIcon type={card.icon} />
+                </div>
                 <h3 className="mb-4 font-display text-2xl font-bold">{card.title}</h3>
-                <p className={`mb-8 text-gray-400 ${card.icon !== 'code' ? 'h-20' : ''}`}>{card.description}</p>
+                <p className="mb-8 h-20 text-gray-400">{card.description}</p>
 
-                {card.code && (
-                  <div className="mb-6 rounded border border-white/10 bg-black/50 p-4 font-mono text-xs text-gami-accent">
-                    POST /v1/events
-                    <br />
-                    {'{ "action": "LEVEL_UP" }'}
-                  </div>
-                )}
-
-                {card.cta && (
+                {card.comingSoon ? (
+                  <span className="block w-full cursor-not-allowed border-2 border-white/30 py-3 text-center font-display font-bold uppercase text-gray-500">
+                    {card.cta}
+                  </span>
+                ) : card.cta && card.href ? (
                   <Link
                     to={card.href}
                     className={`block w-full py-3 text-center font-display font-bold uppercase transition-all ${
-                      card.ctaStyle === 'primary'
-                        ? 'gami-gradient neo-border shadow-brutal hover:shadow-none'
-                        : card.ctaStyle === 'purple'
-                          ? 'bg-gami-purple hover:bg-gami-accent'
-                          : card.ctaStyle === 'muted'
-                            ? 'border-2 border-white/50 hover:border-white'
-                            : 'border-2 border-white hover:bg-white hover:text-black'
+                      card.ctaStyle === 'outline'
+                        ? 'border-2 border-white hover:bg-white hover:text-black'
+                        : 'border-2 border-white/50 hover:border-white'
                     }`}
                   >
                     {card.cta}
                   </Link>
-                )}
-
-                {card.icon === 'wallet' && (
-                  <div className="flex gap-4">
-                    <Link to="/wallet" className="flex flex-1 items-center justify-center border border-white/20 py-3 hover:border-white">
-                      <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M17.5 12c0 2.5-1.9 4.4-4.4 4.4-2.5 0-4.4-1.9-4.4-4.4 0-2.5 1.9-4.4 4.4-4.4 2.5 0 4.4 1.9 4.4 4.4z" />
-                      </svg>
-                    </Link>
-                    <Link to="/wallet" className="flex flex-1 items-center justify-center border border-white/20 py-3 hover:border-white">
-                      <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" />
-                      </svg>
-                    </Link>
-                  </div>
-                )}
+                ) : null}
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* L2 Section */}
+      {/* Layer 1 Section */}
       <section className="mx-auto grid max-w-7xl items-center gap-20 px-6 py-24 lg:grid-cols-2">
         <div>
+          <div className="mb-4 inline-block border border-gami-purple bg-gami-purple/20 px-3 py-1 font-mono text-xs tracking-tighter text-gami-accent">
+            PROTOCOL ARCHITECTURE
+          </div>
           <h2 className="mb-8 font-display text-5xl font-bold leading-tight">
-            GAMI LAYER-2 <br />
-            <span className="text-outline">THE GAMING ENGINE</span>
+            GAMI LAYER 1 <br />
+            <span className="text-outline">THE REWARDS FOUNDATION</span>
           </h2>
-          <p className="mb-8 text-lg leading-relaxed text-gray-400">
-            Gami runs on a scalable Layer-2 EVM compatible network designed specifically for high-frequency reward
-            systems. We process millions of events per second with near-zero gas.
+          <p className="mb-6 text-lg leading-relaxed text-gray-400">
+            Layer 1 is the universal gamification backbone — a shared identity, event, and settlement layer that
+            lets any app plug into quests, XP, and on-chain rewards without rebuilding infrastructure from scratch.
+          </p>
+          <p className="mb-8 text-base leading-relaxed text-gray-500">
+            Partners connect once through the Gami SDK. User actions flow through a verified event bus, AI agents
+            orchestrate quest logic and reward multipliers, and proofs anchor to Base for auditable settlement.
           </p>
           <div className="space-y-6">
-            {L2_STEPS.map((step) => (
+            {L1_STEPS.map((step) => (
               <div key={step.num} className="flex items-start gap-4">
                 <div className="gami-gradient mt-1 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full font-bold">
                   {step.num}
                 </div>
                 <div>
                   <h4 className="mb-1 text-xl font-bold text-white">{step.title}</h4>
-                  <p className="font-mono text-sm italic text-gray-500">{step.detail}</p>
+                  <p className="text-sm leading-relaxed text-gray-500">{step.detail}</p>
                 </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-10 space-y-3 border-t border-white/10 pt-8">
+            <p className="font-mono text-xs uppercase tracking-widest text-gami-accent">Three-Layer Stack</p>
+            {L1_LAYERS.map((layer) => (
+              <div key={layer.label} className="flex flex-col gap-1 sm:flex-row sm:gap-4">
+                <span className="w-20 shrink-0 font-mono text-xs text-gami-purple">{layer.label}</span>
+                <span className="w-36 shrink-0 font-display text-sm font-bold text-white">{layer.name}</span>
+                <span className="text-sm text-gray-500">{layer.desc}</span>
               </div>
             ))}
           </div>
@@ -270,13 +233,13 @@ export function HomePage() {
                 <div className="h-3 w-3 rounded-full bg-yellow-500" />
                 <div className="h-3 w-3 rounded-full bg-green-500" />
               </div>
-              <span className="font-mono text-xs text-gami-accent">L2_METRICS_DASHBOARD</span>
+              <span className="font-mono text-xs text-gami-accent">L1_PROTOCOL_METRICS</span>
             </div>
             <div className="space-y-6">
               <div>
                 <div className="mb-2 flex justify-between font-mono text-xs">
-                  <span>THROUGHPUT</span>
-                  <span className="text-gami-accent">15,402 TPS</span>
+                  <span>PARTNER EVENTS / SEC</span>
+                  <span className="text-gami-accent">15,402 EPS</span>
                 </div>
                 <div className="neo-border h-3 w-full overflow-hidden bg-white/10">
                   <div className="gami-gradient h-full" style={{ width: '85%' }} />
@@ -284,22 +247,25 @@ export function HomePage() {
               </div>
               <div>
                 <div className="mb-2 flex justify-between font-mono text-xs">
-                  <span>NETWORK LOAD</span>
-                  <span className="text-gami-accent">OPTIMAL</span>
+                  <span>QUEST VERIFICATION</span>
+                  <span className="text-gami-accent">REAL-TIME</span>
                 </div>
                 <div className="neo-border h-3 w-full overflow-hidden bg-white/10">
-                  <div className="gami-gradient h-full" style={{ width: '32%' }} />
+                  <div className="gami-gradient h-full" style={{ width: '72%' }} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="border border-white/10 p-4">
-                  <span className="mb-1 block text-xs text-gray-500">GAS FEE (AVG)</span>
-                  <span className="text-xl font-bold">$0.00001</span>
+                  <span className="mb-1 block text-xs text-gray-500">SETTLEMENT (BASE)</span>
+                  <span className="text-xl font-bold">~0.8s</span>
                 </div>
                 <div className="border border-white/10 p-4">
-                  <span className="mb-1 block text-xs text-gray-500">SETTLEMENT</span>
-                  <span className="text-xl font-bold">0.8s</span>
+                  <span className="mb-1 block text-xs text-gray-500">AVG GAS FEE</span>
+                  <span className="text-xl font-bold">$0.00001</span>
                 </div>
+              </div>
+              <div className="rounded border border-gami-purple/30 bg-gami-purple/10 p-4 font-mono text-xs text-gami-accent">
+                SDK → Event Bus → AI Orchestration → L2 Ledger Anchor
               </div>
             </div>
           </div>

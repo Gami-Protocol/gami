@@ -86,6 +86,14 @@ body {
   box-shadow: 6px 6px 0 #000;
 }
 
+.progress-bar-clip {
+  clip-path: polygon(0% 0%, 95% 0%, 100% 50%, 95% 100%, 0% 100%);
+}
+
+.shadow-brutal-white {
+  box-shadow: 8px 8px 0px 0px #ffffff;
+}
+
 .raise-grid {
   background-image:
     linear-gradient(rgba(19, 17, 24, 0.07) 1px, transparent 1px),
