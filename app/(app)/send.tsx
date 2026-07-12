@@ -2,6 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowUp, Check, X } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -12,9 +13,11 @@ import {
 } from 'react-native';
 
 import { GBody, GButtonPrimary, GCard, GMono, GScreen, GSticker } from '@/components/gami';
+import { executeNovaProposal, getActiveChain } from '@/lib/chain';
 import { currentStats } from '@/lib/gami-sdk';
 import { haptics } from '@/lib/haptics';
 import { useOnboardingStore } from '@/lib/store';
+import { usePrivyBridge } from '@/lib/privy-bridge';
 
 const QUICK = [0.25, 0.5, 1] as const;
 
@@ -22,18 +25,18 @@ export default function Send() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const { hideBalances, spendGami } = useOnboardingStore();
+  const privy = usePrivyBridge();
   const stats = currentStats();
   const [recipient, setRecipient] = useState(
     Array.isArray(params.to) ? (params.to[0] ?? '') : (params.to ?? ''),
   );
   const [amount, setAmount] = useState('');
   const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
 
   const numeric = Number.parseFloat(amount) || 0;
   const balance = stats.gamiBalance;
-  const recipientOk =
-    /^0x[0-9a-fA-F]{6,}$/.test(recipient.trim()) ||
-    /^[a-z0-9_]{2,}(\.gami)?$/.test(recipient.trim());
+  const recipientOk = /^0x[0-9a-fA-F]{40}$/.test(recipient.trim());
   const amountOk = numeric > 0 && numeric <= balance;
   const canSend = recipientOk && amountOk && !sent;
 
@@ -42,11 +45,35 @@ export default function Send() {
     return null;
   }, [numeric, balance]);
 
-  const onSend = () => {
-    if (!canSend) return;
-    haptics.success();
-    spendGami(Number(numeric.toFixed(2)));
-    setSent(true);
+  const onSend = async () => {
+    if (!canSend || sending) return;
+    setSending(true);
+    try {
+      const provider = await privy.getWalletProvider();
+      const account = privy.walletAddress;
+      if (!provider || !account?.startsWith('0x')) {
+        throw new Error('Sign in with Privy before sending GAMI.');
+      }
+      await executeNovaProposal(provider, account as `0x${string}`, {
+        id: `manual_${Date.now()}`,
+        kind: 'gami_transfer',
+        chain: getActiveChain(),
+        from: account,
+        to: recipient.trim(),
+        amount: numeric.toString(),
+        symbol: 'GAMI',
+      });
+      spendGami(Number(numeric.toFixed(2)));
+      haptics.success();
+      setSent(true);
+    } catch (sendError) {
+      Alert.alert(
+        'Transaction not submitted',
+        sendError instanceof Error ? sendError.message : 'The wallet rejected this action.',
+      );
+    } finally {
+      setSending(false);
+    }
   };
 
   if (sent) {
@@ -105,7 +132,7 @@ export default function Send() {
             <TextInput
               value={recipient}
               onChangeText={setRecipient}
-              placeholder="handle.gami or 0x address"
+              placeholder="0x wallet address"
               placeholderTextColor="#6B6880"
               autoCapitalize="none"
               autoCorrect={false}
@@ -159,10 +186,10 @@ export default function Send() {
 
         <View className="px-5 pb-4">
           <GButtonPrimary
-            label="SEND IT"
-            disabled={!canSend}
+            label={sending ? 'OPENING PRIVY…' : 'REVIEW + SIGN'}
+            disabled={!canSend || sending}
             icon={<ArrowUp size={18} color={canSend ? '#fff' : '#6B6880'} />}
-            onPress={onSend}
+            onPress={() => void onSend()}
           />
         </View>
       </KeyboardAvoidingView>

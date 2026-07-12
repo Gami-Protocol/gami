@@ -12,12 +12,16 @@ export interface PrivyLoginResult {
   userId: string;
 }
 export type PrivyVerify = PrivyLoginResult | { ok: false; error: string };
+export interface PrivyWalletProvider {
+  request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
+}
 
 export interface PrivyBridge {
   sendCode: (email: string) => Promise<AuthResult>;
   loginWithCode: (email: string, code: string) => Promise<PrivyVerify>;
   walletAddress: string | null;
   ensureWallet: () => Promise<string | null>;
+  getWalletProvider: () => Promise<PrivyWalletProvider | null>;
   logout: () => Promise<void>;
 }
 
@@ -27,6 +31,7 @@ export function usePrivyBridge(): PrivyBridge {
     loginWithCode: async () => ({ ok: false, error: 'Privy is unavailable on web.' }),
     walletAddress: null,
     ensureWallet: async () => null,
+    getWalletProvider: async () => null,
     logout: async () => {},
   };
 }

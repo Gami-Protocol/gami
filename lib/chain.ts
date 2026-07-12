@@ -2,10 +2,30 @@
  * Chain configuration and viem clients for $GAMI on Base.
  */
 
-import { createPublicClient, createWalletClient, custom, formatEther, http, type Address } from 'viem';
+import {
+  createPublicClient,
+  createWalletClient,
+  custom,
+  formatEther,
+  http,
+  parseEther,
+  type Address,
+} from 'viem';
 import { base, baseSepolia } from 'viem/chains';
 
+import { type NovaProposal, validateNovaProposalAuthorization } from '@/lib/nova-proposals';
+
 export const GAMI_TOKEN_ABI = [
+  {
+    name: 'transfer',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'to', type: 'address' },
+      { name: 'amount', type: 'uint256' },
+    ],
+    outputs: [{ name: '', type: 'bool' }],
+  },
   {
     name: 'balanceOf',
     type: 'function',
@@ -153,6 +173,53 @@ export async function fetchClaimableGami(
 type Eip1193Provider = {
   request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
 };
+
+export function validateNovaProposal(
+  proposal: NovaProposal,
+  account: Address,
+  chain: GamiChain = getActiveChain(),
+): string | null {
+  const authorizationError = validateNovaProposalAuthorization(proposal, account, chain);
+  if (authorizationError) return authorizationError;
+  if (proposal.kind === 'gami_claim') {
+    return getVestingAddress(chain) ? null : 'Vesting contract is not configured.';
+  }
+  if (!getGamiTokenAddress(chain)) return 'GAMI token contract is not configured.';
+  try {
+    if (parseEther(proposal.amount) <= 0n) return 'Transfer amount must be greater than zero.';
+  } catch {
+    return 'Transfer amount is invalid.';
+  }
+  return null;
+}
+
+/** Execute a previously previewed Nova proposal through the user's Privy provider. */
+export async function executeNovaProposal(
+  provider: Eip1193Provider,
+  account: Address,
+  proposal: NovaProposal,
+): Promise<`0x${string}`> {
+  const chain = getActiveChain();
+  const validationError = validateNovaProposal(proposal, account, chain);
+  if (validationError) throw new Error(validationError);
+
+  if (proposal.kind === 'gami_claim') {
+    return claimVestedTokens(provider, account, chain);
+  }
+  const tokenAddress = getGamiTokenAddress(chain);
+  if (!tokenAddress) throw new Error('GAMI token contract is not configured');
+  const walletClient = createWalletClient({
+    account,
+    chain: getChainConfig(chain),
+    transport: custom(provider),
+  });
+  return walletClient.writeContract({
+    address: tokenAddress,
+    abi: GAMI_TOKEN_ABI,
+    functionName: 'transfer',
+    args: [proposal.to as Address, parseEther(proposal.amount)],
+  });
+}
 
 /** Execute vesting.claim() via an EIP-1193 provider (Privy embedded wallet). */
 export async function claimVestedTokens(

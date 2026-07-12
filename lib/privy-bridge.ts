@@ -16,6 +16,9 @@ export interface PrivyLoginResult {
   userId: string;
 }
 export type PrivyVerify = PrivyLoginResult | { ok: false; error: string };
+export interface PrivyWalletProvider {
+  request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
+}
 
 export interface PrivyBridge {
   sendCode: (email: string) => Promise<AuthResult>;
@@ -28,6 +31,7 @@ export interface PrivyBridge {
    * never fall back to a mock address.
    */
   ensureWallet: () => Promise<string | null>;
+  getWalletProvider: () => Promise<PrivyWalletProvider | null>;
   logout: () => Promise<void>;
 }
 
@@ -147,6 +151,11 @@ export function usePrivyBridge(): PrivyBridge {
     loginWithCode: doLoginWithCode,
     walletAddress,
     ensureWallet,
+    getWalletProvider: async () => {
+      const embedded = wallets?.[0];
+      if (!embedded) return null;
+      return (await embedded.getProvider()) as PrivyWalletProvider;
+    },
     logout: async () => {
       try {
         await logout();
