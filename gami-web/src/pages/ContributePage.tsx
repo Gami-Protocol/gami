@@ -8,6 +8,7 @@ import {
 } from 'wagmi';
 import { parseUnits } from 'viem';
 
+import { ConnectWallet } from '@/components/ConnectWallet';
 import { GamiFooter } from '@/components/gami/GamiFooter';
 import { GamiTokenLogo } from '@/components/gami/GamiTokenLogo';
 import { GeoBlockBanner } from '@/hooks/useGeoBlock';
@@ -208,6 +209,20 @@ export function ContributePage() {
 
       <GeoBlockBanner />
 
+      <div className="mt-6 border-2 border-primary bg-surface p-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="font-mono text-xs font-bold text-primary">PRIVY WALLET ACCOUNT</p>
+            <p className="mt-1 text-xs text-muted">
+              {isConnected
+                ? 'Signed in. This wallet will receive and manage your token allocation.'
+                : 'Sign in with email or connect a wallet before reserving an allocation.'}
+            </p>
+          </div>
+          <ConnectWallet />
+        </div>
+      </div>
+
       <div className="mt-6 flex gap-1">
         {STEPS.map((s, i) => (
           <div
@@ -247,10 +262,14 @@ export function ContributePage() {
           </div>
           <button
             type="submit"
-            disabled={status === 'loading'}
+            disabled={status === 'loading' || !isConnected}
             className="sticker-shadow w-full bg-primary py-4 font-display font-bold uppercase disabled:opacity-50"
           >
-            {status === 'loading' ? 'Submitting…' : '1. Join Waitlist'}
+            {status === 'loading'
+              ? 'Submitting…'
+              : isConnected
+                ? '1. Reserve Allocation'
+                : 'Sign in to continue'}
           </button>
         </form>
       )}
