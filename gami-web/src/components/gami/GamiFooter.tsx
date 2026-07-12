@@ -34,22 +34,35 @@ export function GamiFooter({ variant = 'default' }: { variant?: 'default' | 'ico
             </p>
             <div className="flex gap-4">
               <a
-                href="#"
+                href="https://x.com/gamiprotocol"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Gami Protocol on X"
                 className="flex h-10 w-10 items-center justify-center border border-white/10 transition-all hover:bg-gami-purple"
               >
                 𝕏
               </a>
               <a
-                href="#"
-                className="flex h-10 w-10 items-center justify-center border border-white/10 font-bold italic transition-all hover:bg-gami-purple"
+                href="https://discord.gg/9Y8vpDAhbD"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Join Gami Protocol on Discord"
+                className="flex h-10 w-10 items-center justify-center border border-white/10 transition-all hover:bg-gami-purple"
               >
-                DI
+                <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5 fill-current">
+                  <path d="M20.32 4.37a19.8 19.8 0 0 0-4.89-1.52l-.61 1.26a18.3 18.3 0 0 0-5.63 0l-.62-1.26a19.7 19.7 0 0 0-4.89 1.53C.59 9.1-.24 13.7.18 18.24a19.9 19.9 0 0 0 6 3.03l1.48-2.02a12.8 12.8 0 0 1-2.33-1.12l.57-.44a14.2 14.2 0 0 0 12.2 0l.58.44c-.74.44-1.52.82-2.34 1.12l1.48 2.02a19.8 19.8 0 0 0 6-3.03c.5-5.27-.86-9.83-3.5-13.87ZM8.02 15.46c-1.17 0-2.13-1.08-2.13-2.4 0-1.33.94-2.41 2.13-2.41 1.2 0 2.15 1.09 2.13 2.4 0 1.33-.94 2.41-2.13 2.41Zm7.96 0c-1.17 0-2.13-1.08-2.13-2.4 0-1.33.94-2.41 2.13-2.41 1.2 0 2.15 1.09 2.13 2.4 0 1.33-.93 2.41-2.13 2.41Z" />
+                </svg>
               </a>
               <a
-                href="#"
-                className="flex h-10 w-10 items-center justify-center border border-white/10 font-bold italic transition-all hover:bg-gami-purple"
+                href="https://t.me/gamiprotocol"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Join Gami Protocol on Telegram"
+                className="flex h-10 w-10 items-center justify-center border border-white/10 transition-all hover:bg-gami-purple"
               >
-                TG
+                <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5 fill-current">
+                  <path d="M11.94 0A12 12 0 1 0 24 12 12 12 0 0 0 11.94 0Zm4.97 7.22-1.98 9.3c-.14.65-.53.81-1.08.5l-3-2.21-1.45 1.4c-.16.16-.29.29-.59.29l.21-3.05 5.56-5.03c.25-.21-.05-.33-.37-.12l-6.87 4.33-2.96-.93c-.64-.2-.66-.64.13-.95l11.57-4.46c.54-.2 1.01.13.83.93Z" />
+                </svg>
               </a>
             </div>
           </div>
@@ -64,19 +77,34 @@ export function GamiFooter({ variant = 'default' }: { variant?: 'default' | 'ico
               className={`space-y-4 text-sm ${isIco ? 'text-xs font-bold uppercase tracking-widest text-gray-500' : 'text-gray-500'}`}
             >
               <li>
-                <Link to="/wallet" className="transition-colors hover:text-white">
+                <a
+                  href="https://www.gamiprotocol.io/app"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="transition-colors hover:text-white"
+                >
                   App Dashboard
-                </Link>
+                </a>
               </li>
               <li>
-                <Link to="/wallet" className="transition-colors hover:text-white">
+                <a
+                  href="https://www.gamiprotocol.io/agents"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="transition-colors hover:text-white"
+                >
                   AI Agents
-                </Link>
+                </a>
               </li>
               <li>
-                <Link to="/wallet" className="transition-colors hover:text-white">
+                <a
+                  href="https://www.gamiprotocol.io/app/wallet"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="transition-colors hover:text-white"
+                >
                   {isIco ? 'Wallet' : 'Wallet Extension'}
-                </Link>
+                </a>
               </li>
               <li>
                 <Link to="/whitepaper" className="transition-colors hover:text-white">
@@ -96,24 +124,44 @@ export function GamiFooter({ variant = 'default' }: { variant?: 'default' | 'ico
               className={`space-y-4 text-sm ${isIco ? 'text-xs font-bold uppercase tracking-widest text-gray-500' : 'text-gray-500'}`}
             >
               <li>
-                <Link to="/whitepaper" className="transition-colors hover:text-white">
+                <a
+                  href="https://www.gamiprotocol.io/developers/docs"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="transition-colors hover:text-white"
+                >
                   Documentation
-                </Link>
+                </a>
               </li>
               <li>
-                <Link to="/whitepaper" className="transition-colors hover:text-white">
+                <a
+                  href="https://www.gamiprotocol.io/developers/sdk"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="transition-colors hover:text-white"
+                >
                   SDK Reference
-                </Link>
+                </a>
               </li>
               <li>
-                <Link to="/whitepaper" className="transition-colors hover:text-white">
+                <a
+                  href="https://www.gamiprotocol.io/developers/api"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="transition-colors hover:text-white"
+                >
                   API Keys
-                </Link>
+                </a>
               </li>
               <li>
-                <Link to="/whitepaper" className="transition-colors hover:text-white">
+                <a
+                  href="https://www.gamiprotocol.io/app"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="transition-colors hover:text-white"
+                >
                   Status
-                </Link>
+                </a>
               </li>
             </ul>
           </div>
@@ -158,9 +206,14 @@ export function GamiFooter({ variant = 'default' }: { variant?: 'default' | 'ico
               ) : (
                 <>
                   <li>
-                    <Link to="/whitepaper" className="transition-colors hover:text-white">
+                    <a
+                      href="https://www.gamiprotocol.io/"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="transition-colors hover:text-white"
+                    >
                       About Us
-                    </Link>
+                    </a>
                   </li>
                   <li>
                     <Link to="/tokenomics" className="transition-colors hover:text-white">
@@ -168,9 +221,12 @@ export function GamiFooter({ variant = 'default' }: { variant?: 'default' | 'ico
                     </Link>
                   </li>
                   <li>
-                    <Link to="/whitepaper" className="transition-colors hover:text-white">
+                    <a
+                      href="mailto:admin@gamiprotocol.io?subject=Gami%20Protocol%20Careers"
+                      className="transition-colors hover:text-white"
+                    >
                       Careers
-                    </Link>
+                    </a>
                   </li>
                   <li>
                     <Link to="/legal/privacy" className="transition-colors hover:text-white">
