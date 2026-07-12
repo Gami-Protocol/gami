@@ -2,12 +2,15 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
   useAccount,
+  useConnect,
   useReadContract,
   useWaitForTransactionReceipt,
   useWriteContract,
 } from 'wagmi';
 import { parseUnits } from 'viem';
 
+import { ConnectWallet } from '@/components/ConnectWallet';
+import { SaleRaiseHeader } from '@/components/sale/SaleRaiseHeader';
 import { GeoBlockBanner } from '@/hooks/useGeoBlock';
 import {
   TOKEN_SALE_ABI,
@@ -35,6 +38,7 @@ export function ContributePage() {
   const walletParam = searchParams.get('wallet') ?? undefined;
 
   const { address, isConnected } = useAccount();
+  const { connect, connectors } = useConnect();
   const [step, setStep] = useState<Step>('waitlist');
   const [email, setEmail] = useState('');
   const [amount, setAmount] = useState('100');
@@ -198,9 +202,36 @@ export function ContributePage() {
   const stepIndex = STEPS.indexOf(step);
 
   return (
-    <div className="mx-auto max-w-lg px-6 py-16">
-      <h1 className="font-display text-3xl font-bold">Contribute</h1>
-      <p className="mt-2 text-muted">Join the waitlist, verify identity, and contribute USDC on Base.</p>
+    <div className="min-h-screen bg-[#f0edff] text-[#131118]">
+      <SaleRaiseHeader />
+      <div className="mx-auto max-w-lg px-4 py-10 sm:px-6">
+        <h1 className="font-display text-3xl font-bold uppercase italic">Contribute</h1>
+        <p className="mt-2 font-mono text-sm text-[#4b4753]">
+          Join the waitlist, verify identity, and contribute USDC on Base.
+        </p>
+
+        <div className="mt-6 flex items-center justify-between border-2 border-black bg-white p-4 shadow-[4px_4px_0_#131118]">
+          <div>
+            <p className="font-mono text-[10px] uppercase text-[#77727e]">Wallet</p>
+            <p className="mt-1 font-mono text-xs font-bold">
+              {isConnected && address ? `${address.slice(0, 6)}…${address.slice(-4)}` : 'Not connected'}
+            </p>
+          </div>
+          <ConnectWallet variant="sale" />
+        </div>
+
+        {!isConnected && (
+          <button
+            type="button"
+            onClick={() => {
+              const connector = connectors.find((c) => c.ready) ?? connectors[0];
+              if (connector) connect({ connector });
+            }}
+            className="mt-4 w-full border-2 border-black bg-[#7047eb] py-3 font-display text-sm font-bold uppercase text-white shadow-[4px_4px_0_#131118]"
+          >
+            Connect Wallet to Continue
+          </button>
+        )}
 
       <GeoBlockBanner />
 
@@ -343,9 +374,10 @@ export function ContributePage() {
         </p>
       )}
 
-      <Link to="/sale" className="mt-8 inline-block font-mono text-sm text-muted hover:text-white">
-        ← Back to sale dashboard
+      <Link to="/sale" className="mt-8 inline-block font-mono text-sm font-bold text-[#7047eb] hover:underline">
+        ← Back to Token Sale
       </Link>
+      </div>
     </div>
   );
 }

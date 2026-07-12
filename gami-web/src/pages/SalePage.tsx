@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAccount, useReadContract, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
+import { useAccount, useConnect, useReadContract, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
 import { formatUnits, parseUnits } from 'viem';
 
 import { ConnectWallet } from '@/components/ConnectWallet';
+import { SaleRaiseHeader } from '@/components/sale/SaleRaiseHeader';
 import {
   TOKEN_SALE_ABI,
   USDC_ABI,
@@ -41,6 +42,7 @@ function walletErrorMessage(error: Error): string {
 
 export function SalePage() {
   const { address, isConnected } = useAccount();
+  const { connect, connectors, isPending: isConnecting } = useConnect();
   const [stats, setStats] = useState<SaleStats | null>(null);
   const [eligibility, setEligibility] = useState<SaleEligibility | null>(null);
   const [amount, setAmount] = useState('500');
@@ -166,7 +168,6 @@ export function SalePage() {
   const cap = hardCapRaw
     ? Number(formatUnits(hardCapRaw as bigint, 6))
     : (stats?.hard_cap_usd ?? FALLBACK_CAP);
-  const pct = cap > 0 ? Math.min(100, (raised / cap) * 100) : 0;
   const price = pricePerToken ? Number(formatUnits(pricePerToken as bigint, 6)) : FALLBACK_PRICE;
   const phase =
     phaseIndex !== undefined
@@ -213,7 +214,8 @@ export function SalePage() {
       detail: 'Connect a Base-compatible wallet',
       xp: '+100 XP',
       complete: isConnected,
-      href: null,
+      href: null as string | null,
+      action: 'connect' as const,
     },
     {
       title: 'Join the whitelist',
@@ -221,6 +223,7 @@ export function SalePage() {
       xp: '+250 XP',
       complete: Boolean(eligibility?.on_waitlist || isEligible),
       href: '/sale/contribute',
+      action: null,
     },
     {
       title: 'Power the protocol',
@@ -228,46 +231,24 @@ export function SalePage() {
       xp: '+1,000 XP',
       complete: (eligibility?.contributed_usd ?? 0) > 0,
       href: '/sale/contribute',
+      action: null,
     },
   ];
 
+  function handleWalletQuest() {
+    const connector = connectors.find((c) => c.ready) ?? connectors[0];
+    if (connector) connect({ connector });
+  }
+
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#f0edff] pt-24 text-[#131118]">
+    <div className="relative min-h-screen overflow-hidden bg-[#f0edff] text-[#131118]">
       <div className="raise-grid pointer-events-none absolute inset-0 opacity-60" />
       <div className="pointer-events-none absolute -left-24 top-44 h-72 w-72 rounded-full bg-[#7047eb]/20 blur-3xl" />
       <div className="pointer-events-none absolute -right-16 top-12 h-80 w-80 bg-[#ffeb55]/40 blur-3xl" />
 
-      <header className="relative z-10 border-y-[3px] border-black bg-[#131118] text-white">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-4">
-          <div className="flex items-center gap-3 font-display font-bold">
-            <span className="flex h-11 w-11 rotate-3 items-center justify-center border-2 border-white bg-[#7047eb] text-2xl">
-              G
-            </span>
-            <span className="leading-[0.85] tracking-tight">
-              GAMI
-              <br />
-              PROTOCOL
-            </span>
-          </div>
-          <div className="flex items-center gap-5 font-mono text-xs sm:text-sm">
-            <span className="border border-[#67f5a1] px-3 py-2 font-bold text-[#67f5a1]">
-              <span className="mr-2 animate-pulse">●</span>RAISE LIVE
-            </span>
-            <span className="font-bold">
-              ${raised.toLocaleString(undefined, { maximumFractionDigits: 0 })} / $
-              {cap.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-            </span>
-          </div>
-        </div>
-        <div className="h-2 bg-white/15">
-          <div
-            className="h-full bg-[#ffeb55] transition-all duration-700"
-            style={{ width: `${pct}%` }}
-          />
-        </div>
-      </header>
+      <SaleRaiseHeader raised={raised} cap={cap} showProgress />
 
-      <main className="relative z-10 mx-auto max-w-7xl px-6 py-12 lg:py-20">
+      <main className="relative z-10 mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:py-16">
         <div className="grid items-center gap-14 lg:grid-cols-[1.08fr_0.92fr]">
           <section>
             <div className="mb-7 inline-flex -rotate-1 items-center gap-3 border-2 border-black bg-[#ffeb55] px-4 py-2 font-mono text-xs font-bold uppercase shadow-[4px_4px_0_#131118]">
@@ -331,7 +312,7 @@ export function SalePage() {
                     <p className="font-mono text-xs uppercase text-[#77727e]">Presale round 1</p>
                   </div>
                 </div>
-                <ConnectWallet light />
+                <ConnectWallet variant="sale" />
               </div>
 
               <div className="my-7 flex items-center justify-between">
@@ -386,9 +367,14 @@ export function SalePage() {
               </div>
 
               {!isConnected ? (
-                <div className="mt-5 flex justify-center border-2 border-dashed border-black/30 p-4">
-                  <ConnectWallet light />
-                </div>
+                <button
+                  type="button"
+                  onClick={handleWalletQuest}
+                  disabled={isConnecting}
+                  className="mt-5 w-full border-[3px] border-black bg-[#7047eb] py-4 font-display font-bold uppercase tracking-wide text-white shadow-[5px_5px_0_#131118] transition hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[3px_3px_0_#131118] disabled:opacity-60"
+                >
+                  {isConnecting ? 'Connecting…' : 'Connect Wallet to Contribute'}
+                </button>
               ) : (
                 <button
                   type="button"
@@ -459,23 +445,40 @@ export function SalePage() {
                       >
                         {quest.complete ? '✓' : '○'}
                       </span>
-                      <span className="font-mono text-[10px] font-bold text-[#7047eb]">
-                        {quest.xp}
-                      </span>
+                      <span className="font-mono text-[10px] font-bold text-[#7047eb]">{quest.xp}</span>
                     </div>
                     <p className="mt-5 font-display text-sm font-bold uppercase">{quest.title}</p>
                     <p className="mt-1 text-xs text-[#77727e]">{quest.detail}</p>
                   </>
                 );
-                return quest.href && !quest.complete ? (
-                  <Link
-                    key={quest.title}
-                    to={quest.href}
-                    className="border-2 border-black p-4 transition hover:-translate-y-1 hover:bg-[#f0edff]"
-                  >
-                    {body}
-                  </Link>
-                ) : (
+
+                if (quest.action === 'connect' && !quest.complete) {
+                  return (
+                    <button
+                      key={quest.title}
+                      type="button"
+                      onClick={handleWalletQuest}
+                      disabled={isConnecting}
+                      className="border-2 border-black p-4 text-left transition hover:-translate-y-1 hover:bg-[#f0edff] disabled:opacity-60"
+                    >
+                      {body}
+                    </button>
+                  );
+                }
+
+                if (quest.href && !quest.complete) {
+                  return (
+                    <Link
+                      key={quest.title}
+                      to={quest.href}
+                      className="border-2 border-black p-4 transition hover:-translate-y-1 hover:bg-[#f0edff]"
+                    >
+                      {body}
+                    </Link>
+                  );
+                }
+
+                return (
                   <div key={quest.title} className="border-2 border-black p-4">
                     {body}
                   </div>
