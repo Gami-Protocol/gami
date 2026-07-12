@@ -57,6 +57,19 @@ Scan the QR code with Expo Go on your phone to see your app running locally.
 - Click on "New codespace" to launch a new Codespace environment.
 - Edit files directly within the Codespace and commit and push your changes once you're done.
 
+## Agentic Quest Chat (Next.js)
+
+The **Gami Agentic Quest** web interface lives in [`gami-agentic-web/`](gami-agentic-web/) — a Next.js 15 app with the agentic chat UI and edge API at `/api/chat/agentic-quest`.
+
+```sh
+cd gami-agentic-web
+cp .env.example .env.local
+npm install
+npm run dev
+```
+
+Open [http://localhost:3010](http://localhost:3010).
+
 ## What technologies are used for this project?
 
 This project is built with:
@@ -66,6 +79,7 @@ This project is built with:
 - TypeScript
 - AsyncStorage (local data persistence)
 - Expo Router (navigation)
+- Next.js 15 (`gami-agentic-web/` — agentic quest chat)
 
 All generated automatically by Bilt from your natural language instructions.
 

@@ -1,0 +1,56 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-infinity-bg: #0e0e12;
+  --color-infinity-surface: #16161e;
+  --color-infinity-surface-2: #1e1e2a;
+  --color-infinity-hairline: #2a2a38;
+  --color-infinity-violet: #6e3cfb;
+  --color-infinity-violet-glow: #9a6bff;
+  --color-infinity-magenta: #ff3d8b;
+  --color-infinity-green: #3df5a0;
+  --color-infinity-ink: #f4f2ff;
+  --color-infinity-ink-dim: #a09cb8;
+  --color-infinity-ink-mute: #6b6880;
+
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+@layer base {
+  * {
+    @apply border-infinity-hairline;
+  }
+
+  body {
+    @apply bg-infinity-bg text-infinity-ink font-sans antialiased;
+  }
+}
+
+@layer utilities {
+  .infinity-panel {
+    @apply bg-infinity-surface border border-infinity-hairline rounded-2xl;
+  }
+
+  .infinity-glow {
+    box-shadow:
+      0 0 20px rgba(110, 60, 251, 0.35),
+      inset 0 1px 0 rgba(154, 107, 255, 0.12);
+  }
+
+  .infinity-gradient {
+    background: linear-gradient(135deg, #6e3cfb 0%, #b14bff 50%, #ff3d8b 100%);
+  }
+
+  .infinity-gradient-text {
+    background: linear-gradient(135deg, #6e3cfb 0%, #b14bff 50%, #ff3d8b 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .obsidian-terminal {
+    background: linear-gradient(180deg, #12121a 0%, #0e0e12 100%);
+  }
+}
