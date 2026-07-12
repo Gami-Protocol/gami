@@ -33,6 +33,7 @@ All client env vars use the `VITE_` prefix (see `.env.example`):
 ```
 VITE_SUPABASE_URL=
 VITE_SUPABASE_ANON_KEY=
+VITE_PRIVY_APP_ID=
 VITE_CHAIN_ID=84532
 VITE_TOKEN_SALE_ADDRESS=
 VITE_GAMI_TOKEN_ADDRESS=
@@ -40,6 +41,9 @@ VITE_USDC_ADDRESS=
 VITE_VESTING_ADDRESS=
 VITE_BLOCKED_COUNTRIES=US,CU,IR,KP,SY
 ```
+
+Set `VITE_PRIVY_APP_ID` to enable Privy email/wallet sign-in on the sale flow. Users who sign in without an
+existing wallet receive a Privy embedded Ethereum wallet for their token allocation.
 
 Deploy contracts first (`cd gami-contracts && npm run deploy:sepolia`), then copy addresses from `deployments/84532.json`.
 

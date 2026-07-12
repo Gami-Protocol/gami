@@ -335,13 +335,13 @@ export function SalePage() {
 
               <div className="my-7 flex items-center justify-between">
                 <div>
-                  <p className="font-mono text-[10px] uppercase text-[#77727e]">Wallet status</p>
+                  <p className="font-mono text-[10px] uppercase text-[#77727e]">Privy allocation account</p>
                   <p className="mt-1 font-mono text-xs font-bold">
                     {isConnected
                       ? isEligible
-                        ? 'VERIFIED + ELIGIBLE'
-                        : 'CONNECTED'
-                      : 'NOT CONNECTED'}
+                        ? 'SIGNED IN + ELIGIBLE'
+                        : 'SIGNED IN — VERIFY NEXT'
+                      : 'SIGN IN REQUIRED'}
                   </p>
                 </div>
                 <span
@@ -385,8 +385,11 @@ export function SalePage() {
               </div>
 
               {!isConnected ? (
-                <div className="mt-5 flex justify-center border-2 border-dashed border-black/30 p-4">
-                  <ConnectWallet light />
+                <div className="mt-5 border-2 border-dashed border-black/30 bg-[#f4f1f8] p-4 text-center">
+                  <p className="mb-3 font-mono text-[10px] font-bold uppercase text-[#77727e]">
+                    Sign in with email or an existing wallet. Privy creates a secure embedded wallet when needed.
+                  </p>
+                  <ConnectWallet light className="w-full py-4 text-xs" />
                 </div>
               ) : (
                 <button

@@ -6,6 +6,7 @@ function read(name: string): string | undefined {
 export const env = {
   supabaseUrl: () => read('VITE_SUPABASE_URL'),
   supabaseAnonKey: () => read('VITE_SUPABASE_ANON_KEY'),
+  privyAppId: () => read('VITE_PRIVY_APP_ID'),
   chainId: () => Number(read('VITE_CHAIN_ID') ?? '84532'),
   vestingAddress: () => read('VITE_VESTING_ADDRESS'),
   tokenSaleAddress: () => read('VITE_TOKEN_SALE_ADDRESS'),

@@ -1,6 +1,55 @@
+import { usePrivy } from '@privy-io/react-auth';
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
 
-export function ConnectWallet({ light = false }: { light?: boolean }) {
+import { env } from '@/lib/env';
+
+type ConnectWalletProps = {
+  light?: boolean;
+  className?: string;
+};
+
+function buttonClass(light: boolean, className: string): string {
+  return `${className} px-3 py-2 font-mono text-[10px] font-bold uppercase disabled:cursor-wait disabled:opacity-50 ${
+    light
+      ? 'border-2 border-black bg-[#7047eb] text-white shadow-[3px_3px_0_#131118]'
+      : 'bg-primary'
+  }`;
+}
+
+function PrivyConnectWallet({ light = false, className = '' }: ConnectWalletProps) {
+  const { ready, authenticated, login, logout } = usePrivy();
+  const { address } = useAccount();
+
+  if (authenticated) {
+    return (
+      <button
+        type="button"
+        onClick={() => void logout()}
+        title="Sign out and disconnect wallet"
+        className={`border-2 px-3 py-2 font-mono text-[10px] font-bold transition ${
+          light
+            ? 'border-black bg-[#67f5a1] text-black hover:bg-[#ffeb55]'
+            : 'border-white/20 hover:border-primary'
+        } ${className}`}
+      >
+        {address ? `${address.slice(0, 6)}…${address.slice(-4)}` : 'PRIVY SIGNED IN'}
+      </button>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      disabled={!ready}
+      onClick={() => login({ loginMethods: ['email', 'wallet'], walletChainType: 'ethereum-only' })}
+      className={buttonClass(light, className)}
+    >
+      {ready ? 'Sign in / Connect wallet' : 'Loading Privy…'}
+    </button>
+  );
+}
+
+function LegacyConnectWallet({ light = false, className = '' }: ConnectWalletProps) {
   const { address, isConnected } = useAccount();
   const { connect, connectors, isPending } = useConnect();
   const { disconnect } = useDisconnect();
@@ -15,7 +64,7 @@ export function ConnectWallet({ light = false }: { light?: boolean }) {
           light
             ? 'border-black bg-[#67f5a1] text-black hover:bg-[#ffeb55]'
             : 'border-white/20 hover:border-primary'
-        }`}
+        } ${className}`}
       >
         {address.slice(0, 6)}…{address.slice(-4)}
       </button>
@@ -28,13 +77,13 @@ export function ConnectWallet({ light = false }: { light?: boolean }) {
       type="button"
       disabled={!connector || isPending}
       onClick={() => connector && connect({ connector })}
-      className={`px-3 py-2 font-mono text-[10px] font-bold uppercase disabled:opacity-50 ${
-        light
-          ? 'border-2 border-black bg-[#7047eb] text-white shadow-[3px_3px_0_#131118]'
-          : 'bg-primary'
-      }`}
+      className={buttonClass(light, className)}
     >
       {isPending ? 'Connecting…' : 'Connect Wallet'}
     </button>
   );
+}
+
+export function ConnectWallet(props: ConnectWalletProps) {
+  return env.privyAppId() ? <PrivyConnectWallet {...props} /> : <LegacyConnectWallet {...props} />;
 }
