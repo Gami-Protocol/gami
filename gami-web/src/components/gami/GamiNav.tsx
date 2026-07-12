@@ -46,7 +46,7 @@ export function GamiNav() {
             <span className="font-display text-2xl font-bold tracking-tight">GAMI</span>
           </Link>
 
-          <div className="hidden items-center gap-8 font-display text-sm font-medium uppercase tracking-widest lg:flex">
+          <div className="hidden items-center gap-8 font-display text-sm font-medium uppercase tracking-widest xl:flex">
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.label}
@@ -60,7 +60,7 @@ export function GamiNav() {
             ))}
           </div>
 
-          <div className="hidden items-center gap-4 lg:flex">
+          <div className="hidden items-center gap-4 xl:flex">
             <Link
               to="/waitlist"
               className="border-2 border-white px-6 py-2 font-display text-xs font-bold tracking-widest transition-all hover:bg-white hover:text-black"
@@ -78,7 +78,7 @@ export function GamiNav() {
           <button
             type="button"
             onClick={() => setMobileMenu(!mobileMenu)}
-            className="p-2 lg:hidden"
+            className="p-2 xl:hidden"
             aria-label="Toggle menu"
           >
             {mobileMenu ? (
@@ -105,7 +105,7 @@ export function GamiNav() {
       </nav>
 
       {mobileMenu && (
-        <div className="fixed inset-0 z-40 bg-gami-bg px-6 pt-24 lg:hidden">
+        <div className="fixed inset-0 z-40 bg-gami-bg px-6 pt-24 xl:hidden">
           <div className="flex flex-col gap-6 font-display text-2xl font-bold uppercase">
             {NAV_LINKS.map((link) => (
               <Link key={link.label} to={link.href} onClick={() => setMobileMenu(false)}>
