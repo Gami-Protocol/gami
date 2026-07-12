@@ -108,7 +108,7 @@ export function HomePage() {
               Earn XP, rewards, and tokens across apps, games, and communities with one universal wallet powered by AI
               agents and blockchain infrastructure.
             </p>
-            <div className="flex flex-wrap gap-6">
+            <div className="flex flex-wrap gap-4">
               <Link
                 to="/wallet"
                 className="gami-gradient neo-border px-8 py-4 font-display text-lg font-bold uppercase tracking-wider shadow-brutal transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none"
@@ -116,10 +116,16 @@ export function HomePage() {
                 Launch App
               </Link>
               <Link
-                to="/wallet"
+                to="/waitlist"
                 className="border-2 border-white px-8 py-4 font-display text-lg font-bold uppercase tracking-wider transition-all hover:bg-white hover:text-black"
               >
-                Explore AI Agents
+                Join Waitlist
+              </Link>
+              <Link
+                to="/sale"
+                className="border-2 border-gami-purple bg-gami-purple/20 px-8 py-4 font-display text-lg font-bold uppercase tracking-wider text-gami-accent transition-all hover:bg-gami-purple hover:text-white"
+              >
+                Token Sale
               </Link>
             </div>
 

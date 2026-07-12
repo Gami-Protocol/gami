@@ -62,6 +62,12 @@ export function GamiNav() {
 
           <div className="hidden items-center gap-4 lg:flex">
             <Link
+              to="/sale"
+              className="border-2 border-gami-purple bg-gami-purple/20 px-6 py-2 font-display text-xs font-bold tracking-widest text-gami-accent transition-all hover:bg-gami-purple hover:text-white"
+            >
+              TOKEN SALE
+            </Link>
+            <Link
               to="/waitlist"
               className="border-2 border-white px-6 py-2 font-display text-xs font-bold tracking-widest transition-all hover:bg-white hover:text-black"
             >
@@ -114,6 +120,13 @@ export function GamiNav() {
             ))}
             <hr className="border-white/10" />
             <ConnectWallet />
+            <Link
+              to="/sale"
+              className="border-2 border-gami-purple bg-gami-purple/20 p-4 text-center text-gami-accent"
+              onClick={() => setMobileMenu(false)}
+            >
+              Token Sale
+            </Link>
             <Link
               to="/waitlist"
               className="gami-gradient neo-border p-4 text-center shadow-brutal"
