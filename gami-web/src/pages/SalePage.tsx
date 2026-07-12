@@ -235,7 +235,7 @@ export function SalePage() {
 
   return (
     <>
-    <div className="relative min-h-screen overflow-hidden bg-[#f0edff] pt-24 text-[#131118]">
+    <div className="relative min-h-screen overflow-hidden bg-[#f0edff] pt-20 text-[#131118] sm:pt-24">
       <div className="raise-grid pointer-events-none absolute inset-0 opacity-60" />
       <div className="pointer-events-none absolute -left-24 top-44 h-72 w-72 rounded-full bg-[#7047eb]/20 blur-3xl" />
       <div className="pointer-events-none absolute -right-16 top-12 h-80 w-80 bg-[#ffeb55]/40 blur-3xl" />
@@ -268,14 +268,14 @@ export function SalePage() {
         </div>
       </header>
 
-      <main className="relative z-10 mx-auto max-w-7xl px-6 py-12 lg:py-20">
-        <div className="grid items-center gap-14 lg:grid-cols-[1.08fr_0.92fr]">
-          <section>
+      <main className="relative z-10 mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:py-14 xl:py-20">
+        <div className="grid min-w-0 items-center gap-12 xl:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] xl:gap-14">
+          <section className="min-w-0">
             <div className="mb-7 inline-flex -rotate-1 items-center gap-3 border-2 border-black bg-[#ffeb55] px-4 py-2 font-mono text-xs font-bold uppercase shadow-[4px_4px_0_#131118]">
               <span className="h-2 w-2 animate-pulse rounded-full bg-[#7047eb]" />
               Phase 1 — Whitelist Open
             </div>
-            <h1 className="max-w-3xl font-display text-[clamp(3.5rem,8vw,7.25rem)] font-bold uppercase leading-[0.82] tracking-[-0.075em]">
+            <h1 className="max-w-3xl break-words font-display text-[clamp(3rem,7vw,6.5rem)] font-bold uppercase leading-[0.86] tracking-[-0.065em]">
               Power the
               <br />
               universal
@@ -287,13 +287,18 @@ export function SalePage() {
               governance rights, and priority access to the protocol.
             </p>
 
-            <div className="mt-9 grid max-w-xl grid-cols-3 border-[3px] border-black bg-white shadow-[7px_7px_0_#131118]">
+            <div className="mt-9 grid max-w-xl grid-cols-1 border-[3px] border-black bg-white shadow-[7px_7px_0_#131118] sm:grid-cols-3">
               {[
                 ['Price', `$${price.toFixed(3)}`],
                 ['Min Allocation', `${MIN_CONTRIBUTION} USDC`],
                 ['Vesting', '30d cliff'],
               ].map(([label, value], index) => (
-                <div key={label} className={`p-4 ${index < 2 ? 'border-r-2 border-black' : ''}`}>
+                <div
+                  key={label}
+                  className={`p-4 ${
+                    index < 2 ? 'border-b-2 border-black sm:border-b-0 sm:border-r-2' : ''
+                  }`}
+                >
                   <p className="font-mono text-[10px] uppercase text-[#77727e]">{label}</p>
                   <p className="mt-2 font-display text-sm font-bold sm:text-base">{value}</p>
                 </div>
@@ -317,20 +322,20 @@ export function SalePage() {
             </Link>
           </section>
 
-          <section id="contribute-card" className="relative scroll-mt-28">
+          <section id="contribute-card" className="relative min-w-0 scroll-mt-28">
             <div className="absolute -right-4 -top-5 z-20 rotate-3 border-2 border-black bg-[#ffeb55] px-3 py-2 font-mono text-[10px] font-bold uppercase shadow-[3px_3px_0_#131118]">
               {phase} round
             </div>
-            <div className="border-[3px] border-black bg-white p-5 shadow-[12px_12px_0_#131118] sm:p-8">
-              <div className="flex items-center justify-between border-b-2 border-black pb-6">
-                <div className="flex items-center gap-4">
+            <div className="border-[3px] border-black bg-white p-4 shadow-[8px_8px_0_#131118] sm:p-8 sm:shadow-[12px_12px_0_#131118]">
+              <div className="flex flex-col items-stretch gap-4 border-b-2 border-black pb-6 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex min-w-0 items-center gap-4">
                   <GamiTokenLogo className="h-14 w-14 border-2 border-black" />
                   <div>
                     <p className="font-display text-xl font-bold">$GAMI TOKEN</p>
                     <p className="font-mono text-xs uppercase text-[#77727e]">Presale round 1</p>
                   </div>
                 </div>
-                <ConnectWallet light />
+                <ConnectWallet light className="w-full whitespace-nowrap sm:w-auto" />
               </div>
 
               <div className="my-7 flex items-center justify-between">
@@ -422,7 +427,7 @@ export function SalePage() {
           </section>
         </div>
 
-        <div className="mt-16 grid gap-8 lg:grid-cols-[0.8fr_1.2fr]">
+        <div className="mt-16 grid min-w-0 gap-8 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
           <section className="border-[3px] border-black bg-[#ffeb55] p-6 shadow-[8px_8px_0_#131118]">
             <p className="font-mono text-xs font-bold uppercase">Participant benefits</p>
             <div className="mt-5 space-y-4">
