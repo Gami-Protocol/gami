@@ -9,8 +9,8 @@ const NAV_LINKS = [
   { href: '/wallet', label: 'Agents' },
   { href: '/wallet', label: 'Wallet' },
   { href: '/whitepaper', label: 'Developers' },
-  { href: '/waitlist', label: 'Token' },
-  { href: '/whitepaper', label: 'Docs' },
+  { href: '/sale', label: 'Raise' },
+  { href: '/tokenomics', label: 'Tokenomics' },
 ];
 
 export function GamiNav() {
@@ -50,7 +50,7 @@ export function GamiNav() {
                 key={link.label}
                 to={link.href}
                 className={`transition-colors hover:text-gami-accent ${
-                  pathname === link.href && link.label === 'Token' ? 'border-b-2 border-gami-accent text-gami-accent' : ''
+                  pathname === link.href ? 'border-b-2 border-gami-accent text-gami-accent' : ''
                 }`}
               >
                 {link.label}

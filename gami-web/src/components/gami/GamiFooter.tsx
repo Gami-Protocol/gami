@@ -61,14 +61,16 @@ export function GamiFooter({ variant = 'default' }: { variant?: 'default' | 'ico
             <ul className={`space-y-4 text-sm ${isIco ? 'text-xs font-bold uppercase tracking-widest text-gray-500' : 'text-gray-500'}`}>
               {isIco ? (
                 <>
-                  <li><Link to="/waitlist" className="transition-colors hover:text-white">Token Sale</Link></li>
-                  <li><Link to="/sale" className="transition-colors hover:text-white">Staking</Link></li>
+                  <li><Link to="/sale" className="transition-colors hover:text-white">Token Raise</Link></li>
+                  <li><Link to="/tokenomics" className="transition-colors hover:text-white">Tokenomics + TGE</Link></li>
+                  <li><Link to="/claim" className="transition-colors hover:text-white">Claim</Link></li>
                   <li><Link to="/whitepaper" className="transition-colors hover:text-white">Grants</Link></li>
                   <li><Link to="/legal/terms" className="transition-colors hover:text-white">Terms</Link></li>
                 </>
               ) : (
                 <>
                   <li><Link to="/whitepaper" className="transition-colors hover:text-white">About Us</Link></li>
+                  <li><Link to="/tokenomics" className="transition-colors hover:text-white">Tokenomics + TGE</Link></li>
                   <li><Link to="/whitepaper" className="transition-colors hover:text-white">Careers</Link></li>
                   <li><Link to="/legal/privacy" className="transition-colors hover:text-white">Privacy</Link></li>
                   <li><Link to="/legal/terms" className="transition-colors hover:text-white">Terms</Link></li>

@@ -312,6 +312,12 @@ export function SalePage() {
             >
               Participate in raise →
             </button>
+            <Link
+              to="/tokenomics"
+              className="ml-0 mt-5 block w-fit border-b-2 border-black font-mono text-xs font-bold uppercase sm:ml-6 sm:inline-block"
+            >
+              Read the full GAMI Tokenomics + TGE plan →
+            </Link>
           </section>
 
           <section id="contribute-card" className="relative scroll-mt-28">

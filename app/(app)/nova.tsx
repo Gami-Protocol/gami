@@ -1,6 +1,7 @@
-import { Send } from 'lucide-react-native';
+import { Check, Send, X } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -11,16 +12,35 @@ import {
 } from 'react-native';
 
 import { GScreen, NovaMascot } from '@/components/gami';
+import { executeNovaProposal } from '@/lib/chain';
 import { haptics } from '@/lib/haptics';
+import { getNovaAgent } from '@/lib/nova-agents';
 import { type ChatMessage, NOVA_SUGGESTIONS, novaOpener, novaReplyLive } from '@/lib/nova';
+import type { NovaProposal } from '@/lib/nova-tools';
+import { usePrivyBridge } from '@/lib/privy-bridge';
 
 let idSeq = 0;
 const nextId = () => `m${(idSeq += 1)}`;
 
-function Bubble({ msg }: { msg: ChatMessage }) {
+function Bubble({
+  msg,
+  pending,
+  onApprove,
+  onCancel,
+}: {
+  msg: ChatMessage;
+  pending: boolean;
+  onApprove: (proposal: NovaProposal) => void;
+  onCancel: (messageId: string) => void;
+}) {
   const isNova = msg.role === 'nova';
   return (
     <View className={`mb-3 max-w-[82%] ${isNova ? 'self-start' : 'self-end'}`}>
+      {isNova && msg.agentId ? (
+        <Text className="text-purple mb-1 font-mono text-[9px] uppercase tracking-widest">
+          {getNovaAgent(msg.agentId).name}
+        </Text>
+      ) : null}
       <View className={`rounded-2xl px-4 py-3 ${isNova ? 'bg-surface' : 'bg-purple'}`}>
         <Text
           className={`font-body text-[14px] ${isNova ? 'text-ink' : 'text-white'}`}
@@ -29,6 +49,50 @@ function Bubble({ msg }: { msg: ChatMessage }) {
           {msg.text}
         </Text>
       </View>
+      {msg.trace?.map((step) => (
+        <View key={`${msg.id}-${step.toolId}`} className="mt-1 flex-row items-center gap-1.5 px-2">
+          <Check size={11} color={step.status === 'completed' ? '#3DF5A0' : '#FF5A6F'} />
+          <Text className="text-ink-mute font-mono text-[10px]">{step.label}</Text>
+        </View>
+      ))}
+      {msg.proposal ? (
+        <View className="border-purple/50 bg-surface mt-2 rounded-2xl border p-4">
+          <Text className="text-purple font-mono text-[10px] tracking-widest">
+            TRANSACTION PREVIEW
+          </Text>
+          <Text className="text-ink mt-2 font-mono text-[13px]">
+            {msg.proposal.kind === 'gami_transfer'
+              ? `Send ${msg.proposal.amount} GAMI`
+              : 'Claim vested GAMI'}
+          </Text>
+          {msg.proposal.kind === 'gami_transfer' ? (
+            <Text className="text-ink-mute mt-1 font-mono text-[10px]" numberOfLines={1}>
+              To: {msg.proposal.to}
+            </Text>
+          ) : null}
+          <Text className="text-ink-mute mt-1 font-mono text-[10px]">
+            Network: {msg.proposal.chain}
+          </Text>
+          <View className="mt-3 flex-row gap-2">
+            <Pressable
+              disabled={pending}
+              onPress={() => onApprove(msg.proposal!)}
+              className="bg-purple flex-1 items-center rounded-xl py-2.5 disabled:opacity-50"
+            >
+              <Text className="font-mono text-[11px] font-bold text-white">
+                {pending ? 'OPENING PRIVY…' : 'REVIEW + SIGN'}
+              </Text>
+            </Pressable>
+            <Pressable
+              disabled={pending}
+              onPress={() => onCancel(msg.id)}
+              className="border-hairline items-center rounded-xl border px-3 py-2.5"
+            >
+              <X size={15} color="#A09CB8" />
+            </Pressable>
+          </View>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -37,7 +101,9 @@ export default function Nova() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [typing, setTyping] = useState(false);
+  const [pendingProposal, setPendingProposal] = useState<string | null>(null);
   const scrollRef = useRef<ScrollView>(null);
+  const privy = usePrivyBridge();
 
   useEffect(() => {
     setMessages([{ id: nextId(), role: 'nova', text: novaOpener() }]);
@@ -58,8 +124,18 @@ export default function Nova() {
     setTyping(true);
     scrollEnd();
     void novaReplyLive(clean, history)
-      .then((reply) => {
-        setMessages((m) => [...m, { id: nextId(), role: 'nova', text: reply }]);
+      .then((result) => {
+        setMessages((m) => [
+          ...m,
+          {
+            id: nextId(),
+            role: 'nova',
+            text: result.reply,
+            agentId: result.activeAgent,
+            trace: result.trace,
+            proposal: result.proposal,
+          },
+        ]);
       })
       .catch(() => {
         setMessages((m) => [
@@ -75,6 +151,48 @@ export default function Nova() {
         setTyping(false);
         scrollEnd();
       });
+  };
+
+  const cancelProposal = (messageId: string) => {
+    haptics.light();
+    setMessages((items) =>
+      items.map((item) => (item.id === messageId ? { ...item, proposal: undefined } : item)),
+    );
+  };
+
+  const approveProposal = async (proposal: NovaProposal) => {
+    setPendingProposal(proposal.id);
+    try {
+      const provider = await privy.getWalletProvider();
+      const account = privy.walletAddress;
+      if (!provider || !account?.startsWith('0x')) {
+        throw new Error('Sign in with Privy to approve this wallet action.');
+      }
+      const hash = await executeNovaProposal(
+        provider,
+        account as `0x${string}`,
+        proposal,
+      );
+      haptics.success();
+      setMessages((items) => [
+        ...items.map((item) =>
+          item.proposal?.id === proposal.id ? { ...item, proposal: undefined } : item,
+        ),
+        {
+          id: nextId(),
+          role: 'nova',
+          agentId: 'wallet',
+          text: `Privy submitted the approved transaction: ${hash.slice(0, 10)}…`,
+        },
+      ]);
+    } catch (error) {
+      Alert.alert(
+        'Transaction not submitted',
+        error instanceof Error ? error.message : 'The wallet rejected this action.',
+      );
+    } finally {
+      setPendingProposal(null);
+    }
   };
 
   return (
@@ -97,7 +215,7 @@ export default function Nova() {
 
       <View className="border-hairline bg-surface/40 border-b px-5 py-2">
         <Text className="text-ink-mute font-mono text-[10px] leading-4">
-          NOVA suggests — you approve. It never moves funds or signs.
+            3 specialist agents can prepare actions. You review; Privy signs.
         </Text>
       </View>
 
@@ -113,7 +231,13 @@ export default function Nova() {
           onContentSizeChange={scrollEnd}
         >
           {messages.map((m) => (
-            <Bubble key={m.id} msg={m} />
+            <Bubble
+              key={m.id}
+              msg={m}
+              pending={pendingProposal === m.proposal?.id}
+              onApprove={(proposal) => void approveProposal(proposal)}
+              onCancel={cancelProposal}
+            />
           ))}
           {typing ? (
             <View className="bg-surface mb-3 max-w-[60%] self-start rounded-2xl px-4 py-3">
