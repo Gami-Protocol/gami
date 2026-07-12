@@ -3,59 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
 
 import { GamiFooter } from '@/components/gami/GamiFooter';
-<<<<<<< HEAD
 import { GamiTokenLogo } from '@/components/gami/GamiTokenLogo';
-
-const STATS = [
-  { label: 'Market Size', value: '$30B', sub: 'BY 2026 PROJECTED' },
-  { label: 'Target Users', value: '5M+', sub: 'GLOBAL ECOSYSTEM' },
-  { label: 'Revenue Target', value: '$5M', sub: 'YEAR 1 PROJECTED' },
-];
-
-const UTILITIES = [
-  {
-    icon: 'xp',
-    title: 'XP Multipliers',
-    description: 'Stake $GAMI to boost your XP earning rate by up to 5x across all partner applications and games.',
-  },
-  {
-    icon: 'gov',
-    title: 'Governance',
-    description: 'Propose and vote on protocol parameters, including reward distribution weights and new chain integrations.',
-  },
-  {
-    icon: 'pool',
-    title: 'Reward Pools',
-    description: 'Participate in exclusive quest pools that only accept $GAMI holders, featuring high-value NFT and token drops.',
-  },
-  {
-    icon: 'premium',
-    title: 'Premium Features',
-    description: 'Access advanced AI agent tools for developers and high-tier analytics for professional reward hunters.',
-  },
-];
-
-const PHASES = [
-  {
-    num: '01',
-    title: 'Whitelist & Testing',
-    description: 'Current Phase. Community members sign up for the whitelist and participate in the incentivized testnet to earn early multipliers.',
-    active: true,
-  },
-  {
-    num: '02',
-    title: 'Private Genesis Sale',
-    description: 'Early backers and strategic partners gain access to the initial $GAMI genesis event. Minimum lock-up periods apply.',
-    active: false,
-  },
-  {
-    num: '03',
-    title: 'Public Protocol Launch',
-    description: 'Token becomes publicly available. Liquidity pools open on Uniswap and major Layer-2 DEXs.',
-    active: false,
-  },
-];
-=======
 import {
   ALLOCATION_ROWS,
   DUAL_TOKEN,
@@ -65,7 +13,6 @@ import {
   PHASES,
   UTILITIES,
 } from '@/data/ico-tokenomics';
->>>>>>> origin/main
 
 function UtilityIcon({ type }: { type: string }) {
   if (type === 'xp') return <span className="font-display font-bold">XP</span>;
