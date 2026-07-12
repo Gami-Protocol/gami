@@ -1,11 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  useAccount,
-  useReadContract,
-  useWaitForTransactionReceipt,
-  useWriteContract,
-} from 'wagmi';
+import { useAccount, useReadContract, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
 import { formatUnits, parseUnits } from 'viem';
 
 import { ConnectWallet } from '@/components/ConnectWallet';
@@ -83,9 +78,16 @@ export function SalePage() {
     query: { enabled: Boolean(saleAddress), refetchInterval: 15_000 },
   });
 
-  const { writeContract: approveUsdc, data: approvalHash, isPending: isApproving } = useWriteContract();
-  const { writeContract: contribute, data: contributionHash, isPending: isContributing } =
-    useWriteContract();
+  const {
+    writeContract: approveUsdc,
+    data: approvalHash,
+    isPending: isApproving,
+  } = useWriteContract();
+  const {
+    writeContract: contribute,
+    data: contributionHash,
+    isPending: isContributing,
+  } = useWriteContract();
   const { isSuccess: approvalConfirmed } = useWaitForTransactionReceipt({ hash: approvalHash });
   const { isSuccess: contributionConfirmed } = useWaitForTransactionReceipt({
     hash: contributionHash,
@@ -121,13 +123,7 @@ export function SalePage() {
   }, [amount, pricePerToken, usdcAmount]);
 
   useEffect(() => {
-    if (
-      !approvalConfirmed ||
-      !saleAddress ||
-      !address ||
-      contributionHash ||
-      usdcAmount === 0n
-    ) {
+    if (!approvalConfirmed || !saleAddress || !address || contributionHash || usdcAmount === 0n) {
       return;
     }
 
@@ -171,9 +167,7 @@ export function SalePage() {
     ? Number(formatUnits(hardCapRaw as bigint, 6))
     : (stats?.hard_cap_usd ?? FALLBACK_CAP);
   const pct = cap > 0 ? Math.min(100, (raised / cap) * 100) : 0;
-  const price = pricePerToken
-    ? Number(formatUnits(pricePerToken as bigint, 6))
-    : FALLBACK_PRICE;
+  const price = pricePerToken ? Number(formatUnits(pricePerToken as bigint, 6)) : FALLBACK_PRICE;
   const phase =
     phaseIndex !== undefined
       ? phaseFromIndex(Number(phaseIndex))
@@ -266,7 +260,10 @@ export function SalePage() {
           </div>
         </div>
         <div className="h-2 bg-white/15">
-          <div className="h-full bg-[#ffeb55] transition-all duration-700" style={{ width: `${pct}%` }} />
+          <div
+            className="h-full bg-[#ffeb55] transition-all duration-700"
+            style={{ width: `${pct}%` }}
+          />
         </div>
       </header>
 
@@ -295,10 +292,7 @@ export function SalePage() {
                 ['Min Allocation', `${MIN_CONTRIBUTION} USDC`],
                 ['Vesting', '30d cliff'],
               ].map(([label, value], index) => (
-                <div
-                  key={label}
-                  className={`p-4 ${index < 2 ? 'border-r-2 border-black' : ''}`}
-                >
+                <div key={label} className={`p-4 ${index < 2 ? 'border-r-2 border-black' : ''}`}>
                   <p className="font-mono text-[10px] uppercase text-[#77727e]">{label}</p>
                   <p className="mt-2 font-display text-sm font-bold sm:text-base">{value}</p>
                 </div>
@@ -307,7 +301,9 @@ export function SalePage() {
 
             <button
               type="button"
-              onClick={() => document.getElementById('contribute-card')?.scrollIntoView({ behavior: 'smooth' })}
+              onClick={() =>
+                document.getElementById('contribute-card')?.scrollIntoView({ behavior: 'smooth' })
+              }
               className="mt-10 border-[3px] border-black bg-[#7047eb] px-8 py-4 font-display font-bold uppercase tracking-wide text-white shadow-[7px_7px_0_#131118] transition hover:translate-x-1 hover:translate-y-1 hover:shadow-[3px_3px_0_#131118]"
             >
               Participate in raise →
@@ -342,7 +338,11 @@ export function SalePage() {
                 <div>
                   <p className="font-mono text-[10px] uppercase text-[#77727e]">Wallet status</p>
                   <p className="mt-1 font-mono text-xs font-bold">
-                    {isConnected ? (isEligible ? 'VERIFIED + ELIGIBLE' : 'CONNECTED') : 'NOT CONNECTED'}
+                    {isConnected
+                      ? isEligible
+                        ? 'VERIFIED + ELIGIBLE'
+                        : 'CONNECTED'
+                      : 'NOT CONNECTED'}
                   </p>
                 </div>
                 <span
@@ -352,7 +352,10 @@ export function SalePage() {
                 />
               </div>
 
-              <label className="block font-mono text-[11px] font-bold uppercase" htmlFor="raise-amount">
+              <label
+                className="block font-mono text-[11px] font-bold uppercase"
+                htmlFor="raise-amount"
+              >
                 Contribute (USDC)
               </label>
               <div className="mt-2 flex border-2 border-black bg-[#f4f1f8]">
@@ -436,7 +439,9 @@ export function SalePage() {
             <div className="flex items-end justify-between gap-4">
               <div>
                 <p className="font-mono text-xs font-bold uppercase text-[#7047eb]">Raise quests</p>
-                <h2 className="mt-1 font-display text-3xl font-bold uppercase">Earn while you join</h2>
+                <h2 className="mt-1 font-display text-3xl font-bold uppercase">
+                  Earn while you join
+                </h2>
               </div>
               <span className="font-mono text-xs">
                 {quests.filter((quest) => quest.complete).length}/{quests.length} COMPLETE
@@ -454,7 +459,9 @@ export function SalePage() {
                       >
                         {quest.complete ? '✓' : '○'}
                       </span>
-                      <span className="font-mono text-[10px] font-bold text-[#7047eb]">{quest.xp}</span>
+                      <span className="font-mono text-[10px] font-bold text-[#7047eb]">
+                        {quest.xp}
+                      </span>
                     </div>
                     <p className="mt-5 font-display text-sm font-bold uppercase">{quest.title}</p>
                     <p className="mt-1 text-xs text-[#77727e]">{quest.detail}</p>

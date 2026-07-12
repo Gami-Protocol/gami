@@ -29,6 +29,7 @@ interface WalletContext {
   totalXP?: number;
   xpToNextLevel?: number;
   gamiBalance?: number;
+  claimableGami?: number;
   points?: number;
   rank?: number;
   interests?: string[];
@@ -66,6 +67,7 @@ const TOOL_LABELS: Record<ToolId, string> = {
   prepare_gami_transfer: 'Prepared GAMI transfer',
   prepare_gami_claim: 'Prepared vested-token claim',
 };
+const TOOL_IDS = Object.keys(TOOL_LABELS) as ToolId[];
 
 const TOOLS = [
   {
@@ -85,7 +87,8 @@ const TOOLS = [
   },
   {
     name: 'tokenomics',
-    description: 'Read the published GAMI utility, allocation, TGE, airdrop, and risk-control plan.',
+    description:
+      'Read the published GAMI utility, allocation, TGE, airdrop, and risk-control plan.',
     input_schema: { type: 'object', properties: {}, additionalProperties: false },
   },
   {
@@ -117,6 +120,7 @@ const TONE_GUIDE: Record<Tone, string> = {
 };
 
 function routeAgent(message: string): AgentId {
+  if (/(send|transfer|pay|claim|wallet|balance)/i.test(message)) return 'wallet';
   if (/(quest|xp|reward|earn|level)/i.test(message)) return 'quests';
   if (/(tokenomics|token|gami|sale|raise|tge|airdrop|allocation|governance)/i.test(message)) {
     return 'tokenomics';
@@ -137,7 +141,7 @@ function buildSystemPrompt(tone: Tone, ctx: WalletContext, agent: AgentId): stri
     `You are currently coordinating the ${agent} specialist. Use only these tools: ${AGENT_TOOLS[agent].join(', ')}. Use a read tool whenever the answer depends on wallet, quest, sale, or token-plan facts. Never claim an action happened when you only prepared it.`,
   );
   lines.push(
-    "Rules: Keep replies short (1-3 sentences unless asked to explain). NEVER invent balances, levels, or numbers. You can prepare allowlisted actions, but the user must separately approve the preview and sign through Privy. Never say that you signed, sent, claimed, or moved funds. Never request or output private keys or seed phrases.",
+    'Rules: Keep replies short (1-3 sentences unless asked to explain). NEVER invent balances, levels, or numbers. You can prepare allowlisted actions, but the user must separately approve the preview and sign through Privy. Never say that you signed, sent, claimed, or moved funds. Never request or output private keys or seed phrases.',
   );
 
   const c: string[] = [];
@@ -148,6 +152,7 @@ function buildSystemPrompt(tone: Tone, ctx: WalletContext, agent: AgentId): stri
   if (typeof ctx.totalXP === 'number') c.push(`total XP: ${ctx.totalXP}`);
   if (typeof ctx.xpToNextLevel === 'number') c.push(`XP to next level: ${ctx.xpToNextLevel}`);
   if (typeof ctx.gamiBalance === 'number') c.push(`$GAMI balance: ${ctx.gamiBalance}`);
+  if (typeof ctx.claimableGami === 'number') c.push(`claimable $GAMI: ${ctx.claimableGami}`);
   if (typeof ctx.points === 'number') c.push(`soulbound Points: ${ctx.points}`);
   if (typeof ctx.rank === 'number') c.push(`leaderboard rank: #${ctx.rank}`);
   if (ctx.interests && ctx.interests.length > 0) c.push(`interests: ${ctx.interests.join(', ')}`);
@@ -161,11 +166,26 @@ function validAddress(value: unknown): value is string {
   return typeof value === 'string' && /^0x[0-9a-fA-F]{40}$/.test(value);
 }
 
+function isTextBlock(value: unknown): value is { type: 'text'; text: string } {
+  if (!value || typeof value !== 'object') return false;
+  return Reflect.get(value, 'type') === 'text' && typeof Reflect.get(value, 'text') === 'string';
+}
+
+function isToolUse(value: unknown): value is ToolUse {
+  if (!value || typeof value !== 'object') return false;
+  return (
+    Reflect.get(value, 'type') === 'tool_use' &&
+    typeof Reflect.get(value, 'id') === 'string' &&
+    TOOL_IDS.includes(Reflect.get(value, 'name'))
+  );
+}
+
 function validAmount(value: unknown): value is string {
   return (
     typeof value === 'string' &&
     /^(?:0|[1-9]\d*)(?:\.\d{1,18})?$/.test(value) &&
-    Number(value) > 0
+    Number(value) > 0 &&
+    Number.isFinite(Number(value))
   );
 }
 
@@ -173,7 +193,9 @@ function cleanContext(raw: unknown): WalletContext {
   if (!raw || typeof raw !== 'object') return {};
   const value = raw as Record<string, unknown>;
   const number = (key: string) =>
-    typeof value[key] === 'number' && Number.isFinite(value[key]) ? (value[key] as number) : undefined;
+    typeof value[key] === 'number' && Number.isFinite(value[key])
+      ? (value[key] as number)
+      : undefined;
   return {
     walletAddress: validAddress(value.walletAddress) ? value.walletAddress : undefined,
     chain: value.chain === 'base' || value.chain === 'baseSepolia' ? value.chain : undefined,
@@ -182,6 +204,7 @@ function cleanContext(raw: unknown): WalletContext {
     totalXP: number('totalXP'),
     xpToNextLevel: number('xpToNextLevel'),
     gamiBalance: number('gamiBalance'),
+    claimableGami: number('claimableGami'),
     points: number('points'),
     rank: number('rank'),
     interests: Array.isArray(value.interests)
@@ -199,7 +222,7 @@ async function executeTool(name: ToolId, input: Record<string, unknown>, ctx: Wa
         level: ctx.level ?? null,
         totalXP: ctx.totalXP ?? null,
         gamiBalance: ctx.gamiBalance ?? null,
-        claimableGami: null,
+        claimableGami: ctx.claimableGami ?? null,
         points: ctx.points ?? null,
       };
     case 'find_quests':
@@ -231,7 +254,16 @@ async function executeTool(name: ToolId, input: Record<string, unknown>, ctx: Wa
         },
         tgePrinciple: 'Launch should amplify a working ecosystem, not substitute for one.',
         airdropPrinciple: 'Reward useful, verified actions rather than speculation.',
-        riskControls: ['geofencing', 'claim caps', 'sybil checks', 'lockups', 'vesting', 'treasury controls', 'anti-bot scoring', 'legal review'],
+        riskControls: [
+          'geofencing',
+          'claim caps',
+          'sybil checks',
+          'lockups',
+          'vesting',
+          'treasury controls',
+          'anti-bot scoring',
+          'legal review',
+        ],
       };
     case 'prepare_gami_transfer':
       if (!ctx.walletAddress) throw new Error('No connected wallet');
@@ -301,13 +333,12 @@ Deno.serve(async (req: Request) => {
       body.tone === 'shy' || body.tone === 'hype' || body.tone === 'chill' ? body.tone : 'chill';
     const messages = Array.isArray(body.messages)
       ? body.messages
-          .filter(
-            (message): message is ChatTurn =>
-              Boolean(
-                message &&
-                  (message.role === 'user' || message.role === 'assistant') &&
-                  typeof message.content === 'string',
-              ),
+          .filter((message): message is ChatTurn =>
+            Boolean(
+              message &&
+              (message.role === 'user' || message.role === 'assistant') &&
+              typeof message.content === 'string',
+            ),
           )
           .slice(-12)
           .map((message) => ({ ...message, content: message.content.slice(0, 2000) }))
@@ -331,17 +362,15 @@ Deno.serve(async (req: Request) => {
 
     for (let round = 0; round < MAX_TOOL_ROUNDS; round += 1) {
       const data = await askAnthropic(system, conversation);
-      const content = Array.isArray(data?.content) ? data.content : [];
+      const content: unknown[] = Array.isArray(data?.content) ? data.content : [];
       const text = content
-        .filter((block: { type?: string }) => block?.type === 'text')
-        .map((block: { text?: string }) => block.text ?? '')
+        .filter(isTextBlock)
+        .map((block) => block.text)
         .join('\n')
         .trim();
       if (text) reply = text;
 
-      const calls = content.filter(
-        (block: ToolUse): block is ToolUse => block?.type === 'tool_use',
-      );
+      const calls = content.filter(isToolUse);
       if (calls.length === 0) break;
       conversation.push({ role: 'assistant', content });
       const results = [];
@@ -382,9 +411,17 @@ Deno.serve(async (req: Request) => {
       conversation.push({ role: 'user', content: results });
     }
 
-    return new Response(JSON.stringify({ reply: reply || 'I could not complete that request.', activeAgent, trace, proposal }), {
-      headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
-    });
+    return new Response(
+      JSON.stringify({
+        reply: reply || 'I could not complete that request.',
+        activeAgent,
+        trace,
+        proposal,
+      }),
+      {
+        headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+      },
+    );
   } catch (err) {
     return new Response(JSON.stringify({ error: 'Unexpected error', detail: String(err) }), {
       status: 500,

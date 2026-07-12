@@ -8,13 +8,12 @@ import {
   custom,
   formatEther,
   http,
-  isAddress,
   parseEther,
   type Address,
 } from 'viem';
 import { base, baseSepolia } from 'viem/chains';
 
-import type { NovaProposal } from '@/lib/nova-tools';
+import { type NovaProposal, validateNovaProposalAuthorization } from '@/lib/nova-proposals';
 
 export const GAMI_TOKEN_ABI = [
   {
@@ -180,16 +179,12 @@ export function validateNovaProposal(
   account: Address,
   chain: GamiChain = getActiveChain(),
 ): string | null {
-  if (proposal.chain !== chain) return `Proposal is for ${proposal.chain}, not ${chain}.`;
-  if (proposal.from.toLowerCase() !== account.toLowerCase()) {
-    return 'Proposal does not belong to the connected wallet.';
-  }
-  if (!isAddress(proposal.from)) return 'Connected wallet address is invalid.';
+  const authorizationError = validateNovaProposalAuthorization(proposal, account, chain);
+  if (authorizationError) return authorizationError;
   if (proposal.kind === 'gami_claim') {
     return getVestingAddress(chain) ? null : 'Vesting contract is not configured.';
   }
   if (!getGamiTokenAddress(chain)) return 'GAMI token contract is not configured.';
-  if (!isAddress(proposal.to)) return 'Recipient must be a valid 0x address.';
   try {
     if (parseEther(proposal.amount) <= 0n) return 'Transfer amount must be greater than zero.';
   } catch {

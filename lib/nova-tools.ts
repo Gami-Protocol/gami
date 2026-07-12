@@ -3,24 +3,6 @@ import type { LevelStats } from '@/lib/gami-sdk';
 import type { NovaAgentId, NovaToolId } from '@/lib/nova-agents';
 import { fetchSaleStats } from '@/lib/sale';
 
-export type NovaProposal =
-  | {
-      id: string;
-      kind: 'gami_transfer';
-      chain: 'base' | 'baseSepolia';
-      from: string;
-      to: string;
-      amount: string;
-      symbol: 'GAMI';
-    }
-  | {
-      id: string;
-      kind: 'gami_claim';
-      chain: 'base' | 'baseSepolia';
-      from: string;
-      symbol: 'GAMI';
-    };
-
 export interface NovaToolTrace {
   toolId: NovaToolId;
   agentId: NovaAgentId;
@@ -65,28 +47,15 @@ export async function executeNovaReadTool(
     case 'tokenomics':
       return {
         purpose: '$GAMI is the utility and governance token for the Gami Protocol economy.',
-        utilities: ['XP multipliers', 'tier access', 'reward pools', 'governance', 'partner access'],
+        utilities: [
+          'XP multipliers',
+          'tier access',
+          'reward pools',
+          'governance',
+          'partner access',
+        ],
       };
     default:
       throw new Error(`${toolId} is not a read-only client tool`);
   }
-}
-
-export function isNovaProposal(value: unknown): value is NovaProposal {
-  if (!value || typeof value !== 'object') return false;
-  const proposal = value as Record<string, unknown>;
-  if (
-    typeof proposal.id !== 'string' ||
-    (proposal.chain !== 'base' && proposal.chain !== 'baseSepolia') ||
-    typeof proposal.from !== 'string' ||
-    proposal.symbol !== 'GAMI'
-  ) {
-    return false;
-  }
-  if (proposal.kind === 'gami_claim') return true;
-  return (
-    proposal.kind === 'gami_transfer' &&
-    typeof proposal.to === 'string' &&
-    typeof proposal.amount === 'string'
-  );
 }

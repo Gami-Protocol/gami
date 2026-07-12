@@ -33,7 +33,9 @@ export function GamiNav() {
     <>
       <nav
         className={`fixed z-50 w-full transition-all duration-300 ${
-          scrolled ? 'border-b-2 border-black bg-gami-bg/80 py-3 backdrop-blur-xl' : 'bg-transparent py-6'
+          scrolled
+            ? 'border-b-2 border-black bg-gami-bg/80 py-3 backdrop-blur-xl'
+            : 'bg-transparent py-6'
         }`}
       >
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6">
@@ -73,14 +75,29 @@ export function GamiNav() {
             </Link>
           </div>
 
-          <button type="button" onClick={() => setMobileMenu(!mobileMenu)} className="p-2 lg:hidden" aria-label="Toggle menu">
+          <button
+            type="button"
+            onClick={() => setMobileMenu(!mobileMenu)}
+            className="p-2 lg:hidden"
+            aria-label="Toggle menu"
+          >
             {mobileMenu ? (
               <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             ) : (
               <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 8h16M4 16h16"
+                />
               </svg>
             )}
           </button>
@@ -97,7 +114,11 @@ export function GamiNav() {
             ))}
             <hr className="border-white/10" />
             <ConnectWallet />
-            <Link to="/waitlist" className="gami-gradient neo-border p-4 text-center shadow-brutal" onClick={() => setMobileMenu(false)}>
+            <Link
+              to="/waitlist"
+              className="gami-gradient neo-border p-4 text-center shadow-brutal"
+              onClick={() => setMobileMenu(false)}
+            >
               Join Waitlist
             </Link>
           </div>

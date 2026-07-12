@@ -66,10 +66,10 @@ export default function Send() {
       spendGami(Number(numeric.toFixed(2)));
       haptics.success();
       setSent(true);
-    } catch (error) {
+    } catch (sendError) {
       Alert.alert(
         'Transaction not submitted',
-        error instanceof Error ? error.message : 'The wallet rejected this action.',
+        sendError instanceof Error ? sendError.message : 'The wallet rejected this action.',
       );
     } finally {
       setSending(false);

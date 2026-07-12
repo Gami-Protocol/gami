@@ -16,7 +16,7 @@ import { executeNovaProposal } from '@/lib/chain';
 import { haptics } from '@/lib/haptics';
 import { getNovaAgent } from '@/lib/nova-agents';
 import { type ChatMessage, NOVA_SUGGESTIONS, novaOpener, novaReplyLive } from '@/lib/nova';
-import type { NovaProposal } from '@/lib/nova-tools';
+import type { NovaProposal } from '@/lib/nova-proposals';
 import { usePrivyBridge } from '@/lib/privy-bridge';
 
 let idSeq = 0;
@@ -37,7 +37,7 @@ function Bubble({
   return (
     <View className={`mb-3 max-w-[82%] ${isNova ? 'self-start' : 'self-end'}`}>
       {isNova && msg.agentId ? (
-        <Text className="text-purple mb-1 font-mono text-[9px] uppercase tracking-widest">
+        <Text className="text-purple mb-1 font-mono text-[9px] tracking-widest uppercase">
           {getNovaAgent(msg.agentId).name}
         </Text>
       ) : null}
@@ -168,11 +168,7 @@ export default function Nova() {
       if (!provider || !account?.startsWith('0x')) {
         throw new Error('Sign in with Privy to approve this wallet action.');
       }
-      const hash = await executeNovaProposal(
-        provider,
-        account as `0x${string}`,
-        proposal,
-      );
+      const hash = await executeNovaProposal(provider, account as `0x${string}`, proposal);
       haptics.success();
       setMessages((items) => [
         ...items.map((item) =>
@@ -215,7 +211,7 @@ export default function Nova() {
 
       <View className="border-hairline bg-surface/40 border-b px-5 py-2">
         <Text className="text-ink-mute font-mono text-[10px] leading-4">
-            3 specialist agents can prepare actions. You review; Privy signs.
+          3 specialist agents can prepare actions. You review; Privy signs.
         </Text>
       </View>
 

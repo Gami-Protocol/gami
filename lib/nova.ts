@@ -2,11 +2,8 @@ import { type NovaTone } from '@/lib/config';
 import { getActiveChain } from '@/lib/chain';
 import { currentStats, fetchStatsForAddress } from '@/lib/gami-sdk';
 import { isNovaAgentId, type NovaAgentId } from '@/lib/nova-agents';
-import {
-  isNovaProposal,
-  type NovaProposal,
-  type NovaToolTrace,
-} from '@/lib/nova-tools';
+import { isNovaProposal, type NovaProposal } from '@/lib/nova-proposals';
+import { type NovaToolTrace } from '@/lib/nova-tools';
 import { useOnboardingStore } from '@/lib/store';
 import { FUNCTIONS_URL, SUPABASE_ANON_KEY } from '@/lib/supabase';
 import { INTERESTS } from '@/lib/config';
@@ -104,6 +101,7 @@ async function buildContext() {
     totalXP: stats.totalXP,
     xpToNextLevel: stats.xpToNextLevel,
     gamiBalance: stats.gamiBalance,
+    claimableGami: stats.claimableGami,
     points: stats.points,
     rank: stats.rank,
     interests: interestLabels,
@@ -157,14 +155,13 @@ export async function novaReplyLive(
     const reply = typeof raw.reply === 'string' ? raw.reply.trim() : '';
     if (!reply || !isNovaAgentId(raw.activeAgent)) return fallbackResult(input);
     const trace = Array.isArray(raw.trace)
-      ? raw.trace.filter(
-          (entry): entry is NovaToolTrace =>
-            Boolean(
-              entry &&
-                typeof entry === 'object' &&
-                typeof (entry as NovaToolTrace).toolId === 'string' &&
-                typeof (entry as NovaToolTrace).label === 'string',
-            ),
+      ? raw.trace.filter((entry): entry is NovaToolTrace =>
+          Boolean(
+            entry &&
+            typeof entry === 'object' &&
+            typeof (entry as NovaToolTrace).toolId === 'string' &&
+            typeof (entry as NovaToolTrace).label === 'string',
+          ),
         )
       : [];
     return {

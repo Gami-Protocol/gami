@@ -3,9 +3,18 @@ import allocation from '@/data/allocation.json';
 const UTILITIES = [
   ['XP Multiplier', 'Holding or staking $GAMI can boost XP earnings.'],
   ['Tier Access', 'Premium tiers and partner features can require $GAMI staking.'],
-  ['Reward Pools', 'Treasury and fee flows can fund user rewards, quests, and sponsored incentives.'],
-  ['Governance', 'Holders can vote on protocol parameters, reward formulas, fee rates, and ecosystem programs.'],
-  ['Partner Access', 'Partners can stake or subscribe for higher campaign limits, analytics, SDK access, and lower fees.'],
+  [
+    'Reward Pools',
+    'Treasury and fee flows can fund user rewards, quests, and sponsored incentives.',
+  ],
+  [
+    'Governance',
+    'Holders can vote on protocol parameters, reward formulas, fee rates, and ecosystem programs.',
+  ],
+  [
+    'Partner Access',
+    'Partners can stake or subscribe for higher campaign limits, analytics, SDK access, and lower fees.',
+  ],
 ] as const;
 
 const ILLUSTRATIVE_ALLOCATION = [
@@ -62,9 +71,14 @@ export function TokenomicsPage() {
         </p>
         <div className="mt-6 space-y-3">
           {allocation.allocation.map((item) => (
-            <div key={item.bucket} className="sticker-shadow border-2 border-white/10 bg-surface p-4">
+            <div
+              key={item.bucket}
+              className="sticker-shadow border-2 border-white/10 bg-surface p-4"
+            >
               <div className="flex justify-between">
-                <span className="font-display font-bold capitalize">{item.bucket.replace(/_/g, ' ')}</span>
+                <span className="font-display font-bold capitalize">
+                  {item.bucket.replace(/_/g, ' ')}
+                </span>
                 <span className="font-mono text-primary">{item.percent}%</span>
               </div>
               <p className="mt-1 font-mono text-sm text-muted">
@@ -104,7 +118,9 @@ export function TokenomicsPage() {
 
       <section className="mt-12">
         <h2 className="font-display text-2xl font-bold">Smart Burn Engine</h2>
-        <p className="mt-4 text-muted">Protocol revenue allocation (governance-adjustable within bounds):</p>
+        <p className="mt-4 text-muted">
+          Protocol revenue allocation (governance-adjustable within bounds):
+        </p>
         <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
           {Object.entries(allocation.feeRouting).map(([key, pct]) => (
             <div key={key} className="border border-white/10 p-4 text-center">
@@ -160,17 +176,17 @@ export function TokenomicsPage() {
         <article className="border-2 border-white/10 bg-surface p-6">
           <h2 className="font-display text-2xl font-bold">Launch strategy</h2>
           <p className="mt-4 leading-relaxed text-muted">
-            Do not lead with speculative token claims. Lead with protocol utility, partner
-            adoption, SDK usage, points activity, wallet engagement, and transparent reward flows.
-            Token launch should amplify a working ecosystem, not substitute for one.
+            Do not lead with speculative token claims. Lead with protocol utility, partner adoption,
+            SDK usage, points activity, wallet engagement, and transparent reward flows. Token
+            launch should amplify a working ecosystem, not substitute for one.
           </p>
         </article>
         <article className="border-2 border-white/10 bg-surface p-6">
           <h2 className="font-display text-2xl font-bold">Airdrop strategy</h2>
           <p className="mt-4 leading-relaxed text-muted">
-            Airdrops should reward useful actions: early wallet signup, XP earned, quest
-            completion, partner integrations, developer contributions, community ambassador work,
-            staking participation, and verified referrals.
+            Airdrops should reward useful actions: early wallet signup, XP earned, quest completion,
+            partner integrations, developer contributions, community ambassador work, staking
+            participation, and verified referrals.
           </p>
         </article>
       </section>

@@ -1,14 +1,13 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { validateNovaProposal } from '@/lib/chain';
 import { getNovaAgent, NOVA_AGENTS } from '@/lib/nova-agents';
-import { isNovaProposal } from '@/lib/nova-tools';
+import { isNovaProposal, validateNovaProposalAuthorization } from '@/lib/nova-proposals';
 
 const ACCOUNT = '0x1111111111111111111111111111111111111111' as const;
 const RECIPIENT = '0x2222222222222222222222222222222222222222' as const;
 
-test('agent registry exposes only each specialist allowlist', () => {
+void test('agent registry exposes only each specialist allowlist', () => {
   assert.deepEqual(getNovaAgent('wallet').toolIds, [
     'wallet_overview',
     'prepare_gami_transfer',
@@ -18,7 +17,7 @@ test('agent registry exposes only each specialist allowlist', () => {
   assert.equal(getNovaAgent('quests').toolIds.includes('prepare_gami_transfer'), false);
 });
 
-test('proposal shape rejects malformed model output', () => {
+void test('proposal shape rejects malformed model output', () => {
   assert.equal(isNovaProposal({ kind: 'gami_transfer', amount: '1' }), false);
   assert.equal(
     isNovaProposal({
@@ -34,9 +33,7 @@ test('proposal shape rejects malformed model output', () => {
   );
 });
 
-test('wallet proposal validation fails closed', () => {
-  process.env.EXPO_PUBLIC_GAMI_TOKEN_ADDRESS_SEPOLIA =
-    '0x3333333333333333333333333333333333333333';
+void test('wallet proposal authorization fails closed', () => {
   const proposal = {
     id: 'proposal-1',
     kind: 'gami_transfer' as const,
@@ -47,17 +44,21 @@ test('wallet proposal validation fails closed', () => {
     symbol: 'GAMI' as const,
   };
 
-  assert.equal(validateNovaProposal(proposal, ACCOUNT, 'baseSepolia'), null);
+  assert.equal(validateNovaProposalAuthorization(proposal, ACCOUNT, 'baseSepolia'), null);
   assert.match(
-    validateNovaProposal(proposal, RECIPIENT, 'baseSepolia') ?? '',
+    validateNovaProposalAuthorization(proposal, RECIPIENT, 'baseSepolia') ?? '',
     /does not belong/,
   );
   assert.match(
-    validateNovaProposal({ ...proposal, to: 'not-an-address' }, ACCOUNT, 'baseSepolia') ?? '',
+    validateNovaProposalAuthorization(
+      { ...proposal, to: 'not-an-address' },
+      ACCOUNT,
+      'baseSepolia',
+    ) ?? '',
     /valid 0x address/,
   );
   assert.match(
-    validateNovaProposal({ ...proposal, chain: 'base' }, ACCOUNT, 'baseSepolia') ?? '',
+    validateNovaProposalAuthorization({ ...proposal, chain: 'base' }, ACCOUNT, 'baseSepolia') ?? '',
     /Proposal is for base/,
   );
 });
