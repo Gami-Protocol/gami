@@ -14,7 +14,7 @@ export function GamiTokenLogo({
       viewBox="0 0 100 100"
       className={className}
       xmlns="http://www.w3.org/2000/svg"
-      aria-hidden
+      aria-hidden={true}
       {...sizeProps}
     >
       <circle cx="50" cy="50" r="50" fill={TOKEN_PURPLE} />

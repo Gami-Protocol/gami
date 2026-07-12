@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAccount, useReadContract, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
+import { useAccount, useConnect, useReadContract, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
 import { formatUnits, parseUnits } from 'viem';
 
 import { ConnectWallet } from '@/components/ConnectWallet';
 import { GamiFooter } from '@/components/gami/GamiFooter';
 import { GamiTokenLogo } from '@/components/gami/GamiTokenLogo';
+import { SaleRaiseHeader } from '@/components/sale/SaleRaiseHeader';
 import {
   TOKEN_SALE_ABI,
   USDC_ABI,
@@ -43,6 +44,7 @@ function walletErrorMessage(error: Error): string {
 
 export function SalePage() {
   const { address, isConnected } = useAccount();
+  const { connect, connectors, isPending: isConnecting } = useConnect();
   const [stats, setStats] = useState<SaleStats | null>(null);
   const [eligibility, setEligibility] = useState<SaleEligibility | null>(null);
   const [amount, setAmount] = useState('500');
@@ -168,7 +170,6 @@ export function SalePage() {
   const cap = hardCapRaw
     ? Number(formatUnits(hardCapRaw as bigint, 6))
     : (stats?.hard_cap_usd ?? FALLBACK_CAP);
-  const pct = cap > 0 ? Math.min(100, (raised / cap) * 100) : 0;
   const price = pricePerToken ? Number(formatUnits(pricePerToken as bigint, 6)) : FALLBACK_PRICE;
   const phase =
     phaseIndex !== undefined
@@ -215,7 +216,8 @@ export function SalePage() {
       detail: 'Connect a Base-compatible wallet',
       xp: '+100 XP',
       complete: isConnected,
-      href: null,
+      href: null as string | null,
+      action: 'connect' as const,
     },
     {
       title: 'Join the whitelist',
@@ -223,6 +225,7 @@ export function SalePage() {
       xp: '+250 XP',
       complete: Boolean(eligibility?.on_waitlist || isEligible),
       href: '/sale/contribute',
+      action: null,
     },
     {
       title: 'Power the protocol',
@@ -230,72 +233,55 @@ export function SalePage() {
       xp: '+1,000 XP',
       complete: (eligibility?.contributed_usd ?? 0) > 0,
       href: '/sale/contribute',
+      action: null,
     },
   ];
 
+  function handleWalletQuest() {
+    const connector = connectors.find((c) => c.ready) ?? connectors[0];
+    if (connector) connect({ connector });
+  }
+
   return (
     <>
-    <div className="relative min-h-screen overflow-hidden bg-[#f0edff] pt-24 text-[#131118]">
+    <div className="relative min-h-screen w-full max-w-[100vw] overflow-x-hidden bg-[#f0edff] text-[#131118]">
       <div className="raise-grid pointer-events-none absolute inset-0 opacity-60" />
-      <div className="pointer-events-none absolute -left-24 top-44 h-72 w-72 rounded-full bg-[#7047eb]/20 blur-3xl" />
-      <div className="pointer-events-none absolute -right-16 top-12 h-80 w-80 bg-[#ffeb55]/40 blur-3xl" />
+      <div className="pointer-events-none absolute -left-24 top-44 hidden h-72 w-72 rounded-full bg-[#7047eb]/20 blur-3xl sm:block" />
+      <div className="pointer-events-none absolute -right-16 top-12 hidden h-80 w-80 bg-[#ffeb55]/40 blur-3xl sm:block" />
 
-      <header className="relative z-10 border-y-[3px] border-black bg-[#131118] text-white">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-4">
-          <div className="flex items-center gap-3 font-display font-bold">
-            <GamiTokenLogo className="h-11 w-11 rotate-3 border-2 border-white" />
-            <span className="leading-[0.85] tracking-tight">
-              GAMI
-              <br />
-              PROTOCOL
-            </span>
-          </div>
-          <div className="flex items-center gap-5 font-mono text-xs sm:text-sm">
-            <span className="border border-[#67f5a1] px-3 py-2 font-bold text-[#67f5a1]">
-              <span className="mr-2 animate-pulse">●</span>RAISE LIVE
-            </span>
-            <span className="font-bold">
-              ${raised.toLocaleString(undefined, { maximumFractionDigits: 0 })} / $
-              {cap.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-            </span>
-          </div>
-        </div>
-        <div className="h-2 bg-white/15">
-          <div
-            className="h-full bg-[#ffeb55] transition-all duration-700"
-            style={{ width: `${pct}%` }}
-          />
-        </div>
-      </header>
+      <SaleRaiseHeader raised={raised} cap={cap} showProgress />
 
-      <main className="relative z-10 mx-auto max-w-7xl px-6 py-12 lg:py-20">
-        <div className="grid items-center gap-14 lg:grid-cols-[1.08fr_0.92fr]">
-          <section>
-            <div className="mb-7 inline-flex -rotate-1 items-center gap-3 border-2 border-black bg-[#ffeb55] px-4 py-2 font-mono text-xs font-bold uppercase shadow-[4px_4px_0_#131118]">
+      <main className="sale-safe-bottom relative z-10 mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-10 lg:py-16">
+        <div className="grid w-full gap-8 lg:grid-cols-[1.08fr_0.92fr] lg:items-start lg:gap-14">
+          <section className="order-2 min-w-0 lg:order-1">
+            <div className="mb-4 inline-flex -rotate-1 items-center gap-2 border-2 border-black bg-[#ffeb55] px-3 py-1.5 font-mono text-[10px] font-bold uppercase shadow-[4px_4px_0_#131118] sm:mb-7 sm:gap-3 sm:px-4 sm:py-2 sm:text-xs">
               <span className="h-2 w-2 animate-pulse rounded-full bg-[#7047eb]" />
               Phase 1 — Whitelist Open
             </div>
-            <h1 className="max-w-3xl font-display text-[clamp(3.5rem,8vw,7.25rem)] font-bold uppercase leading-[0.82] tracking-[-0.075em]">
+            <h1 className="max-w-3xl font-display text-[clamp(2rem,10vw,7.25rem)] font-bold uppercase leading-[0.88] tracking-[-0.04em] sm:leading-[0.82] sm:tracking-[-0.075em]">
               Power the
               <br />
               universal
               <br />
               <span className="raise-highlight">rewards</span> economy
             </h1>
-            <p className="mt-8 max-w-xl text-lg font-medium leading-relaxed text-[#4b4753]">
+            <p className="mt-4 max-w-xl text-base font-medium leading-relaxed text-[#4b4753] sm:mt-8 sm:text-lg">
               Join the $GAMI Token Raise. Early participants receive boosted XP multipliers,
               governance rights, and priority access to the protocol.
             </p>
 
-            <div className="mt-9 grid max-w-xl grid-cols-3 border-[3px] border-black bg-white shadow-[7px_7px_0_#131118]">
+            <div className="mt-6 grid w-full max-w-xl grid-cols-1 divide-y-2 divide-black border-[3px] border-black bg-white shadow-[5px_5px_0_#131118] sm:mt-9 sm:grid-cols-3 sm:divide-y-0 sm:shadow-[7px_7px_0_#131118]">
               {[
                 ['Price', `$${price.toFixed(3)}`],
                 ['Min Allocation', `${MIN_CONTRIBUTION} USDC`],
                 ['Vesting', '30d cliff'],
               ].map(([label, value], index) => (
-                <div key={label} className={`p-4 ${index < 2 ? 'border-r-2 border-black' : ''}`}>
+                <div
+                  key={label}
+                  className={`p-3 sm:p-4 ${index < 2 ? 'sm:border-r-2 sm:border-black' : ''}`}
+                >
                   <p className="font-mono text-[10px] uppercase text-[#77727e]">{label}</p>
-                  <p className="mt-2 font-display text-sm font-bold sm:text-base">{value}</p>
+                  <p className="mt-1 font-display text-sm font-bold sm:mt-2 sm:text-base">{value}</p>
                 </div>
               ))}
             </div>
@@ -305,35 +291,37 @@ export function SalePage() {
               onClick={() =>
                 document.getElementById('contribute-card')?.scrollIntoView({ behavior: 'smooth' })
               }
-              className="mt-10 border-[3px] border-black bg-[#7047eb] px-8 py-4 font-display font-bold uppercase tracking-wide text-white shadow-[7px_7px_0_#131118] transition hover:translate-x-1 hover:translate-y-1 hover:shadow-[3px_3px_0_#131118]"
+              className="mt-6 hidden w-full border-[3px] border-black bg-[#7047eb] px-6 py-3 font-display text-sm font-bold uppercase tracking-wide text-white shadow-[5px_5px_0_#131118] transition hover:translate-x-1 hover:translate-y-1 hover:shadow-[3px_3px_0_#131118] sm:mt-10 sm:w-auto sm:px-8 sm:py-4 sm:text-base lg:inline-block"
             >
               Participate in raise →
             </button>
             <Link
               to="/tokenomics"
-              className="ml-0 mt-5 block w-fit border-b-2 border-black font-mono text-xs font-bold uppercase sm:ml-6 sm:inline-block"
+              className="mt-4 block w-fit border-b-2 border-black font-mono text-[10px] font-bold uppercase sm:mt-5 sm:text-xs"
             >
               Read the full GAMI Tokenomics + TGE plan →
             </Link>
           </section>
 
-          <section id="contribute-card" className="relative scroll-mt-28">
-            <div className="absolute -right-4 -top-5 z-20 rotate-3 border-2 border-black bg-[#ffeb55] px-3 py-2 font-mono text-[10px] font-bold uppercase shadow-[3px_3px_0_#131118]">
+          <section id="contribute-card" className="relative order-1 min-w-0 scroll-mt-24 lg:order-2 lg:scroll-mt-28">
+            <div className="absolute -right-2 -top-4 z-20 rotate-3 border-2 border-black bg-[#ffeb55] px-2 py-1 font-mono text-[9px] font-bold uppercase shadow-[3px_3px_0_#131118] sm:-right-4 sm:-top-5 sm:px-3 sm:py-2 sm:text-[10px]">
               {phase} round
             </div>
-            <div className="border-[3px] border-black bg-white p-5 shadow-[12px_12px_0_#131118] sm:p-8">
-              <div className="flex items-center justify-between border-b-2 border-black pb-6">
-                <div className="flex items-center gap-4">
-                  <GamiTokenLogo className="h-14 w-14 border-2 border-black" />
-                  <div>
-                    <p className="font-display text-xl font-bold">$GAMI TOKEN</p>
-                    <p className="font-mono text-xs uppercase text-[#77727e]">Presale round 1</p>
+            <div className="border-[3px] border-black bg-white p-4 shadow-[8px_8px_0_#131118] sm:p-6 lg:p-8 lg:shadow-[12px_12px_0_#131118]">
+              <div className="flex flex-col gap-4 border-b-2 border-black pb-4 sm:flex-row sm:items-center sm:justify-between sm:pb-6">
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <GamiTokenLogo className="h-12 w-12 shrink-0 border-2 border-black sm:h-14 sm:w-14" />
+                  <div className="min-w-0">
+                    <p className="font-display text-lg font-bold sm:text-xl">$GAMI TOKEN</p>
+                    <p className="font-mono text-[10px] uppercase text-[#77727e] sm:text-xs">Presale round 1</p>
                   </div>
                 </div>
-                <ConnectWallet light />
+                <div className="hidden sm:block">
+                  <ConnectWallet variant="sale" />
+                </div>
               </div>
 
-              <div className="my-7 flex items-center justify-between">
+              <div className="my-5 flex items-center justify-between sm:my-7">
                 <div>
                   <p className="font-mono text-[10px] uppercase text-[#77727e]">Wallet status</p>
                   <p className="mt-1 font-mono text-xs font-bold">
@@ -365,7 +353,7 @@ export function SalePage() {
                   step="100"
                   value={amount}
                   onChange={(event) => setAmount(event.target.value)}
-                  className="min-w-0 flex-1 bg-transparent px-4 py-4 font-mono text-2xl font-bold outline-none"
+                  className="min-w-0 flex-1 bg-transparent px-3 py-3 font-mono text-xl font-bold outline-none sm:px-4 sm:py-4 sm:text-2xl"
                 />
                 <span className="flex items-center border-l-2 border-black px-4 font-mono text-xs font-bold">
                   USDC
@@ -385,9 +373,14 @@ export function SalePage() {
               </div>
 
               {!isConnected ? (
-                <div className="mt-5 flex justify-center border-2 border-dashed border-black/30 p-4">
-                  <ConnectWallet light />
-                </div>
+                <button
+                  type="button"
+                  onClick={handleWalletQuest}
+                  disabled={isConnecting}
+                  className="mt-5 w-full border-[3px] border-black bg-[#7047eb] py-4 font-display font-bold uppercase tracking-wide text-white shadow-[5px_5px_0_#131118] transition hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[3px_3px_0_#131118] disabled:opacity-60"
+                >
+                  {isConnecting ? 'Connecting…' : 'Connect Wallet to Contribute'}
+                </button>
               ) : (
                 <button
                   type="button"
@@ -419,8 +412,8 @@ export function SalePage() {
           </section>
         </div>
 
-        <div className="mt-16 grid gap-8 lg:grid-cols-[0.8fr_1.2fr]">
-          <section className="border-[3px] border-black bg-[#ffeb55] p-6 shadow-[8px_8px_0_#131118]">
+        <div className="mt-10 grid w-full gap-6 sm:mt-16 sm:gap-8 lg:grid-cols-[0.8fr_1.2fr]">
+          <section className="min-w-0 border-[3px] border-black bg-[#ffeb55] p-4 shadow-[6px_6px_0_#131118] sm:p-6 sm:shadow-[8px_8px_0_#131118]">
             <p className="font-mono text-xs font-bold uppercase">Participant benefits</p>
             <div className="mt-5 space-y-4">
               {BENEFITS.map((benefit) => (
@@ -434,19 +427,19 @@ export function SalePage() {
             </div>
           </section>
 
-          <section className="border-[3px] border-black bg-white p-6 shadow-[8px_8px_0_#7047eb]">
-            <div className="flex items-end justify-between gap-4">
+          <section className="min-w-0 border-[3px] border-black bg-white p-4 shadow-[6px_6px_0_#7047eb] sm:p-6 sm:shadow-[8px_8px_0_#7047eb]">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
               <div>
                 <p className="font-mono text-xs font-bold uppercase text-[#7047eb]">Raise quests</p>
-                <h2 className="mt-1 font-display text-3xl font-bold uppercase">
+                <h2 className="mt-1 font-display text-2xl font-bold uppercase sm:text-3xl">
                   Earn while you join
                 </h2>
               </div>
-              <span className="font-mono text-xs">
+              <span className="font-mono text-[10px] sm:text-xs">
                 {quests.filter((quest) => quest.complete).length}/{quests.length} COMPLETE
               </span>
             </div>
-            <div className="mt-6 grid gap-3 md:grid-cols-3">
+            <div className="mt-4 grid gap-3 sm:mt-6 md:grid-cols-3">
               {quests.map((quest) => {
                 const body = (
                   <>
@@ -458,23 +451,40 @@ export function SalePage() {
                       >
                         {quest.complete ? '✓' : '○'}
                       </span>
-                      <span className="font-mono text-[10px] font-bold text-[#7047eb]">
-                        {quest.xp}
-                      </span>
+                      <span className="font-mono text-[10px] font-bold text-[#7047eb]">{quest.xp}</span>
                     </div>
                     <p className="mt-5 font-display text-sm font-bold uppercase">{quest.title}</p>
                     <p className="mt-1 text-xs text-[#77727e]">{quest.detail}</p>
                   </>
                 );
-                return quest.href && !quest.complete ? (
-                  <Link
-                    key={quest.title}
-                    to={quest.href}
-                    className="border-2 border-black p-4 transition hover:-translate-y-1 hover:bg-[#f0edff]"
-                  >
-                    {body}
-                  </Link>
-                ) : (
+
+                if (quest.action === 'connect' && !quest.complete) {
+                  return (
+                    <button
+                      key={quest.title}
+                      type="button"
+                      onClick={handleWalletQuest}
+                      disabled={isConnecting}
+                      className="border-2 border-black p-4 text-left transition hover:-translate-y-1 hover:bg-[#f0edff] disabled:opacity-60"
+                    >
+                      {body}
+                    </button>
+                  );
+                }
+
+                if (quest.href && !quest.complete) {
+                  return (
+                    <Link
+                      key={quest.title}
+                      to={quest.href}
+                      className="border-2 border-black p-4 transition hover:-translate-y-1 hover:bg-[#f0edff]"
+                    >
+                      {body}
+                    </Link>
+                  );
+                }
+
+                return (
                   <div key={quest.title} className="border-2 border-black p-4">
                     {body}
                   </div>
