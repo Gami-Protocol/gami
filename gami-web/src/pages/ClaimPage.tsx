@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useAccount, useReadContract, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
 import { formatEther } from 'viem';
 
+import { GamiFooter } from '@/components/gami/GamiFooter';
+import { GamiTokenLogo } from '@/components/gami/GamiTokenLogo';
 import { VESTING_ABI, getContractAddress, getExplorerTxUrl, getChainId } from '@/lib/contracts';
 import { logClaimEvent } from '@/lib/sale';
 
@@ -69,7 +71,9 @@ export function ClaimPage() {
   const canClaim = claimableRaw && (claimableRaw as bigint) > 0n;
 
   return (
+    <>
     <div className="mx-auto max-w-lg px-6 py-16">
+      <GamiTokenLogo className="mb-4 h-14 w-14" />
       <h1 className="font-display text-3xl font-bold">Claim $GAMI</h1>
       <p className="mt-2 text-muted">
         Claim your vested tokens after TGE. 15% unlocks immediately, remainder vests over 12 months.
@@ -128,5 +132,7 @@ export function ClaimPage() {
 
       {message && <p className="mt-4 font-mono text-sm text-green-400">{message}</p>}
     </div>
+    <GamiFooter variant="ico" />
+    </>
   );
 }

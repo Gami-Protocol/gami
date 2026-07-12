@@ -1,3 +1,5 @@
+import { GamiFooter } from '@/components/gami/GamiFooter';
+import { GamiTokenLogo } from '@/components/gami/GamiTokenLogo';
 import allocation from '@/data/allocation.json';
 
 const UTILITIES = [
@@ -39,7 +41,9 @@ const TGE_CHECKLIST = [
 
 export function TokenomicsPage() {
   return (
+    <>
     <div className="mx-auto max-w-4xl px-6 py-16">
+      <GamiTokenLogo className="mb-4 h-14 w-14" />
       <h1 className="font-display text-4xl font-bold">Tokenomics</h1>
       <p className="mt-4 text-muted">
         Total supply: 1 billion $GAMI. Fixed supply with smart burn tied to protocol usage.
@@ -199,5 +203,7 @@ export function TokenomicsPage() {
         </p>
       </section>
     </div>
+    <GamiFooter variant="ico" />
+    </>
   );
 }

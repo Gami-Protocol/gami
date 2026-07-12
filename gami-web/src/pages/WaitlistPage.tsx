@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
 
 import { GamiFooter } from '@/components/gami/GamiFooter';
+import { GamiTokenLogo } from '@/components/gami/GamiTokenLogo';
 import {
   ALLOCATION_ROWS,
   DUAL_TOKEN,
@@ -121,6 +122,7 @@ export function WaitlistPage() {
         <section className="mx-auto mb-20 max-w-7xl px-6">
           <div className="grid items-start gap-12 lg:grid-cols-12">
             <div className="pt-10 lg:col-span-7">
+              <GamiTokenLogo className="mb-6 h-16 w-16 neo-border" />
               <div className="mb-8 inline-flex items-center gap-2 bg-white px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-tighter text-black">
                 <span className="animate-pulse text-red-600">●</span> Phase 1: Waitlist Open
               </div>
