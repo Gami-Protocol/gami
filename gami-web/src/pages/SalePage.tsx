@@ -241,41 +241,44 @@ export function SalePage() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#f0edff] text-[#131118]">
+    <div className="relative min-h-screen w-full max-w-[100vw] overflow-x-hidden bg-[#f0edff] text-[#131118]">
       <div className="raise-grid pointer-events-none absolute inset-0 opacity-60" />
-      <div className="pointer-events-none absolute -left-24 top-44 h-72 w-72 rounded-full bg-[#7047eb]/20 blur-3xl" />
-      <div className="pointer-events-none absolute -right-16 top-12 h-80 w-80 bg-[#ffeb55]/40 blur-3xl" />
+      <div className="pointer-events-none absolute -left-24 top-44 hidden h-72 w-72 rounded-full bg-[#7047eb]/20 blur-3xl sm:block" />
+      <div className="pointer-events-none absolute -right-16 top-12 hidden h-80 w-80 bg-[#ffeb55]/40 blur-3xl sm:block" />
 
       <SaleRaiseHeader raised={raised} cap={cap} showProgress />
 
-      <main className="relative z-10 mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:py-16">
-        <div className="grid items-center gap-14 lg:grid-cols-[1.08fr_0.92fr]">
-          <section>
-            <div className="mb-7 inline-flex -rotate-1 items-center gap-3 border-2 border-black bg-[#ffeb55] px-4 py-2 font-mono text-xs font-bold uppercase shadow-[4px_4px_0_#131118]">
+      <main className="sale-safe-bottom relative z-10 mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-10 lg:py-16">
+        <div className="grid w-full gap-8 lg:grid-cols-[1.08fr_0.92fr] lg:items-start lg:gap-14">
+          <section className="order-2 min-w-0 lg:order-1">
+            <div className="mb-4 inline-flex -rotate-1 items-center gap-2 border-2 border-black bg-[#ffeb55] px-3 py-1.5 font-mono text-[10px] font-bold uppercase shadow-[4px_4px_0_#131118] sm:mb-7 sm:gap-3 sm:px-4 sm:py-2 sm:text-xs">
               <span className="h-2 w-2 animate-pulse rounded-full bg-[#7047eb]" />
               Phase 1 — Whitelist Open
             </div>
-            <h1 className="max-w-3xl font-display text-[clamp(3.5rem,8vw,7.25rem)] font-bold uppercase leading-[0.82] tracking-[-0.075em]">
+            <h1 className="max-w-3xl font-display text-[clamp(2rem,10vw,7.25rem)] font-bold uppercase leading-[0.88] tracking-[-0.04em] sm:leading-[0.82] sm:tracking-[-0.075em]">
               Power the
               <br />
               universal
               <br />
               <span className="raise-highlight">rewards</span> economy
             </h1>
-            <p className="mt-8 max-w-xl text-lg font-medium leading-relaxed text-[#4b4753]">
+            <p className="mt-4 max-w-xl text-base font-medium leading-relaxed text-[#4b4753] sm:mt-8 sm:text-lg">
               Join the $GAMI Token Raise. Early participants receive boosted XP multipliers,
               governance rights, and priority access to the protocol.
             </p>
 
-            <div className="mt-9 grid max-w-xl grid-cols-3 border-[3px] border-black bg-white shadow-[7px_7px_0_#131118]">
+            <div className="mt-6 grid w-full max-w-xl grid-cols-1 divide-y-2 divide-black border-[3px] border-black bg-white shadow-[5px_5px_0_#131118] sm:mt-9 sm:grid-cols-3 sm:divide-y-0 sm:shadow-[7px_7px_0_#131118]">
               {[
                 ['Price', `$${price.toFixed(3)}`],
                 ['Min Allocation', `${MIN_CONTRIBUTION} USDC`],
                 ['Vesting', '30d cliff'],
               ].map(([label, value], index) => (
-                <div key={label} className={`p-4 ${index < 2 ? 'border-r-2 border-black' : ''}`}>
+                <div
+                  key={label}
+                  className={`p-3 sm:p-4 ${index < 2 ? 'sm:border-r-2 sm:border-black' : ''}`}
+                >
                   <p className="font-mono text-[10px] uppercase text-[#77727e]">{label}</p>
-                  <p className="mt-2 font-display text-sm font-bold sm:text-base">{value}</p>
+                  <p className="mt-1 font-display text-sm font-bold sm:mt-2 sm:text-base">{value}</p>
                 </div>
               ))}
             </div>
@@ -285,37 +288,39 @@ export function SalePage() {
               onClick={() =>
                 document.getElementById('contribute-card')?.scrollIntoView({ behavior: 'smooth' })
               }
-              className="mt-10 border-[3px] border-black bg-[#7047eb] px-8 py-4 font-display font-bold uppercase tracking-wide text-white shadow-[7px_7px_0_#131118] transition hover:translate-x-1 hover:translate-y-1 hover:shadow-[3px_3px_0_#131118]"
+              className="mt-6 hidden w-full border-[3px] border-black bg-[#7047eb] px-6 py-3 font-display text-sm font-bold uppercase tracking-wide text-white shadow-[5px_5px_0_#131118] transition hover:translate-x-1 hover:translate-y-1 hover:shadow-[3px_3px_0_#131118] sm:mt-10 sm:w-auto sm:px-8 sm:py-4 sm:text-base lg:inline-block"
             >
               Participate in raise →
             </button>
             <Link
               to="/tokenomics"
-              className="ml-0 mt-5 block w-fit border-b-2 border-black font-mono text-xs font-bold uppercase sm:ml-6 sm:inline-block"
+              className="mt-4 block w-fit border-b-2 border-black font-mono text-[10px] font-bold uppercase sm:mt-5 sm:text-xs"
             >
               Read the full GAMI Tokenomics + TGE plan →
             </Link>
           </section>
 
-          <section id="contribute-card" className="relative scroll-mt-28">
-            <div className="absolute -right-4 -top-5 z-20 rotate-3 border-2 border-black bg-[#ffeb55] px-3 py-2 font-mono text-[10px] font-bold uppercase shadow-[3px_3px_0_#131118]">
+          <section id="contribute-card" className="relative order-1 min-w-0 scroll-mt-24 lg:order-2 lg:scroll-mt-28">
+            <div className="absolute -right-2 -top-4 z-20 rotate-3 border-2 border-black bg-[#ffeb55] px-2 py-1 font-mono text-[9px] font-bold uppercase shadow-[3px_3px_0_#131118] sm:-right-4 sm:-top-5 sm:px-3 sm:py-2 sm:text-[10px]">
               {phase} round
             </div>
-            <div className="border-[3px] border-black bg-white p-5 shadow-[12px_12px_0_#131118] sm:p-8">
-              <div className="flex items-center justify-between border-b-2 border-black pb-6">
-                <div className="flex items-center gap-4">
-                  <span className="flex h-14 w-14 items-center justify-center border-2 border-black bg-[#7047eb] font-display text-3xl font-bold text-white">
+            <div className="border-[3px] border-black bg-white p-4 shadow-[8px_8px_0_#131118] sm:p-6 lg:p-8 lg:shadow-[12px_12px_0_#131118]">
+              <div className="flex flex-col gap-4 border-b-2 border-black pb-4 sm:flex-row sm:items-center sm:justify-between sm:pb-6">
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center border-2 border-black bg-[#7047eb] font-display text-2xl font-bold text-white sm:h-14 sm:w-14 sm:text-3xl">
                     G
                   </span>
-                  <div>
-                    <p className="font-display text-xl font-bold">$GAMI TOKEN</p>
-                    <p className="font-mono text-xs uppercase text-[#77727e]">Presale round 1</p>
+                  <div className="min-w-0">
+                    <p className="font-display text-lg font-bold sm:text-xl">$GAMI TOKEN</p>
+                    <p className="font-mono text-[10px] uppercase text-[#77727e] sm:text-xs">Presale round 1</p>
                   </div>
                 </div>
-                <ConnectWallet variant="sale" />
+                <div className="hidden sm:block">
+                  <ConnectWallet variant="sale" />
+                </div>
               </div>
 
-              <div className="my-7 flex items-center justify-between">
+              <div className="my-5 flex items-center justify-between sm:my-7">
                 <div>
                   <p className="font-mono text-[10px] uppercase text-[#77727e]">Wallet status</p>
                   <p className="mt-1 font-mono text-xs font-bold">
@@ -347,7 +352,7 @@ export function SalePage() {
                   step="100"
                   value={amount}
                   onChange={(event) => setAmount(event.target.value)}
-                  className="min-w-0 flex-1 bg-transparent px-4 py-4 font-mono text-2xl font-bold outline-none"
+                  className="min-w-0 flex-1 bg-transparent px-3 py-3 font-mono text-xl font-bold outline-none sm:px-4 sm:py-4 sm:text-2xl"
                 />
                 <span className="flex items-center border-l-2 border-black px-4 font-mono text-xs font-bold">
                   USDC
@@ -406,8 +411,8 @@ export function SalePage() {
           </section>
         </div>
 
-        <div className="mt-16 grid gap-8 lg:grid-cols-[0.8fr_1.2fr]">
-          <section className="border-[3px] border-black bg-[#ffeb55] p-6 shadow-[8px_8px_0_#131118]">
+        <div className="mt-10 grid w-full gap-6 sm:mt-16 sm:gap-8 lg:grid-cols-[0.8fr_1.2fr]">
+          <section className="min-w-0 border-[3px] border-black bg-[#ffeb55] p-4 shadow-[6px_6px_0_#131118] sm:p-6 sm:shadow-[8px_8px_0_#131118]">
             <p className="font-mono text-xs font-bold uppercase">Participant benefits</p>
             <div className="mt-5 space-y-4">
               {BENEFITS.map((benefit) => (
@@ -421,19 +426,19 @@ export function SalePage() {
             </div>
           </section>
 
-          <section className="border-[3px] border-black bg-white p-6 shadow-[8px_8px_0_#7047eb]">
-            <div className="flex items-end justify-between gap-4">
+          <section className="min-w-0 border-[3px] border-black bg-white p-4 shadow-[6px_6px_0_#7047eb] sm:p-6 sm:shadow-[8px_8px_0_#7047eb]">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
               <div>
                 <p className="font-mono text-xs font-bold uppercase text-[#7047eb]">Raise quests</p>
-                <h2 className="mt-1 font-display text-3xl font-bold uppercase">
+                <h2 className="mt-1 font-display text-2xl font-bold uppercase sm:text-3xl">
                   Earn while you join
                 </h2>
               </div>
-              <span className="font-mono text-xs">
+              <span className="font-mono text-[10px] sm:text-xs">
                 {quests.filter((quest) => quest.complete).length}/{quests.length} COMPLETE
               </span>
             </div>
-            <div className="mt-6 grid gap-3 md:grid-cols-3">
+            <div className="mt-4 grid gap-3 sm:mt-6 md:grid-cols-3">
               {quests.map((quest) => {
                 const body = (
                   <>

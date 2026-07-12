@@ -25,12 +25,12 @@ function AppShell() {
     <div
       className={
         isSaleRoute
-          ? 'min-h-screen font-sans'
+          ? 'min-h-screen w-full max-w-[100vw] overflow-x-hidden font-sans'
           : 'hexagon-bg min-h-screen font-sans text-white selection:bg-gami-accent selection:text-white'
       }
     >
       {!isSaleRoute && <GamiNav />}
-      <main>
+      <main className={isSaleRoute ? 'w-full max-w-[100vw] overflow-x-hidden' : undefined}>
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/waitlist" element={<WaitlistPage />} />

@@ -204,7 +204,7 @@ export function ContributePage() {
   return (
     <div className="min-h-screen bg-[#f0edff] text-[#131118]">
       <SaleRaiseHeader />
-      <div className="mx-auto max-w-lg px-4 py-10 sm:px-6">
+      <div className="sale-safe-bottom mx-auto max-w-lg px-4 py-8 sm:px-6 sm:py-10">
         <h1 className="font-display text-3xl font-bold uppercase italic">Contribute</h1>
         <p className="mt-2 font-mono text-sm text-[#4b4753]">
           Join the waitlist, verify identity, and contribute USDC on Base.
