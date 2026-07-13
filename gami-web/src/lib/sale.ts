@@ -1,3 +1,5 @@
+import { parseUnits } from 'viem';
+
 import { getContractAddress, getFunctionsBase, getSupabaseUrl } from '@/lib/contracts';
 import { env } from '@/lib/env';
 
@@ -20,6 +22,7 @@ export interface SaleStats {
   hard_cap_usd: number;
   current_phase: string;
   on_chain_raised_usdc?: number;
+  updated_at?: string;
 }
 
 export async function fetchSaleStats(): Promise<SaleStats | null> {
@@ -82,31 +85,6 @@ export async function joinWaitlist(input: {
   return { ok: true };
 }
 
-export async function requestKycApproval(input: {
-  wallet_address: string;
-  email?: string;
-}): Promise<{ ok: boolean; error?: string }> {
-  const base = getFunctionsBase();
-  if (!base) return { ok: false, error: 'Backend not configured' };
-
-  const res = await fetch(`${base}/kyc-webhook`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      wallet_address: input.wallet_address,
-      kyc_status: 'approved',
-      email: input.email,
-      phase: 'public',
-    }),
-  });
-
-  if (!res.ok) {
-    const data = (await res.json().catch(() => ({}))) as { error?: string };
-    return { ok: false, error: data.error ?? 'KYC update failed' };
-  }
-  return { ok: true };
-}
-
 export async function logClaimEvent(input: {
   wallet_address: string;
   amount: string;
@@ -124,6 +102,20 @@ export async function logClaimEvent(input: {
 export function previewGamiAllocation(usdcAmount6: bigint, pricePerToken: bigint): bigint {
   if (pricePerToken === 0n) return 0n;
   return (usdcAmount6 * 10n ** 18n) / pricePerToken;
+}
+
+export function parseStablecoinAmount(value: string, decimals = 6): bigint | null {
+  const normalized = value.trim();
+  if (!/^(?:0|[1-9]\d*)(?:\.\d+)?$/.test(normalized)) return null;
+  const fraction = normalized.split('.')[1];
+  if (fraction && fraction.length > decimals) return null;
+
+  try {
+    const amount = parseUnits(normalized, decimals);
+    return amount > 0n ? amount : null;
+  } catch {
+    return null;
+  }
 }
 
 export function usdcToDisplay(amount6: bigint): number {

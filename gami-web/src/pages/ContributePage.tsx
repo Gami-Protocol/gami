@@ -24,7 +24,6 @@ import {
   isSaleConfigured,
   joinWaitlist,
   previewGamiAllocation,
-  requestKycApproval,
 } from '@/lib/sale';
 import { env } from '@/lib/env';
 
@@ -141,24 +140,17 @@ export function ContributePage() {
       setMessage('Connect your wallet first.');
       return;
     }
-    setStatus('loading');
-
-    const templateId = env.personaTemplateId();
-    if (templateId) {
-      setMessage('Complete verification in the Persona modal (configure SDK with your template).');
-      setStatus('idle');
-      return;
-    }
-
-    const result = await requestKycApproval({ wallet_address: address, email });
-    if (!result.ok) {
+    const verificationUrl = env.kycVerificationUrl();
+    if (!verificationUrl) {
       setStatus('error');
-      setMessage(result.error ?? 'KYC failed');
+      setMessage('Identity verification is not configured. Contributions remain disabled.');
       return;
     }
-    setStatus('done');
-    setMessage('Identity verified (sandbox). Checking eligibility…');
-    await refreshEligibility();
+
+    const url = verificationUrl.replace('{wallet}', encodeURIComponent(address));
+    window.open(url, '_blank', 'noopener,noreferrer');
+    setStatus('idle');
+    setMessage('Complete verification with the provider, then check your eligibility.');
     setStep('eligibility');
   }
 
@@ -277,7 +269,7 @@ export function ContributePage() {
       {step === 'kyc' && (
         <div className="mt-8 space-y-4">
           <p className="text-sm text-muted">
-            Connect your wallet and complete KYC. Sandbox mode auto-approves when Persona is not configured.
+            Connect your wallet and complete identity verification with the configured provider.
           </p>
           <button
             type="button"

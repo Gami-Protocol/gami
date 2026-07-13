@@ -1,11 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAccount, useReadContract, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
-import { formatUnits, parseUnits } from 'viem';
+import {
+  useAccount,
+  useChainId,
+  useReadContract,
+  useSwitchChain,
+  useWaitForTransactionReceipt,
+  useWriteContract,
+} from 'wagmi';
+import { formatUnits } from 'viem';
 
 import { ConnectWallet } from '@/components/ConnectWallet';
 import { GamiFooter } from '@/components/gami/GamiFooter';
 import { GamiTokenLogo } from '@/components/gami/GamiTokenLogo';
+import { useGeoBlock } from '@/hooks/useGeoBlock';
 import {
   TOKEN_SALE_ABI,
   USDC_ABI,
@@ -18,15 +26,19 @@ import {
   fetchEligibility,
   fetchSaleStats,
   isSaleConfigured,
+  parseStablecoinAmount,
   previewGamiAllocation,
   type SaleEligibility,
   type SaleStats,
 } from '@/lib/sale';
+import { env } from '@/lib/env';
 
-const FALLBACK_RAISED = 4_800_000;
-const FALLBACK_CAP = 12_000_000;
-const FALLBACK_PRICE = 0.045;
+const CONFIGURED_CAP = 2_160_000;
+const CONFIGURED_PRICE = 0.012;
 const MIN_CONTRIBUTION = 500;
+const USDC_DECIMALS = 6;
+
+type PaymentMethod = 'usdc' | 'usdt' | 'fiat';
 
 const BENEFITS = [
   '1.5x XP Multiplier at TGE',
@@ -43,14 +55,23 @@ function walletErrorMessage(error: Error): string {
 
 export function SalePage() {
   const { address, isConnected } = useAccount();
+  const connectedChainId = useChainId();
+  const { switchChain, isPending: isSwitchingChain } = useSwitchChain();
+  const { blocked: geoBlocked, country, loading: geoLoading } = useGeoBlock();
   const [stats, setStats] = useState<SaleStats | null>(null);
   const [eligibility, setEligibility] = useState<SaleEligibility | null>(null);
   const [amount, setAmount] = useState('500');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('usdc');
+  const [pendingAmount, setPendingAmount] = useState<bigint | null>(null);
   const [message, setMessage] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
   const saleAddress = getContractAddress('TOKEN_SALE');
   const usdcAddress = getContractAddress('USDC');
   const saleConfigured = isSaleConfigured();
+  const requiredChainId = getChainId();
+  const wrongNetwork = isConnected && connectedChainId !== requiredChainId;
+  const fiatOnrampUrl = env.fiatOnrampUrl();
+  const usdtSwapUrl = env.usdtSwapUrl();
 
   const { data: onChainRaised } = useReadContract({
     address: saleAddress ?? undefined,
@@ -63,14 +84,14 @@ export function SalePage() {
     address: saleAddress ?? undefined,
     abi: TOKEN_SALE_ABI,
     functionName: 'hardCap',
-    query: { enabled: Boolean(saleAddress) },
+    query: { enabled: Boolean(saleAddress), refetchInterval: 15_000 },
   });
 
   const { data: pricePerToken } = useReadContract({
     address: saleAddress ?? undefined,
     abi: TOKEN_SALE_ABI,
     functionName: 'pricePerToken',
-    query: { enabled: Boolean(saleAddress) },
+    query: { enabled: Boolean(saleAddress), refetchInterval: 15_000 },
   });
 
   const { data: phaseIndex } = useReadContract({
@@ -80,15 +101,56 @@ export function SalePage() {
     query: { enabled: Boolean(saleAddress), refetchInterval: 15_000 },
   });
 
+  const { data: perWalletCapRaw } = useReadContract({
+    address: saleAddress ?? undefined,
+    abi: TOKEN_SALE_ABI,
+    functionName: 'perWalletCap',
+    query: { enabled: Boolean(saleAddress), refetchInterval: 15_000 },
+  });
+
+  const { data: walletContributedRaw, refetch: refetchWalletContributed } = useReadContract({
+    address: saleAddress ?? undefined,
+    abi: TOKEN_SALE_ABI,
+    functionName: 'contributed',
+    args: address ? [address] : undefined,
+    query: { enabled: Boolean(saleAddress && address), refetchInterval: 15_000 },
+  });
+
+  const { data: walletAllocationRaw, refetch: refetchWalletAllocation } = useReadContract({
+    address: saleAddress ?? undefined,
+    abi: TOKEN_SALE_ABI,
+    functionName: 'allocation',
+    args: address ? [address] : undefined,
+    query: { enabled: Boolean(saleAddress && address), refetchInterval: 15_000 },
+  });
+
+  const { data: usdcBalanceRaw, refetch: refetchUsdcBalance } = useReadContract({
+    address: usdcAddress ?? undefined,
+    abi: USDC_ABI,
+    functionName: 'balanceOf',
+    args: address ? [address] : undefined,
+    query: { enabled: Boolean(usdcAddress && address), refetchInterval: 15_000 },
+  });
+
+  const { data: usdcAllowanceRaw, refetch: refetchUsdcAllowance } = useReadContract({
+    address: usdcAddress ?? undefined,
+    abi: USDC_ABI,
+    functionName: 'allowance',
+    args: address && saleAddress ? [address, saleAddress] : undefined,
+    query: { enabled: Boolean(usdcAddress && saleAddress && address), refetchInterval: 15_000 },
+  });
+
   const {
     writeContract: approveUsdc,
     data: approvalHash,
     isPending: isApproving,
+    reset: resetApproval,
   } = useWriteContract();
   const {
     writeContract: contribute,
     data: contributionHash,
     isPending: isContributing,
+    reset: resetContribution,
   } = useWriteContract();
   const { isSuccess: approvalConfirmed } = useWaitForTransactionReceipt({ hash: approvalHash });
   const { isSuccess: contributionConfirmed } = useWaitForTransactionReceipt({
@@ -104,28 +166,28 @@ export function SalePage() {
   }, [address]);
 
   useEffect(() => {
-    void fetchSaleStats().then(setStats);
+    const refreshStats = () => void fetchSaleStats().then(setStats);
+    refreshStats();
+    const timer = window.setInterval(refreshStats, 15_000);
+    return () => window.clearInterval(timer);
   }, []);
 
   useEffect(() => {
     void refreshEligibility();
   }, [refreshEligibility]);
 
-  const usdcAmount = useMemo(() => {
-    const value = Number(amount);
-    if (!Number.isFinite(value) || value <= 0) return 0n;
-    return parseUnits(value.toFixed(6), 6);
-  }, [amount]);
+  const usdcAmount = useMemo(() => parseStablecoinAmount(amount, USDC_DECIMALS), [amount]);
 
   const tokenAmount = useMemo(() => {
-    if (pricePerToken && usdcAmount > 0n) {
+    if (pricePerToken && usdcAmount) {
       return Number(formatUnits(previewGamiAllocation(usdcAmount, pricePerToken as bigint), 18));
     }
-    return Number(amount || 0) / FALLBACK_PRICE;
+    const numericAmount = Number(amount);
+    return Number.isFinite(numericAmount) ? numericAmount / CONFIGURED_PRICE : 0;
   }, [amount, pricePerToken, usdcAmount]);
 
   useEffect(() => {
-    if (!approvalConfirmed || !saleAddress || !address || contributionHash || usdcAmount === 0n) {
+    if (!approvalConfirmed || !saleAddress || !address || contributionHash || !pendingAmount) {
       return;
     }
 
@@ -135,7 +197,7 @@ export function SalePage() {
         address: saleAddress,
         abi: TOKEN_SALE_ABI,
         functionName: 'contributeUSDC',
-        args: [usdcAmount, eligibility?.merkle_proof ?? []],
+        args: [pendingAmount, eligibility?.merkle_proof ?? []],
       },
       {
         onError: (error) => setMessage(walletErrorMessage(error)),
@@ -148,34 +210,69 @@ export function SalePage() {
     contributionHash,
     eligibility,
     saleAddress,
-    usdcAmount,
+    pendingAmount,
   ]);
 
   useEffect(() => {
     if (!contributionConfirmed) return;
     setShowSuccess(true);
     setMessage('');
+    setPendingAmount(null);
     void refreshEligibility();
     void fetchSaleStats().then(setStats);
-  }, [contributionConfirmed, refreshEligibility]);
+    void refetchWalletContributed();
+    void refetchWalletAllocation();
+    void refetchUsdcBalance();
+    void refetchUsdcAllowance();
+  }, [
+    contributionConfirmed,
+    refreshEligibility,
+    refetchUsdcAllowance,
+    refetchUsdcBalance,
+    refetchWalletAllocation,
+    refetchWalletContributed,
+  ]);
 
-  const hasLiveRaisedData = Boolean(stats || onChainRaised);
+  const hasLiveRaisedData = Boolean(stats) || onChainRaised !== undefined;
   const onChainUsd =
     onChainRaised !== undefined ? Number(formatUnits(onChainRaised as bigint, 6)) : 0;
   const raised = hasLiveRaisedData
     ? Math.max(stats?.total_raised_usd ?? 0, onChainUsd)
-    : FALLBACK_RAISED;
+    : 0;
   const cap = hardCapRaw
     ? Number(formatUnits(hardCapRaw as bigint, 6))
-    : (stats?.hard_cap_usd ?? FALLBACK_CAP);
+    : (stats?.hard_cap_usd ?? CONFIGURED_CAP);
   const pct = cap > 0 ? Math.min(100, (raised / cap) * 100) : 0;
-  const price = pricePerToken ? Number(formatUnits(pricePerToken as bigint, 6)) : FALLBACK_PRICE;
+  const price = pricePerToken ? Number(formatUnits(pricePerToken as bigint, 6)) : CONFIGURED_PRICE;
   const phase =
     phaseIndex !== undefined
       ? phaseFromIndex(Number(phaseIndex))
       : (stats?.current_phase ?? 'private');
   const isEligible = eligibility?.kyc_status === 'approved';
-  const validAmount = Number(amount) >= MIN_CONTRIBUTION;
+  const perWalletCap = (perWalletCapRaw as bigint | undefined) ?? 0n;
+  const walletContributed = (walletContributedRaw as bigint | undefined) ?? 0n;
+  const walletAllocation = (walletAllocationRaw as bigint | undefined) ?? 0n;
+  const usdcBalance = (usdcBalanceRaw as bigint | undefined) ?? 0n;
+  const usdcAllowance = (usdcAllowanceRaw as bigint | undefined) ?? 0n;
+  const remainingWalletCap = perWalletCap > walletContributed ? perWalletCap - walletContributed : 0n;
+  const maxContribution =
+    remainingWalletCap > 0n && usdcBalance > remainingWalletCap ? remainingWalletCap : usdcBalance;
+  const minContributionRaw = BigInt(MIN_CONTRIBUTION) * 10n ** BigInt(USDC_DECIMALS);
+  const validAmount = Boolean(
+    usdcAmount &&
+      usdcAmount >= minContributionRaw &&
+      usdcAmount <= usdcBalance &&
+      (perWalletCap === 0n || usdcAmount <= remainingWalletCap),
+  );
+  const saleOpen = phase !== 'closed' && raised < cap;
+  const canContribute =
+    saleConfigured &&
+    saleOpen &&
+    isEligible &&
+    !wrongNetwork &&
+    !geoBlocked &&
+    validAmount &&
+    paymentMethod === 'usdc';
 
   function handleContribution() {
     if (!isConnected || !address) {
@@ -190,12 +287,61 @@ export function SalePage() {
       setMessage('On-chain sale contracts are not configured for this environment.');
       return;
     }
-    if (!validAmount) {
-      setMessage(`The minimum contribution is ${MIN_CONTRIBUTION} USDC.`);
+    if (geoLoading) {
+      setMessage('Checking regional availability. Please wait.');
+      return;
+    }
+    if (geoBlocked) {
+      setMessage(`Sale participation is unavailable from ${country ?? 'your region'}.`);
+      return;
+    }
+    if (wrongNetwork) {
+      switchChain({ chainId: requiredChainId });
+      return;
+    }
+    if (!saleOpen) {
+      setMessage('This sale round is currently closed.');
+      return;
+    }
+    if (!usdcAmount || usdcAmount < minContributionRaw) {
+      setMessage(`Enter at least ${MIN_CONTRIBUTION} USDC with no more than 6 decimal places.`);
+      return;
+    }
+    if (usdcAmount > usdcBalance) {
+      setMessage('Your wallet does not have enough USDC for this contribution.');
+      return;
+    }
+    if (perWalletCap > 0n && usdcAmount > remainingWalletCap) {
+      setMessage(
+        `Amount exceeds your remaining wallet cap of ${Number(formatUnits(remainingWalletCap, 6)).toLocaleString()} USDC.`,
+      );
       return;
     }
 
-    setMessage('Approve USDC in your wallet. You will then confirm the contribution.');
+    resetApproval();
+    resetContribution();
+    setPendingAmount(usdcAmount);
+
+    if (usdcAllowance >= usdcAmount) {
+      setMessage('Confirm the contribution in your wallet.');
+      contribute(
+        {
+          address: saleAddress,
+          abi: TOKEN_SALE_ABI,
+          functionName: 'contributeUSDC',
+          args: [usdcAmount, eligibility?.merkle_proof ?? []],
+        },
+        {
+          onError: (error) => {
+            setPendingAmount(null);
+            setMessage(walletErrorMessage(error));
+          },
+        },
+      );
+      return;
+    }
+
+    setMessage('Approve the exact USDC amount. You will then confirm the contribution.');
     approveUsdc(
       {
         address: usdcAddress,
@@ -204,9 +350,17 @@ export function SalePage() {
         args: [saleAddress, usdcAmount],
       },
       {
-        onError: (error) => setMessage(walletErrorMessage(error)),
+        onError: (error) => {
+          setPendingAmount(null);
+          setMessage(walletErrorMessage(error));
+        },
       },
     );
+  }
+
+  function setMaximumContribution() {
+    if (maxContribution <= 0n) return;
+    setAmount(formatUnits(maxContribution, USDC_DECIMALS));
   }
 
   const quests = [
@@ -252,7 +406,8 @@ export function SalePage() {
           </div>
           <div className="flex items-center gap-5 font-mono text-xs sm:text-sm">
             <span className="border border-[#67f5a1] px-3 py-2 font-bold text-[#67f5a1]">
-              <span className="mr-2 animate-pulse">●</span>RAISE LIVE
+              <span className={`mr-2 ${saleOpen && saleConfigured ? 'animate-pulse' : ''}`}>●</span>
+              {saleConfigured ? (saleOpen ? 'RAISE LIVE' : 'ROUND CLOSED') : 'CONFIGURATION PENDING'}
             </span>
             <span className="font-bold">
               ${raised.toLocaleString(undefined, { maximumFractionDigits: 0 })} / $
@@ -273,7 +428,7 @@ export function SalePage() {
           <section>
             <div className="mb-7 inline-flex -rotate-1 items-center gap-3 border-2 border-black bg-[#ffeb55] px-4 py-2 font-mono text-xs font-bold uppercase shadow-[4px_4px_0_#131118]">
               <span className="h-2 w-2 animate-pulse rounded-full bg-[#7047eb]" />
-              Phase 1 — Whitelist Open
+              {phase} phase — {saleOpen ? 'participation open' : 'currently closed'}
             </div>
             <h1 className="max-w-3xl font-display text-[clamp(3.5rem,8vw,7.25rem)] font-bold uppercase leading-[0.82] tracking-[-0.075em]">
               Power the
@@ -291,7 +446,7 @@ export function SalePage() {
               {[
                 ['Price', `$${price.toFixed(3)}`],
                 ['Min Allocation', `${MIN_CONTRIBUTION} USDC`],
-                ['Vesting', '30d cliff'],
+                ['Distribution', '15% TGE + 1y'],
               ].map(([label, value], index) => (
                 <div key={label} className={`p-4 ${index < 2 ? 'border-r-2 border-black' : ''}`}>
                   <p className="font-mono text-[10px] uppercase text-[#77727e]">{label}</p>
@@ -351,6 +506,53 @@ export function SalePage() {
                 />
               </div>
 
+              <div className="mb-6">
+                <p className="font-mono text-[11px] font-bold uppercase">Payment route</p>
+                <div className="mt-2 grid grid-cols-3 gap-2">
+                  {(
+                    [
+                      ['usdc', 'USDC'],
+                      ['usdt', 'USDT'],
+                      ['fiat', 'Card / Fiat'],
+                    ] as const
+                  ).map(([method, label]) => (
+                    <button
+                      key={method}
+                      type="button"
+                      onClick={() => setPaymentMethod(method)}
+                      className={`border-2 border-black px-2 py-3 font-mono text-[10px] font-bold uppercase ${
+                        paymentMethod === method ? 'bg-[#ffeb55]' : 'bg-white hover:bg-[#f4f1f8]'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                {paymentMethod !== 'usdc' && (
+                  <div className="mt-3 border-2 border-black bg-[#f4f1f8] p-4">
+                    <p className="text-xs leading-relaxed">
+                      {paymentMethod === 'usdt'
+                        ? 'The sale contract settles in USDC. Swap USDT to USDC on Base, then return here to contribute.'
+                        : 'Buy USDC on Base through the configured regulated on-ramp, then return here to contribute.'}
+                    </p>
+                    {(paymentMethod === 'usdt' ? usdtSwapUrl : fiatOnrampUrl) ? (
+                      <a
+                        href={(paymentMethod === 'usdt' ? usdtSwapUrl : fiatOnrampUrl) as string}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-3 block w-full border-2 border-black bg-[#7047eb] px-4 py-3 text-center font-mono text-xs font-bold uppercase text-white"
+                      >
+                        {paymentMethod === 'usdt' ? 'Swap USDT to USDC ↗' : 'Buy USDC with fiat ↗'}
+                      </a>
+                    ) : (
+                      <p className="mt-3 font-mono text-[10px] font-bold uppercase text-[#a13b3b]">
+                        This payment route is not enabled yet. Do not send funds directly.
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+
               <label
                 className="block font-mono text-[11px] font-bold uppercase"
                 htmlFor="raise-amount"
@@ -362,7 +564,8 @@ export function SalePage() {
                   id="raise-amount"
                   type="number"
                   min={MIN_CONTRIBUTION}
-                  step="100"
+                  max={maxContribution > 0n ? formatUnits(maxContribution, USDC_DECIMALS) : undefined}
+                  step="0.000001"
                   value={amount}
                   onChange={(event) => setAmount(event.target.value)}
                   className="min-w-0 flex-1 bg-transparent px-4 py-4 font-mono text-2xl font-bold outline-none"
@@ -371,6 +574,24 @@ export function SalePage() {
                   USDC
                 </span>
               </div>
+              {isConnected && (
+                <div className="mt-2 flex flex-wrap items-center justify-between gap-2 font-mono text-[10px] uppercase text-[#77727e]">
+                  <span>
+                    Balance: {Number(formatUnits(usdcBalance, USDC_DECIMALS)).toLocaleString(undefined, {
+                      maximumFractionDigits: 2,
+                    })}{' '}
+                    USDC
+                  </span>
+                  <button
+                    type="button"
+                    onClick={setMaximumContribution}
+                    disabled={maxContribution <= 0n}
+                    className="font-bold text-[#7047eb] underline disabled:text-[#77727e]"
+                  >
+                    Use max
+                  </button>
+                </div>
+              )}
 
               <div className="my-4 flex justify-center font-mono text-xl">↓</div>
 
@@ -383,6 +604,20 @@ export function SalePage() {
                 </div>
                 <span className="font-display text-sm font-bold">$GAMI</span>
               </div>
+              {isConnected && (
+                <div className="mt-3 grid grid-cols-2 gap-2 font-mono text-[10px] uppercase text-[#77727e]">
+                  <span>
+                    Already contributed:{' '}
+                    {Number(formatUnits(walletContributed, USDC_DECIMALS)).toLocaleString()} USDC
+                  </span>
+                  <span className="text-right">
+                    Reserved: {Number(formatUnits(walletAllocation, 18)).toLocaleString(undefined, {
+                      maximumFractionDigits: 0,
+                    })}{' '}
+                    GAMI
+                  </span>
+                </div>
+              )}
 
               {!isConnected ? (
                 <div className="mt-5 border-2 border-dashed border-black/30 bg-[#f4f1f8] p-4 text-center">
@@ -395,13 +630,40 @@ export function SalePage() {
                 <button
                   type="button"
                   onClick={handleContribution}
-                  disabled={isApproving || isContributing}
+                  disabled={
+                    isApproving ||
+                    isContributing ||
+                    isSwitchingChain ||
+                    paymentMethod !== 'usdc' ||
+                    (!canContribute && !wrongNetwork)
+                  }
                   className="mt-5 w-full border-[3px] border-black bg-[#131118] py-4 font-display font-bold uppercase tracking-wide text-white shadow-[5px_5px_0_#7047eb] transition hover:bg-[#7047eb] disabled:cursor-wait disabled:opacity-60"
                 >
-                  {isApproving || isContributing ? 'Confirm in wallet…' : 'Confirm contribution'}
+                  {paymentMethod !== 'usdc'
+                    ? 'Fund wallet above, then select USDC'
+                    : isSwitchingChain
+                      ? 'Switching network…'
+                      : wrongNetwork
+                        ? `Switch to ${requiredChainId === 8453 ? 'Base' : 'Base Sepolia'}`
+                        : isApproving || isContributing
+                          ? 'Confirm in wallet…'
+                          : !saleConfigured
+                            ? 'Sale contracts not configured'
+                            : !saleOpen
+                              ? 'Sale round closed'
+                              : geoBlocked
+                                ? 'Unavailable in your region'
+                                : !validAmount
+                                  ? 'Enter an eligible amount'
+                                  : 'Confirm contribution'}
                 </button>
               )}
 
+              {geoBlocked && (
+                <p className="mt-4 border-l-4 border-red-600 bg-red-50 p-3 font-mono text-xs text-red-800">
+                  Participation is unavailable from {country ?? 'your region'} under the sale policy.
+                </p>
+              )}
               {isConnected && !isEligible && (
                 <Link
                   to="/sale/contribute"
