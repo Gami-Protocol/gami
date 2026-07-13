@@ -27,6 +27,7 @@ describe('TokenSale + VestingVault', function () {
     const perWallet = 500_000_000n;
     await sale.setParams(price, hardCap, perWallet);
     await sale.setPhase(3); // PUBLIC
+    await gami.transfer(await sale.getAddress(), ethers.parseEther('100000000'));
 
     await usdc.mint(buyer.address, 1_000_000_000n);
     await usdc.connect(buyer).approve(await sale.getAddress(), 1_000_000_000n);
@@ -86,5 +87,35 @@ describe('TokenSale + VestingVault', function () {
 
     await vesting.connect(buyer).claim();
     expect(await gami.balanceOf(buyer.address)).to.equal(claimable);
+  });
+
+  it('prevents vesting schedules from being overwritten', async function () {
+    const { buyer, vesting } = await deployFixture();
+    const start = BigInt(Math.floor(Date.now() / 1000));
+    await vesting.createVesting(buyer.address, 100n, start, 0, 100, 1_500);
+
+    await expect(
+      vesting.createVesting(buyer.address, 200n, start, 0, 100, 1_500),
+    ).to.be.revertedWith('schedule exists');
+  });
+
+  it('funds the vesting vault exactly once when finalized', async function () {
+    const { buyer, gami, vesting, sale } = await deployFixture();
+    await sale.connect(buyer).contributeUSDC(100_000_000n, []);
+    const sold = await sale.totalSold();
+    await sale.setPhase(0);
+
+    await expect(sale.finalizeSale(0, 0, 0, 0))
+      .to.emit(sale, 'SaleFinalized')
+      .withArgs(sold);
+    expect(await gami.balanceOf(await vesting.getAddress())).to.equal(sold);
+    await expect(sale.finalizeSale(0, 0, 0, 0)).to.be.revertedWith('already finalized');
+  });
+
+  it('rejects ETH contributions so stablecoin caps stay consistent', async function () {
+    const { buyer, sale } = await deployFixture();
+    await expect(sale.connect(buyer).contributeETH([], { value: 1n })).to.be.revertedWith(
+      'ETH disabled',
+    );
   });
 });
