@@ -33,6 +33,18 @@ async function main() {
   let total = 0n;
 
   for (const [buyer, amount] of buyers) {
+    const existing = await vesting.schedules(buyer);
+    if (existing.totalAmount > 0n) {
+      if (existing.totalAmount !== amount) {
+        throw new Error(
+          `Existing vesting for ${buyer} is ${existing.totalAmount}, expected ${amount}`,
+        );
+      }
+      console.log('Vesting already exists:', buyer, ethers.formatEther(amount));
+      total += amount;
+      continue;
+    }
+
     await (
       await vesting.createVesting(
         buyer,
@@ -47,9 +59,19 @@ async function main() {
     console.log('Vesting created:', buyer, ethers.formatEther(amount));
   }
 
-  await (await gami.approve(deployment.contracts.VestingVault, total)).wait();
+  const saleBalance = await gami.balanceOf(deployment.contracts.TokenSale);
+  if (saleBalance < total) {
+    throw new Error(
+      `TokenSale has ${ethers.formatEther(saleBalance)} GAMI; ${ethers.formatEther(total)} required`,
+    );
+  }
+
+  if (await sale.finalized()) {
+    console.log('Sale already finalized; vesting vault funding is complete.');
+    return;
+  }
+
   await (await sale.finalizeSale(vestingStart, CLIFF_SECONDS, VESTING_SECONDS, TGE_UNLOCK_BPS)).wait();
-  await (await gami.transfer(deployment.contracts.VestingVault, total)).wait();
 
   console.log('Finalized sale for', buyers.size, 'buyers, total GAMI:', ethers.formatEther(total));
   console.log('Owner:', owner.address);

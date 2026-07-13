@@ -44,6 +44,7 @@ contract VestingVault is Ownable, ReentrancyGuard {
         require(beneficiary != address(0), "zero address");
         require(amount > 0, "zero amount");
         require(tgeUnlockBps <= 10_000, "invalid bps");
+        require(schedules[beneficiary].totalAmount == 0, "schedule exists");
 
         schedules[beneficiary] = VestingSchedule({
             totalAmount: amount,
@@ -97,7 +98,7 @@ contract VestingVault is Ownable, ReentrancyGuard {
 
 /**
  * @title TokenSale
- * @notice Accepts ETH or USDC for $GAMI allocation with phase caps and whitelist.
+ * @notice Accepts the configured 6-decimal stablecoin for $GAMI allocations.
  */
 contract TokenSale is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
@@ -114,6 +115,7 @@ contract TokenSale is Ownable, ReentrancyGuard {
     uint256 public perWalletCap;
     uint256 public totalRaised;
     uint256 public totalSold;
+    bool public finalized;
 
     bytes32 public merkleRoot;
     mapping(address => uint256) public contributed;
@@ -122,6 +124,7 @@ contract TokenSale is Ownable, ReentrancyGuard {
     event PhaseChanged(Phase phase);
     event Contribution(address indexed buyer, uint256 paymentAmount, uint256 gamiAmount);
     event WhitelistUpdated(bytes32 merkleRoot);
+    event SaleFinalized(uint256 totalSold);
 
     constructor(
         address _gamiToken,
@@ -165,6 +168,7 @@ contract TokenSale is Ownable, ReentrancyGuard {
 
         uint256 gamiAmount = (amount * 1e18) / pricePerToken;
         require(gamiAmount > 0, "too small");
+        require(gamiToken.balanceOf(address(this)) >= totalSold + gamiAmount, "insufficient GAMI");
 
         paymentToken.safeTransferFrom(msg.sender, address(this), amount);
 
@@ -176,38 +180,23 @@ contract TokenSale is Ownable, ReentrancyGuard {
         emit Contribution(msg.sender, amount, gamiAmount);
     }
 
-    function contributeETH(bytes32[] calldata proof) external payable nonReentrant {
-        require(currentPhase != Phase.CLOSED, "sale closed");
-        if (currentPhase != Phase.PUBLIC) {
-            require(_verifyWhitelist(msg.sender, proof), "not whitelisted");
-        }
-
-        uint256 amount = msg.value;
-        require(totalRaised + amount <= hardCap, "hard cap");
-        require(contributed[msg.sender] + amount <= perWalletCap, "wallet cap");
-
-        uint256 gamiAmount = (amount * 1e18) / pricePerToken;
-        require(gamiAmount > 0, "too small");
-
-        totalRaised += amount;
-        totalSold += gamiAmount;
-        contributed[msg.sender] += amount;
-        allocation[msg.sender] += gamiAmount;
-
-        emit Contribution(msg.sender, amount, gamiAmount);
+    function contributeETH(bytes32[] calldata) external payable {
+        revert("ETH disabled");
     }
 
     function finalizeSale(
-        uint256 vestingStart,
-        uint256 cliffDuration,
-        uint256 vestingDuration,
-        uint256 tgeUnlockBps
+        uint256,
+        uint256,
+        uint256,
+        uint256
     ) external onlyOwner {
         require(currentPhase == Phase.CLOSED || totalRaised >= hardCap, "sale active");
+        require(!finalized, "already finalized");
+        require(gamiToken.balanceOf(address(this)) >= totalSold, "insufficient GAMI");
 
-        // Transfer GAMI to vesting vault and create schedules for all contributors
-        // In production, iterate off-chain and batch create vesting schedules
-        gamiToken.approve(address(vestingVault), totalSold);
+        finalized = true;
+        gamiToken.safeTransfer(address(vestingVault), totalSold);
+        emit SaleFinalized(totalSold);
     }
 
     function withdrawPayments(address to) external onlyOwner {
@@ -223,5 +212,7 @@ contract TokenSale is Ownable, ReentrancyGuard {
         return MerkleProof.verify(proof, merkleRoot, leaf);
     }
 
-    receive() external payable {}
+    receive() external payable {
+        revert("ETH disabled");
+    }
 }

@@ -1,6 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { createPublicClient, formatUnits, http } from 'https://esm.sh/viem@2.21.0';
-import { baseSepolia } from 'https://esm.sh/viem@2.21.0/chains';
+import { base, baseSepolia } from 'https://esm.sh/viem@2.21.0/chains';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -19,11 +19,15 @@ const TOKEN_SALE_ABI = [
 
 async function fetchOnChainRaised(): Promise<number> {
   const saleAddress = Deno.env.get('TOKEN_SALE_ADDRESS');
-  const rpcUrl = Deno.env.get('BASE_SEPOLIA_RPC') ?? 'https://sepolia.base.org';
+  const chainId = Number(Deno.env.get('CHAIN_ID') ?? '84532');
+  const chain = chainId === base.id ? base : baseSepolia;
+  const rpcUrl =
+    Deno.env.get('BASE_RPC_URL') ??
+    (chainId === base.id ? 'https://mainnet.base.org' : 'https://sepolia.base.org');
   if (!saleAddress) return 0;
 
   try {
-    const client = createPublicClient({ chain: baseSepolia, transport: http(rpcUrl) });
+    const client = createPublicClient({ chain, transport: http(rpcUrl) });
     const raw = await client.readContract({
       address: saleAddress as `0x${string}`,
       abi: TOKEN_SALE_ABI,
@@ -49,9 +53,10 @@ Deno.serve(async (req) => {
     const { data: byPhase, error: phaseError } = await supabase.from('sale_stats').select('*');
     if (phaseError) throw phaseError;
 
-    const { data: waitlistCount } = await supabase
+    const { count: waitlistCount, error: waitlistError } = await supabase
       .from('waitlist')
       .select('id', { count: 'exact', head: true });
+    if (waitlistError) throw waitlistError;
 
     const { data: participants } = await supabase
       .from('sale_participants')
