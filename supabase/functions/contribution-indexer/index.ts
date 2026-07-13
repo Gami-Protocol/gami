@@ -1,6 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { createPublicClient, http, parseAbiItem } from 'https://esm.sh/viem@2.21.0';
-import { baseSepolia } from 'https://esm.sh/viem@2.21.0/chains';
+import { base, baseSepolia } from 'https://esm.sh/viem@2.21.0/chains';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -23,7 +23,11 @@ Deno.serve(async (req) => {
     );
 
     const saleAddress = Deno.env.get('TOKEN_SALE_ADDRESS');
-    const rpcUrl = Deno.env.get('BASE_SEPOLIA_RPC') ?? 'https://sepolia.base.org';
+    const chainId = Number(Deno.env.get('CHAIN_ID') ?? '84532');
+    const chain = chainId === base.id ? base : baseSepolia;
+    const rpcUrl =
+      Deno.env.get('BASE_RPC_URL') ??
+      (chainId === base.id ? 'https://mainnet.base.org' : 'https://sepolia.base.org');
     const fromBlock = BigInt(Deno.env.get('INDEX_FROM_BLOCK') ?? '0');
 
     if (!saleAddress) {
@@ -34,7 +38,7 @@ Deno.serve(async (req) => {
     }
 
     const client = createPublicClient({
-      chain: baseSepolia,
+      chain,
       transport: http(rpcUrl),
     });
 
@@ -45,18 +49,23 @@ Deno.serve(async (req) => {
       toBlock: 'latest',
     });
 
-    let indexed = 0;
+    const totals = new Map<string, { payment: bigint; gami: bigint }>();
     for (const log of logs) {
       const buyer = String(log.args.buyer).toLowerCase();
-      const payment = Number(log.args.paymentAmount) / 1_000_000;
-      const gami = Number(log.args.gamiAmount) / 1e18;
+      const current = totals.get(buyer) ?? { payment: 0n, gami: 0n };
+      totals.set(buyer, {
+        payment: current.payment + (log.args.paymentAmount ?? 0n),
+        gami: current.gami + (log.args.gamiAmount ?? 0n),
+      });
+    }
 
+    let indexed = 0;
+    for (const [buyer, total] of totals) {
       const { error } = await supabase.from('sale_participants').upsert(
         {
           wallet_address: buyer,
-          contributed_usd: payment,
-          allocation_gami: gami,
-          kyc_status: 'approved',
+          contributed_usd: Number(total.payment) / 1_000_000,
+          allocation_gami: Number(total.gami) / 1e18,
           phase: Deno.env.get('SALE_PHASE') ?? 'public',
           updated_at: new Date().toISOString(),
         },
