@@ -1,5 +1,5 @@
-import { createConfig } from '@privy-io/wagmi';
-import { http } from 'wagmi';
+import { createConfig as createPrivyConfig } from '@privy-io/wagmi';
+import { createConfig, http } from 'wagmi';
 import { injected } from 'wagmi/connectors';
 import { base, baseSepolia } from 'viem/chains';
 
@@ -9,11 +9,22 @@ const chainId = env.chainId();
 export const supportedChains = chainId === 8453 ? ([base] as const) : ([baseSepolia] as const);
 export const defaultChain = supportedChains[0];
 
-export const wagmiConfig = createConfig({
+const transports = {
+  [base.id]: http(),
+  [baseSepolia.id]: http(),
+} as const;
+
+/** Privy drives connectors — do not pass injected here. */
+export const privyWagmiConfig = createPrivyConfig({
+  chains: supportedChains,
+  transports,
+});
+
+/** Fallback when VITE_PRIVY_APP_ID is unset. */
+export const legacyWagmiConfig = createConfig({
   chains: supportedChains,
   connectors: [injected({ shimDisconnect: true })],
-  transports: {
-    [base.id]: http(),
-    [baseSepolia.id]: http(),
-  },
+  transports,
 });
+
+export const wagmiConfig = env.privyAppId() ? privyWagmiConfig : legacyWagmiConfig;

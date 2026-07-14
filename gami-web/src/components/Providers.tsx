@@ -4,8 +4,10 @@ import { WagmiProvider as PrivyWagmiProvider } from '@privy-io/wagmi';
 import { WagmiProvider } from 'wagmi';
 import { useState, type ReactNode } from 'react';
 
+import { SyncPrivyWallet } from '@/components/SyncPrivyWallet';
+import { PrivySaleAccountProvider } from '@/hooks/useSaleAccount';
 import { env } from '@/lib/env';
-import { defaultChain, supportedChains, wagmiConfig } from '@/lib/wagmi';
+import { defaultChain, legacyWagmiConfig, privyWagmiConfig, supportedChains } from '@/lib/wagmi';
 
 export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
@@ -14,7 +16,7 @@ export function Providers({ children }: { children: ReactNode }) {
   if (!privyAppId) {
     return (
       <QueryClientProvider client={queryClient}>
-        <WagmiProvider config={wagmiConfig}>{children}</WagmiProvider>
+        <WagmiProvider config={legacyWagmiConfig}>{children}</WagmiProvider>
       </QueryClientProvider>
     );
   }
@@ -28,10 +30,12 @@ export function Providers({ children }: { children: ReactNode }) {
           theme: 'dark',
           accentColor: '#6E3CFB',
           walletChainType: 'ethereum-only',
+          showWalletLoginFirst: false,
         },
         embeddedWallets: {
           ethereum: {
-            createOnLogin: 'users-without-wallets',
+            // Every sale participant needs an allocation wallet, including email logins.
+            createOnLogin: 'all-users',
           },
         },
         supportedChains: [...supportedChains],
@@ -39,7 +43,10 @@ export function Providers({ children }: { children: ReactNode }) {
       }}
     >
       <QueryClientProvider client={queryClient}>
-        <PrivyWagmiProvider config={wagmiConfig}>{children}</PrivyWagmiProvider>
+        <PrivyWagmiProvider config={privyWagmiConfig}>
+          <SyncPrivyWallet />
+          <PrivySaleAccountProvider>{children}</PrivySaleAccountProvider>
+        </PrivyWagmiProvider>
       </QueryClientProvider>
     </PrivyProvider>
   );

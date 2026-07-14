@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  useAccount,
   useChainId,
   useReadContract,
   useSwitchChain,
@@ -14,6 +13,7 @@ import { ConnectWallet } from '@/components/ConnectWallet';
 import { GamiFooter } from '@/components/gami/GamiFooter';
 import { GamiTokenLogo } from '@/components/gami/GamiTokenLogo';
 import { useGeoBlock } from '@/hooks/useGeoBlock';
+import { useSaleAccount } from '@/hooks/useSaleAccount';
 import {
   TOKEN_SALE_ABI,
   USDC_ABI,
@@ -54,7 +54,7 @@ function walletErrorMessage(error: Error): string {
 }
 
 export function SalePage() {
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, isLinking, authenticated, ready: walletReady } = useSaleAccount();
   const connectedChainId = useChainId();
   const { switchChain, isPending: isSwitchingChain } = useSwitchChain();
   const { blocked: geoBlocked, country, loading: geoLoading } = useGeoBlock();
@@ -68,10 +68,12 @@ export function SalePage() {
   const saleAddress = getContractAddress('TOKEN_SALE');
   const usdcAddress = getContractAddress('USDC');
   const saleConfigured = isSaleConfigured();
+  const saleLive = env.saleLive() && saleConfigured;
   const requiredChainId = getChainId();
   const wrongNetwork = isConnected && connectedChainId !== requiredChainId;
   const fiatOnrampUrl = env.fiatOnrampUrl();
   const usdtSwapUrl = env.usdtSwapUrl();
+  const privyConfigured = Boolean(env.privyAppId());
 
   const { data: onChainRaised } = useReadContract({
     address: saleAddress ?? undefined,
@@ -264,9 +266,9 @@ export function SalePage() {
       usdcAmount <= usdcBalance &&
       (perWalletCap === 0n || usdcAmount <= remainingWalletCap),
   );
-  const saleOpen = phase !== 'closed' && raised < cap;
+  const saleOpen = saleLive && phase !== 'closed' && raised < cap;
   const canContribute =
-    saleConfigured &&
+    saleLive &&
     saleOpen &&
     isEligible &&
     !wrongNetwork &&
@@ -276,7 +278,11 @@ export function SalePage() {
 
   function handleContribution() {
     if (!isConnected || !address) {
-      setMessage('Connect your wallet to continue.');
+      setMessage('Sign in with Privy to link your allocation wallet.');
+      return;
+    }
+    if (!saleLive) {
+      setMessage('The raise is not live yet. Your wallet is linked and ready for launch.');
       return;
     }
     if (!isEligible) {
@@ -366,7 +372,9 @@ export function SalePage() {
   const quests = [
     {
       title: 'Link your wallet',
-      detail: 'Connect a Base-compatible wallet',
+      detail: privyConfigured
+        ? 'Sign in with Privy email or wallet'
+        : 'Connect a Base-compatible wallet',
       xp: '+100 XP',
       complete: isConnected,
       href: null,
@@ -380,12 +388,32 @@ export function SalePage() {
     },
     {
       title: 'Power the protocol',
-      detail: 'Complete your first contribution',
+      detail: saleLive ? 'Complete your first contribution' : 'Ready when the raise goes live',
       xp: '+1,000 XP',
       complete: (eligibility?.contributed_usd ?? 0) > 0,
-      href: '/sale/contribute',
+      href: saleLive ? '/sale/contribute' : null,
     },
   ];
+
+  const raiseStatusLabel = !saleLive
+    ? 'NOT LIVE YET'
+    : saleOpen
+      ? 'RAISE LIVE'
+      : 'ROUND CLOSED';
+
+  const walletStatusLabel = !privyConfigured
+    ? isConnected
+      ? 'WALLET CONNECTED'
+      : 'CONNECT WALLET'
+    : !walletReady
+      ? 'LOADING PRIVY…'
+      : isLinking
+        ? 'LINKING EMBEDDED WALLET…'
+        : isConnected
+          ? isEligible
+            ? 'SIGNED IN + ELIGIBLE'
+            : 'SIGNED IN — WALLET LINKED'
+          : 'SIGN IN REQUIRED';
 
   return (
     <>
@@ -405,9 +433,15 @@ export function SalePage() {
             </span>
           </div>
           <div className="flex items-center gap-5 font-mono text-xs sm:text-sm">
-            <span className="border border-[#67f5a1] px-3 py-2 font-bold text-[#67f5a1]">
-              <span className={`mr-2 ${saleOpen && saleConfigured ? 'animate-pulse' : ''}`}>●</span>
-              {saleConfigured ? (saleOpen ? 'RAISE LIVE' : 'ROUND CLOSED') : 'CONFIGURATION PENDING'}
+            <span
+              className={`border px-3 py-2 font-bold ${
+                saleLive && saleOpen
+                  ? 'border-[#67f5a1] text-[#67f5a1]'
+                  : 'border-[#ffeb55] text-[#ffeb55]'
+              }`}
+            >
+              <span className={`mr-2 ${saleLive && saleOpen ? 'animate-pulse' : ''}`}>●</span>
+              {raiseStatusLabel}
             </span>
             <span className="font-bold">
               ${raised.toLocaleString(undefined, { maximumFractionDigits: 0 })} / $
@@ -428,7 +462,9 @@ export function SalePage() {
           <section>
             <div className="mb-7 inline-flex -rotate-1 items-center gap-3 border-2 border-black bg-[#ffeb55] px-4 py-2 font-mono text-xs font-bold uppercase shadow-[4px_4px_0_#131118]">
               <span className="h-2 w-2 animate-pulse rounded-full bg-[#7047eb]" />
-              {phase} phase — {saleOpen ? 'participation open' : 'currently closed'}
+              {saleLive
+                ? `${phase} phase — ${saleOpen ? 'participation open' : 'currently closed'}`
+                : 'Raise coming soon — link your Privy wallet now'}
             </div>
             <h1 className="max-w-3xl font-display text-[clamp(3.5rem,8vw,7.25rem)] font-bold uppercase leading-[0.82] tracking-[-0.075em]">
               Power the
@@ -438,8 +474,9 @@ export function SalePage() {
               <span className="raise-highlight">rewards</span> economy
             </h1>
             <p className="mt-8 max-w-xl text-lg font-medium leading-relaxed text-[#4b4753]">
-              Join the $GAMI Token Raise. Early participants receive boosted XP multipliers,
-              governance rights, and priority access to the protocol.
+              {saleLive
+                ? 'Join the $GAMI Token Raise. Early participants receive boosted XP multipliers, governance rights, and priority access to the protocol.'
+                : 'The $GAMI raise is not live yet. Sign in with Privy to create or connect your allocation wallet, join the whitelist, and be ready when contributions open.'}
             </p>
 
             <div className="mt-9 grid max-w-xl grid-cols-3 border-[3px] border-black bg-white shadow-[7px_7px_0_#131118]">
@@ -462,7 +499,7 @@ export function SalePage() {
               }
               className="mt-10 border-[3px] border-black bg-[#7047eb] px-8 py-4 font-display font-bold uppercase tracking-wide text-white shadow-[7px_7px_0_#131118] transition hover:translate-x-1 hover:translate-y-1 hover:shadow-[3px_3px_0_#131118]"
             >
-              Participate in raise →
+              {saleLive ? 'Participate in raise →' : 'Link wallet for launch →'}
             </button>
             <Link
               to="/tokenomics"
@@ -474,7 +511,7 @@ export function SalePage() {
 
           <section id="contribute-card" className="relative scroll-mt-28">
             <div className="absolute -right-4 -top-5 z-20 rotate-3 border-2 border-black bg-[#ffeb55] px-3 py-2 font-mono text-[10px] font-bold uppercase shadow-[3px_3px_0_#131118]">
-              {phase} round
+              {saleLive ? `${phase} round` : 'pre-launch'}
             </div>
             <div className="border-[3px] border-black bg-white p-5 shadow-[12px_12px_0_#131118] sm:p-8">
               <div className="flex items-center justify-between border-b-2 border-black pb-6">
@@ -482,7 +519,9 @@ export function SalePage() {
                   <GamiTokenLogo className="h-14 w-14 border-2 border-black" />
                   <div>
                     <p className="font-display text-xl font-bold">$GAMI TOKEN</p>
-                    <p className="font-mono text-xs uppercase text-[#77727e]">Presale round 1</p>
+                    <p className="font-mono text-xs uppercase text-[#77727e]">
+                      {saleLive ? 'Presale round 1' : 'Wallet prep · not live'}
+                    </p>
                   </div>
                 </div>
                 <ConnectWallet light />
@@ -490,21 +529,34 @@ export function SalePage() {
 
               <div className="my-7 flex items-center justify-between">
                 <div>
-                  <p className="font-mono text-[10px] uppercase text-[#77727e]">Privy allocation account</p>
-                  <p className="mt-1 font-mono text-xs font-bold">
-                    {isConnected
-                      ? isEligible
-                        ? 'SIGNED IN + ELIGIBLE'
-                        : 'SIGNED IN — VERIFY NEXT'
-                      : 'SIGN IN REQUIRED'}
+                  <p className="font-mono text-[10px] uppercase text-[#77727e]">
+                    Privy allocation account
                   </p>
+                  <p className="mt-1 font-mono text-xs font-bold">{walletStatusLabel}</p>
+                  {address && (
+                    <p className="mt-1 font-mono text-[10px] text-[#77727e]">
+                      {address.slice(0, 6)}…{address.slice(-4)}
+                    </p>
+                  )}
                 </div>
                 <span
                   className={`h-3 w-3 rounded-full border border-black ${
-                    isConnected ? 'bg-[#67f5a1]' : 'bg-[#d5d0db]'
+                    isConnected ? 'bg-[#67f5a1]' : isLinking || authenticated ? 'bg-[#ffeb55]' : 'bg-[#d5d0db]'
                   }`}
                 />
               </div>
+
+              {!privyConfigured && (
+                <p className="mb-6 border-l-4 border-[#a13b3b] bg-[#fff4f4] p-3 font-mono text-xs text-[#a13b3b]">
+                  Set `VITE_PRIVY_APP_ID` to enable Privy email + embedded wallet sign-in on this page.
+                </p>
+              )}
+
+              {!saleLive && (
+                <p className="mb-6 border-2 border-black bg-[#ffeb55] p-3 font-mono text-[11px] font-bold uppercase">
+                  Raise is not live yet. Sign in now to reserve your allocation wallet.
+                </p>
+              )}
 
               <div className="mb-6">
                 <p className="font-mono text-[11px] font-bold uppercase">Payment route</p>
@@ -622,7 +674,9 @@ export function SalePage() {
               {!isConnected ? (
                 <div className="mt-5 border-2 border-dashed border-black/30 bg-[#f4f1f8] p-4 text-center">
                   <p className="mb-3 font-mono text-[10px] font-bold uppercase text-[#77727e]">
-                    Sign in with email or an existing wallet. Privy creates a secure embedded wallet when needed.
+                    {isLinking
+                      ? 'Privy signed in — creating your embedded allocation wallet…'
+                      : 'Sign in with email or an existing wallet. Privy creates a secure embedded wallet when needed.'}
                   </p>
                   <ConnectWallet light className="w-full py-4 text-xs" />
                 </div>
@@ -631,31 +685,34 @@ export function SalePage() {
                   type="button"
                   onClick={handleContribution}
                   disabled={
+                    !saleLive ||
                     isApproving ||
                     isContributing ||
                     isSwitchingChain ||
                     paymentMethod !== 'usdc' ||
                     (!canContribute && !wrongNetwork)
                   }
-                  className="mt-5 w-full border-[3px] border-black bg-[#131118] py-4 font-display font-bold uppercase tracking-wide text-white shadow-[5px_5px_0_#7047eb] transition hover:bg-[#7047eb] disabled:cursor-wait disabled:opacity-60"
+                  className="mt-5 w-full border-[3px] border-black bg-[#131118] py-4 font-display font-bold uppercase tracking-wide text-white shadow-[5px_5px_0_#7047eb] transition hover:bg-[#7047eb] disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {paymentMethod !== 'usdc'
-                    ? 'Fund wallet above, then select USDC'
-                    : isSwitchingChain
-                      ? 'Switching network…'
-                      : wrongNetwork
-                        ? `Switch to ${requiredChainId === 8453 ? 'Base' : 'Base Sepolia'}`
-                        : isApproving || isContributing
-                          ? 'Confirm in wallet…'
-                          : !saleConfigured
-                            ? 'Sale contracts not configured'
-                            : !saleOpen
-                              ? 'Sale round closed'
-                              : geoBlocked
-                                ? 'Unavailable in your region'
-                                : !validAmount
-                                  ? 'Enter an eligible amount'
-                                  : 'Confirm contribution'}
+                  {!saleLive
+                    ? 'Wallet linked · waiting for launch'
+                    : paymentMethod !== 'usdc'
+                      ? 'Fund wallet above, then select USDC'
+                      : isSwitchingChain
+                        ? 'Switching network…'
+                        : wrongNetwork
+                          ? `Switch to ${requiredChainId === 8453 ? 'Base' : 'Base Sepolia'}`
+                          : isApproving || isContributing
+                            ? 'Confirm in wallet…'
+                            : !saleConfigured
+                              ? 'Sale contracts not configured'
+                              : !saleOpen
+                                ? 'Sale round closed'
+                                : geoBlocked
+                                  ? 'Unavailable in your region'
+                                  : !validAmount
+                                    ? 'Enter an eligible amount'
+                                    : 'Confirm contribution'}
                 </button>
               )}
 
@@ -664,12 +721,20 @@ export function SalePage() {
                   Participation is unavailable from {country ?? 'your region'} under the sale policy.
                 </p>
               )}
-              {isConnected && !isEligible && (
+              {isConnected && saleLive && !isEligible && (
                 <Link
                   to="/sale/contribute"
                   className="mt-4 block text-center font-mono text-xs font-bold text-[#7047eb] underline"
                 >
                   Complete whitelist + KYC first →
+                </Link>
+              )}
+              {isConnected && !saleLive && (
+                <Link
+                  to="/sale/contribute"
+                  className="mt-4 block text-center font-mono text-xs font-bold text-[#7047eb] underline"
+                >
+                  Join the whitelist while you wait →
                 </Link>
               )}
               {message && (
