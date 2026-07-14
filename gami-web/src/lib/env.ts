@@ -7,6 +7,8 @@ export const env = {
   supabaseUrl: () => read('VITE_SUPABASE_URL'),
   supabaseAnonKey: () => read('VITE_SUPABASE_ANON_KEY'),
   privyAppId: () => read('VITE_PRIVY_APP_ID'),
+  /** Explicit launch switch. Leave unset/false until the raise is ready. */
+  saleLive: () => read('VITE_SALE_LIVE') === 'true',
   chainId: () => Number(read('VITE_CHAIN_ID') ?? '84532'),
   vestingAddress: () => read('VITE_VESTING_ADDRESS'),
   tokenSaleAddress: () => read('VITE_TOKEN_SALE_ADDRESS'),

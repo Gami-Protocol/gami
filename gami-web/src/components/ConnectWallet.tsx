@@ -1,4 +1,4 @@
-import { usePrivy } from '@privy-io/react-auth';
+import { usePrivy, useWallets } from '@privy-io/react-auth';
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
 
 import { env } from '@/lib/env';
@@ -16,11 +16,19 @@ function buttonClass(light: boolean, className: string): string {
   }`;
 }
 
+function shorten(address: string): string {
+  return `${address.slice(0, 6)}…${address.slice(-4)}`;
+}
+
 function PrivyConnectWallet({ light = false, className = '' }: ConnectWalletProps) {
   const { ready, authenticated, login, logout } = usePrivy();
-  const { address } = useAccount();
+  const { wallets } = useWallets();
+  const { address, isConnected } = useAccount();
+  const privyAddress = wallets[0]?.address;
+  const displayAddress = address ?? privyAddress;
 
   if (authenticated) {
+    const linking = !isConnected || !displayAddress;
     return (
       <button
         type="button"
@@ -32,7 +40,11 @@ function PrivyConnectWallet({ light = false, className = '' }: ConnectWalletProp
             : 'border-white/20 hover:border-primary'
         } ${className}`}
       >
-        {address ? `${address.slice(0, 6)}…${address.slice(-4)}` : 'PRIVY SIGNED IN'}
+        {linking
+          ? 'Linking wallet…'
+          : displayAddress
+            ? shorten(displayAddress)
+            : 'PRIVY SIGNED IN'}
       </button>
     );
   }
@@ -41,7 +53,12 @@ function PrivyConnectWallet({ light = false, className = '' }: ConnectWalletProp
     <button
       type="button"
       disabled={!ready}
-      onClick={() => login({ loginMethods: ['email', 'wallet'], walletChainType: 'ethereum-only' })}
+      onClick={() =>
+        login({
+          loginMethods: ['email', 'wallet'],
+          walletChainType: 'ethereum-only',
+        })
+      }
       className={buttonClass(light, className)}
     >
       {ready ? 'Sign in / Connect wallet' : 'Loading Privy…'}
@@ -66,7 +83,7 @@ function LegacyConnectWallet({ light = false, className = '' }: ConnectWalletPro
             : 'border-white/20 hover:border-primary'
         } ${className}`}
       >
-        {address.slice(0, 6)}…{address.slice(-4)}
+        {shorten(address)}
       </button>
     );
   }

@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
-  useAccount,
   useReadContract,
   useWaitForTransactionReceipt,
   useWriteContract,
@@ -12,6 +11,7 @@ import { ConnectWallet } from '@/components/ConnectWallet';
 import { GamiFooter } from '@/components/gami/GamiFooter';
 import { GamiTokenLogo } from '@/components/gami/GamiTokenLogo';
 import { GeoBlockBanner } from '@/hooks/useGeoBlock';
+import { useSaleAccount } from '@/hooks/useSaleAccount';
 import {
   TOKEN_SALE_ABI,
   USDC_ABI,
@@ -36,7 +36,7 @@ export function ContributePage() {
   const referralCode = searchParams.get('ref') ?? undefined;
   const walletParam = searchParams.get('wallet') ?? undefined;
 
-  const { address, isConnected } = useAccount();
+  const { address, isConnected } = useSaleAccount();
   const [step, setStep] = useState<Step>('waitlist');
   const [email, setEmail] = useState('');
   const [amount, setAmount] = useState('100');
@@ -48,6 +48,7 @@ export function ContributePage() {
   const saleAddress = getContractAddress('TOKEN_SALE');
   const usdcAddress = getContractAddress('USDC');
   const saleConfigured = isSaleConfigured();
+  const saleLive = env.saleLive() && saleConfigured;
 
   const { data: pricePerToken } = useReadContract({
     address: saleAddress ?? undefined,
@@ -171,6 +172,11 @@ export function ContributePage() {
   }
 
   async function handleContribute() {
+    if (!saleLive) {
+      setStatus('error');
+      setMessage('The raise is not live yet. Your wallet can stay linked for launch.');
+      return;
+    }
     if (!saleAddress || !usdcAddress || !address) return;
     setStatus('loading');
     setMessage('');
@@ -197,7 +203,11 @@ export function ContributePage() {
     <div className="mx-auto max-w-lg px-6 py-16">
       <GamiTokenLogo className="mb-4 h-14 w-14" />
       <h1 className="font-display text-3xl font-bold">Contribute</h1>
-      <p className="mt-2 text-muted">Join the waitlist, verify identity, and contribute USDC on Base.</p>
+      <p className="mt-2 text-muted">
+        {saleLive
+          ? 'Join the waitlist, verify identity, and contribute USDC on Base.'
+          : 'Sign in with Privy, join the waitlist, and get ready. Contributions open when the raise goes live.'}
+      </p>
 
       <GeoBlockBanner />
 
@@ -300,6 +310,11 @@ export function ContributePage() {
 
       {step === 'contribute' && (
         <div className="mt-8 space-y-4">
+          {!saleLive && (
+            <p className="text-sm text-yellow-400">
+              The raise is not live yet. Keep your Privy wallet linked and return when contributions open.
+            </p>
+          )}
           {!saleConfigured && (
             <p className="text-sm text-yellow-400">
               Set VITE_TOKEN_SALE_ADDRESS and VITE_USDC_ADDRESS to enable on-chain contributions.
@@ -322,10 +337,10 @@ export function ContributePage() {
           <button
             type="button"
             onClick={handleContribute}
-            disabled={status === 'loading' || !saleConfigured || usdcAmount === 0n}
+            disabled={status === 'loading' || !saleLive || !saleConfigured || usdcAmount === 0n}
             className="sticker-shadow w-full bg-primary py-4 font-display font-bold uppercase disabled:opacity-50"
           >
-            4. Approve & Contribute USDC
+            {saleLive ? '4. Approve & Contribute USDC' : '4. Waiting for raise launch'}
           </button>
         </div>
       )}

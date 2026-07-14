@@ -1,3 +1,4 @@
+import { GamiBrandLogo } from '@/components/gami/GamiBrandLogo';
 import { GamiFooter } from '@/components/gami/GamiFooter';
 import { GamiTokenLogo } from '@/components/gami/GamiTokenLogo';
 import allocation from '@/data/allocation.json';
@@ -48,6 +49,43 @@ export function TokenomicsPage() {
       <p className="mt-4 text-muted">
         Total supply: 1 billion $GAMI. Fixed supply with smart burn tied to protocol usage.
       </p>
+
+      <section className="mt-12 border-2 border-white/10 bg-surface p-6">
+        <p className="font-mono text-xs uppercase tracking-widest text-primary">$GAMI brand marks</p>
+        <p className="mt-3 text-sm text-muted">
+          Official marks used across the protocol site: landing hero, raise/token surfaces, and universal chrome.
+        </p>
+        <div className="mt-6 grid gap-4 sm:grid-cols-3">
+          {[
+            {
+              variant: 'landing' as const,
+              label: 'Landing',
+              detail: 'Hero / marketing',
+              frame: 'bg-black/40',
+            },
+            {
+              variant: 'token' as const,
+              label: 'Raise + Token',
+              detail: 'Sale, claim, tokenomics',
+              frame: 'bg-white/5',
+            },
+            {
+              variant: 'universal' as const,
+              label: 'Universal',
+              detail: 'Nav, footer, favicon',
+              frame: 'bg-white/5',
+            },
+          ].map((mark) => (
+            <article key={mark.variant} className="border border-white/10 p-4 text-center">
+              <div className={`mx-auto flex h-28 w-28 items-center justify-center ${mark.frame}`}>
+                <GamiBrandLogo variant={mark.variant} className="h-20 w-20" decorative={false} alt={mark.label} />
+              </div>
+              <p className="mt-4 font-display text-sm font-bold uppercase">{mark.label}</p>
+              <p className="mt-1 font-mono text-[10px] uppercase text-muted">{mark.detail}</p>
+            </article>
+          ))}
+        </div>
+      </section>
 
       <section className="mt-12 border-2 border-white/10 bg-surface p-6">
         <p className="font-mono text-xs uppercase tracking-widest text-primary">Token purpose</p>
