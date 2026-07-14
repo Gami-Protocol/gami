@@ -425,7 +425,7 @@ export function SalePage() {
       <header className="relative z-10 border-y-[3px] border-black bg-[#131118] text-white">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-4">
           <div className="flex items-center gap-3 font-display font-bold">
-            <GamiTokenLogo className="h-11 w-11 rotate-3 border-2 border-white" />
+            <GamiTokenLogo className="h-11 w-11" />
             <span className="leading-[0.85] tracking-tight">
               GAMI
               <br />
@@ -516,7 +516,7 @@ export function SalePage() {
             <div className="border-[3px] border-black bg-white p-5 shadow-[12px_12px_0_#131118] sm:p-8">
               <div className="flex items-center justify-between border-b-2 border-black pb-6">
                 <div className="flex items-center gap-4">
-                  <GamiTokenLogo className="h-14 w-14 border-2 border-black" />
+                  <GamiTokenLogo className="h-14 w-14" />
                   <div>
                     <p className="font-display text-xl font-bold">$GAMI TOKEN</p>
                     <p className="font-mono text-xs uppercase text-[#77727e]">

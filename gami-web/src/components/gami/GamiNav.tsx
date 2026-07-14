@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 import { ConnectWallet } from '@/components/ConnectWallet';
-import { GamiLogo } from '@/components/gami/GamiLogo';
+import { GamiBrandLogo } from '@/components/gami/GamiBrandLogo';
 
 const NAV_LINKS = [
   { href: '/wallet', label: 'Product' },
@@ -40,9 +40,10 @@ export function GamiNav() {
       >
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6">
           <Link to="/" className="group flex items-center gap-3">
-            <div className="gami-gradient neo-border flex h-10 w-10 transform items-center justify-center transition-transform group-hover:rotate-12">
-              <GamiLogo />
-            </div>
+            <GamiBrandLogo
+              variant="universal"
+              className="h-10 w-10 neo-border transition-transform group-hover:rotate-12"
+            />
             <span className="font-display text-2xl font-bold tracking-tight">GAMI</span>
           </Link>
 

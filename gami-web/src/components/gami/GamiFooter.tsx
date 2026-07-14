@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 
-import { GamiLogo } from '@/components/gami/GamiLogo';
+import { GamiBrandLogo } from '@/components/gami/GamiBrandLogo';
 import { GamiTokenLogo } from '@/components/gami/GamiTokenLogo';
 
 export function GamiFooter({ variant = 'default' }: { variant?: 'default' | 'ico' }) {
@@ -12,19 +12,11 @@ export function GamiFooter({ variant = 'default' }: { variant?: 'default' | 'ico
         <div className="mb-20 grid grid-cols-2 gap-12 md:grid-cols-4 lg:grid-cols-5">
           <div className="col-span-2">
             <div className="mb-8 flex items-center gap-3">
-              <div
-                className={
-                  isIco
-                    ? 'neo-border flex h-8 w-8 items-center justify-center overflow-hidden'
-                    : 'gami-gradient neo-border flex h-8 w-8 items-center justify-center'
-                }
-              >
-                {isIco ? (
-                  <GamiTokenLogo className="h-8 w-8" />
-                ) : (
-                  <GamiLogo className="h-5 w-5" />
-                )}
-              </div>
+              {isIco ? (
+                <GamiTokenLogo className="h-10 w-10" />
+              ) : (
+                <GamiBrandLogo variant="universal" className="h-10 w-10 neo-border" />
+              )}
               <span className="font-display text-2xl font-bold uppercase italic tracking-tight">
                 GAMI PROTOCOL
               </span>

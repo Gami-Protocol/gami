@@ -112,10 +112,9 @@ export function HomePage() {
           </div>
 
           <div className="relative flex justify-center lg:justify-end">
-            <div className="token-3d relative h-64 w-64 md:h-96 md:w-96">
-              <div className="gami-gradient neo-border absolute inset-0 flex rotate-12 transform items-center justify-center shadow-[0_0_50px_rgba(110,60,251,0.6)]">
-                <GamiLogo className="h-32 w-32 drop-shadow-2xl" />
-              </div>
+            <div className="token-3d relative flex h-64 w-64 items-center justify-center md:h-96 md:w-96">
+              <div className="absolute inset-8 rounded-full bg-[#702FE5]/30 blur-3xl" />
+              <GamiLogo className="relative z-10 h-56 w-56 drop-shadow-[0_0_40px_rgba(112,47,229,0.55)] md:h-80 md:w-80" />
               <div className="absolute -right-10 -top-10 h-20 w-20 animate-spin-slow border-2 border-gami-accent/30" />
               <div className="absolute bottom-20 -left-20 h-12 w-12 bg-gami-accent/40 blur-xl" />
               <div className="neo-border absolute left-0 top-0 animate-bounce bg-black/80 px-4 py-2 font-mono text-sm text-gami-accent">
