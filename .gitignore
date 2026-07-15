@@ -38,6 +38,8 @@ yarn-error.*
 .env.*
 !.env.example
 !.env*.example
+# Public Vite client defaults for gami-web (no secrets).
+!gami-web/.env
 .env*.local
 
 # typescript
