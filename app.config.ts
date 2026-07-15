@@ -56,7 +56,13 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           ]
         : undefined,
     },
+    updates: {
+      url: 'https://u.expo.dev/a34177f8-42ca-48d4-8c87-39f82476418e',
+    },
     extra: {
+      eas: {
+        projectId: 'a34177f8-42ca-48d4-8c87-39f82476418e',
+      },
       appStoreAppId: process.env.BILT_APP_STORE_APP_ID,
       // Embed the Supabase config into the native build so it is available even
       // if EXPO_PUBLIC_* inlining is missed. Read at runtime via expo-constants.
