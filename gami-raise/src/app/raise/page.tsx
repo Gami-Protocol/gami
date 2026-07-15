@@ -1,5 +1,6 @@
 import Link from 'next/link';
 
+import { GamiBrandLogo } from '@/components/brand/logo';
 import { PageShell } from '@/components/layout/page-shell';
 import { RaiseFlow } from '@/components/raise/raise-flow';
 import { Button } from '@/components/ui/button';
@@ -29,6 +30,13 @@ export default function RaisePage() {
         </>
       }
     >
+      <div className="mb-8 flex items-center gap-4">
+        <GamiBrandLogo variant="raise" className="h-16 w-16" priority />
+        <div>
+          <p className="font-[family-name:var(--font-display)] text-xl font-semibold">$GAMI Raise</p>
+          <p className="text-sm text-white/50">Sale · claim · allocation mark</p>
+        </div>
+      </div>
       <div className="mb-8 grid gap-4 md:grid-cols-4">
         {[
           ['Hard cap', formatUsd(RAISE.hardCapUsd)],

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 
+import { GamiBrandLogo } from '@/components/brand/logo';
 import { PageShell } from '@/components/layout/page-shell';
 import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardTitle } from '@/components/ui/card';
@@ -22,6 +23,7 @@ export default function IcoPage() {
         </Button>
       }
     >
+      <GamiBrandLogo variant="raise" className="mb-8 h-14 w-14" />
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardTitle>Participation path</CardTitle>

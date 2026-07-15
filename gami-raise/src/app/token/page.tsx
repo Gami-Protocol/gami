@@ -1,5 +1,6 @@
 import Link from 'next/link';
 
+import { GamiBrandLogo } from '@/components/brand/logo';
 import { PageShell } from '@/components/layout/page-shell';
 import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardTitle } from '@/components/ui/card';
@@ -37,6 +38,33 @@ export default function TokenPage() {
         </>
       }
     >
+      <Card className="mb-6">
+        <CardTitle>$GAMI brand marks</CardTitle>
+        <CardDescription>
+          Landing for hero/marketing, raise+token for sale surfaces, universal for nav/footer/favicon.
+        </CardDescription>
+        <div className="mt-6 grid gap-4 sm:grid-cols-3">
+          {(
+            [
+              ['landing', 'Landing', 'Hero / marketing'],
+              ['raise', 'Raise + Token', 'Sale, claim, tokenomics'],
+              ['universal', 'Universal', 'Nav, footer, favicon'],
+            ] as const
+          ).map(([variant, label, detail]) => (
+            <div
+              key={variant}
+              className="rounded-2xl border border-white/10 bg-black/30 p-4 text-center"
+            >
+              <div className="mx-auto flex h-28 items-center justify-center">
+                <GamiBrandLogo variant={variant} className="h-20 w-20" alt={label} />
+              </div>
+              <p className="mt-3 text-sm font-semibold uppercase tracking-wide">{label}</p>
+              <p className="mt-1 text-xs text-white/45">{detail}</p>
+            </div>
+          ))}
+        </div>
+      </Card>
+
       <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
         <Card>
           <CardTitle>Tokenomics</CardTitle>

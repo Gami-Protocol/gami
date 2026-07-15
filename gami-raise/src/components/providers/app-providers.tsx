@@ -21,7 +21,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
         appearance: {
           theme: 'dark',
           accentColor: '#6C3BFF',
-          logo: '/brand/mark.svg',
+          logo: '/brand/gami-logo-universal.png',
           walletChainType: 'ethereum-only',
         },
         embeddedWallets: {

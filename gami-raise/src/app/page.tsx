@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ArrowRight, ShieldCheck, Sparkles, Wallet } from 'lucide-react';
 
+import { GamiBrandLogo } from '@/components/brand/logo';
 import { HeroScene } from '@/components/home/hero-scene';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -38,6 +39,11 @@ export default function HomePage() {
         <HeroScene />
         <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.15fr_0.85fr]">
           <div>
+            <GamiBrandLogo
+              variant="landing"
+              priority
+              className="mb-6 h-20 w-20 drop-shadow-[0_0_40px_rgba(108,59,255,0.55)] sm:h-24 sm:w-24"
+            />
             <Badge>Official raise portal</Badge>
             <h1 className="mt-5 max-w-3xl font-[family-name:var(--font-display)] text-5xl font-semibold tracking-tight text-white sm:text-6xl lg:text-7xl">
               GAMI

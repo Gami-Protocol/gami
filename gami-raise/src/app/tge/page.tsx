@@ -1,5 +1,6 @@
 import Link from 'next/link';
 
+import { GamiBrandLogo } from '@/components/brand/logo';
 import { PageShell } from '@/components/layout/page-shell';
 import { TgeCountdown } from '@/components/tge/countdown';
 import { Button } from '@/components/ui/button';
@@ -23,6 +24,7 @@ export default function TgePage() {
         </Button>
       }
     >
+      <GamiBrandLogo variant="raise" className="mb-8 h-14 w-14" />
       <Card className="max-w-3xl">
         <CardTitle>Countdown</CardTitle>
         <CardDescription>

@@ -30,6 +30,10 @@ export const metadata: Metadata = {
   description:
     'Official Gami Protocol portal for ICO participation, TGE registration, waitlist, investor access, and partner onboarding.',
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'),
+  icons: {
+    icon: [{ url: '/favicon.png', type: 'image/png' }],
+    apple: [{ url: '/brand/gami-logo-universal.png' }],
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
