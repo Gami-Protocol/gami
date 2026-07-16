@@ -1,15 +1,19 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { ConnectWallet } from '@/components/ConnectWallet';
 import { usePaymentGateway } from '@/hooks/usePaymentGateway';
 import { useUniswapSwap } from '@/hooks/useUniswapSwap';
-import { getExplorerTxUrl, getChainId } from '@/lib/contracts';
+import {
+  BRIDGE_SOURCE_CHAINS,
+  type BridgeSourceChainId,
+} from '@/lib/uniswap-chains';
 import {
   fiatGatewayAvailable,
   paymentChainLabel,
   type PaymentMethod,
   type SwapAsset,
 } from '@/lib/payment-gateway';
+import type { TradeDestination } from '@/lib/uniswap-trade-api';
 
 type PaymentGatewayPanelProps = {
   paymentMethod: PaymentMethod;
@@ -18,20 +22,19 @@ type PaymentGatewayPanelProps = {
   isConnected: boolean;
   amountUsd: string;
   onFunded?: () => void;
-  /** Light (SalePage) vs dark (ContributePage) surface. */
   variant?: 'light' | 'dark';
 };
 
 const METHODS: Array<[PaymentMethod, string]> = [
   ['usdc', 'USDC'],
-  ['usdt', 'USDT / Swap'],
+  ['usdt', 'Swap / Bridge'],
   ['fiat', 'Card / Fiat'],
 ];
 
 const SWAP_OPTIONS: Array<[SwapAsset, string]> = [
-  ['usdt', 'USDT → USDC'],
-  ['eth', 'ETH → USDC'],
-  ['other', 'Other token → USDC'],
+  ['usdt', 'USDT'],
+  ['eth', 'ETH'],
+  ['other', 'Other'],
 ];
 
 export function PaymentGatewayPanel({
@@ -52,6 +55,12 @@ export function PaymentGatewayPanel({
   const [selectedSwap, setSelectedSwap] = useState<SwapAsset>('usdt');
   const light = variant === 'light';
 
+  useEffect(() => {
+    if (uniswap.phase === 'done' && uniswap.destination === 'usdc') {
+      onPaymentMethodChange('usdc');
+    }
+  }, [onPaymentMethodChange, uniswap.destination, uniswap.phase]);
+
   const panelClass = light
     ? 'mt-3 border-2 border-black bg-[#f4f1f8] p-4'
     : 'mt-3 border border-white/15 bg-white/5 p-4';
@@ -71,8 +80,12 @@ export function PaymentGatewayPanel({
     ? 'font-mono text-[11px] font-bold uppercase'
     : 'font-mono text-[11px] font-bold uppercase text-muted';
   const monoTiny = light ? 'text-[#77727e]' : 'text-muted';
+  const inputClass = light
+    ? 'w-full border-2 border-black bg-white px-3 py-2 font-mono text-xs outline-none'
+    : 'w-full border border-white/20 bg-black/40 px-3 py-2 font-mono text-xs outline-none';
 
   const swapBusy = ['quoting', 'approving', 'swapping', 'confirming'].includes(uniswap.phase);
+  const destinationLabel = uniswap.destination === 'gami' ? '$GAMI on Base' : 'USDC on Base';
 
   return (
     <div>
@@ -92,16 +105,18 @@ export function PaymentGatewayPanel({
 
       {paymentMethod === 'usdc' && (
         <p className={`mt-3 ${textMuted}`}>
-          Contribute with USDC already in your wallet. Settlement is on {paymentChainLabel()}.
+          Contribute with USDC already on {paymentChainLabel()}. That funds your $GAMI allocation on
+          the Gami chain (Base).
         </p>
       )}
 
       {paymentMethod === 'usdt' && (
         <div className={panelClass}>
           <p className={textMuted}>
-            The sale settles in USDC. Swap via the Uniswap Trading API (
-            <span className="font-mono">check_approval → quote → swap</span>
-            ), then select USDC to contribute.
+            Use the Uniswap Trading API to move value onto the Gami chain (Base):{' '}
+            <span className="font-mono">check_approval → quote → swap/order</span>. Bridge from
+            Ethereum / Arbitrum / Optimism / Polygon, or swap on Base, then contribute USDC for
+            $GAMI — or route directly into $GAMI when the token address is configured.
           </p>
 
           {!isConnected ? (
@@ -110,20 +125,80 @@ export function PaymentGatewayPanel({
             </div>
           ) : (
             <div className="mt-3 space-y-3">
-              <div className="grid grid-cols-3 gap-2">
-                {SWAP_OPTIONS.map(([asset, label]) => (
-                  <button
-                    key={asset}
-                    type="button"
-                    onClick={() => {
-                      setSelectedSwap(asset);
-                      uniswap.clear();
-                    }}
-                    className={`${tabBase} ${selectedSwap === asset ? tabActive : tabIdle}`}
-                  >
-                    {label}
-                  </button>
-                ))}
+              <div>
+                <p className={`mb-2 font-mono text-[10px] uppercase ${monoTiny}`}>
+                  1. Destination on Gami chain (Base)
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {(
+                    [
+                      ['usdc', 'USDC (for sale)'],
+                      ['gami', '$GAMI token'],
+                    ] as Array<[TradeDestination, string]>
+                  ).map(([value, label]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      disabled={value === 'gami' && !uniswap.gamiConfigured}
+                      onClick={() => {
+                        uniswap.setDestination(value);
+                        uniswap.clear();
+                      }}
+                      className={`${tabBase} ${uniswap.destination === value ? tabActive : tabIdle}`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                {!uniswap.gamiConfigured && (
+                  <p className={`mt-2 font-mono text-[10px] ${monoTiny}`}>
+                    $GAMI route needs `VITE_GAMI_TOKEN_ADDRESS`. Sale contributions still use USDC.
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <p className={`mb-2 font-mono text-[10px] uppercase ${monoTiny}`}>
+                  2. Source chain
+                </p>
+                <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+                  {BRIDGE_SOURCE_CHAINS.map((chain) => (
+                    <button
+                      key={chain.chainId}
+                      type="button"
+                      onClick={() => {
+                        uniswap.setSourceChainId(chain.chainId as BridgeSourceChainId);
+                        uniswap.clear();
+                      }}
+                      className={`${tabBase} ${
+                        uniswap.sourceChainId === chain.chainId ? tabActive : tabIdle
+                      }`}
+                    >
+                      {chain.shortLabel}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <p className={`mb-2 font-mono text-[10px] uppercase ${monoTiny}`}>
+                  3. Asset to spend
+                </p>
+                <div className="grid grid-cols-3 gap-2">
+                  {SWAP_OPTIONS.map(([asset, label]) => (
+                    <button
+                      key={asset}
+                      type="button"
+                      onClick={() => {
+                        setSelectedSwap(asset);
+                        uniswap.clear();
+                      }}
+                      className={`${tabBase} ${selectedSwap === asset ? tabActive : tabIdle}`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {selectedSwap === 'other' && (
@@ -131,12 +206,8 @@ export function PaymentGatewayPanel({
                   type="text"
                   value={uniswap.customToken}
                   onChange={(event) => uniswap.setCustomToken(event.target.value)}
-                  placeholder="Token address 0x…"
-                  className={
-                    light
-                      ? 'w-full border-2 border-black bg-white px-3 py-2 font-mono text-xs outline-none'
-                      : 'w-full border border-white/20 bg-black/40 px-3 py-2 font-mono text-xs outline-none'
-                  }
+                  placeholder="Token address on source chain 0x…"
+                  className={inputClass}
                 />
               )}
 
@@ -150,7 +221,9 @@ export function PaymentGatewayPanel({
                   >
                     {uniswap.phase === 'quoting'
                       ? 'Fetching Uniswap quote…'
-                      : `Get Uniswap quote for ${amountUsd || '—'} USDC`}
+                      : uniswap.sourceChainId === 8453
+                        ? `Quote swap → ${destinationLabel}`
+                        : `Quote bridge ${uniswap.sourceChainLabel} → ${destinationLabel}`}
                   </button>
 
                   {uniswap.preview && (
@@ -161,19 +234,35 @@ export function PaymentGatewayPanel({
                           : 'border border-white/20 bg-black/30 p-3 font-mono text-[10px]'
                       }
                     >
-                      <p className="uppercase opacity-60">Quote · {uniswap.preview.routing}</p>
+                      <p className="uppercase opacity-60">
+                        {uniswap.preview.crossChain ? 'Bridge' : 'Swap'} · {uniswap.preview.routing}
+                      </p>
                       <p className="mt-2 font-bold">
                         Pay ~{Number(uniswap.preview.amountInFormatted).toLocaleString(undefined, {
                           maximumFractionDigits: 6,
                         })}{' '}
-                        → receive {Number(uniswap.preview.amountOutFormatted).toLocaleString()} USDC
+                        on {uniswap.sourceChainLabel}
+                        <br />
+                        Receive{' '}
+                        {Number(uniswap.preview.amountOutFormatted).toLocaleString(undefined, {
+                          maximumFractionDigits: uniswap.destination === 'gami' ? 2 : 2,
+                        })}{' '}
+                        {uniswap.destination === 'gami' ? '$GAMI' : 'USDC'} on Base
                       </p>
                       {uniswap.preview.gasFeeUsd && (
                         <p className={`mt-1 ${monoTiny}`}>Est. gas ${uniswap.preview.gasFeeUsd}</p>
                       )}
+                      {uniswap.preview.bridgeFee && (
+                        <p className={`mt-1 ${monoTiny}`}>Bridge fee {uniswap.preview.bridgeFee}</p>
+                      )}
+                      {uniswap.preview.estimatedFillTime && (
+                        <p className={`mt-1 ${monoTiny}`}>
+                          ETA {uniswap.preview.estimatedFillTime}
+                        </p>
+                      )}
                       {uniswap.pendingApproval && (
                         <p className={`mt-1 ${monoTiny}`}>
-                          Approval required before swap (Permit2 proxy flow).
+                          Approval required on the source chain before the swap/bridge.
                         </p>
                       )}
                       <button
@@ -185,30 +274,38 @@ export function PaymentGatewayPanel({
                         {uniswap.phase === 'approving'
                           ? 'Confirm approval in wallet…'
                           : uniswap.phase === 'swapping'
-                            ? 'Building swap…'
+                            ? 'Building Uniswap transaction…'
                             : uniswap.phase === 'confirming'
-                              ? 'Confirming swap…'
+                              ? 'Confirming on-chain…'
                               : uniswap.phase === 'done'
-                                ? 'Swap complete'
-                                : 'Approve & swap via Uniswap'}
+                                ? 'Complete'
+                                : uniswap.preview.crossChain
+                                  ? 'Approve & bridge to Base'
+                                  : 'Approve & swap on Base'}
                       </button>
                     </div>
                   )}
 
-                  {uniswap.phase === 'done' && uniswap.txHash && (
+                  {uniswap.phase === 'done' && uniswap.explorerUrl && (
                     <a
-                      href={getExplorerTxUrl(getChainId(), uniswap.txHash)}
+                      href={uniswap.explorerUrl}
                       target="_blank"
                       rel="noreferrer"
                       className="block font-mono text-[10px] font-bold uppercase text-[#7047eb] underline"
                     >
-                      View swap transaction ↗
+                      View source-chain transaction ↗
                     </a>
+                  )}
+
+                  {uniswap.phase === 'done' && uniswap.destination === 'usdc' && (
+                    <p className="font-mono text-[10px] font-bold uppercase text-[#7047eb]">
+                      USDC is on Base — select the USDC tab and confirm your $GAMI contribution.
+                    </p>
                   )}
                 </>
               ) : (
                 <p className="font-mono text-[10px] font-bold uppercase text-[#a13b3b]">
-                  Set `VITE_UNISWAP_API_KEY` to enable in-app Uniswap Trading API swaps.
+                  Set `VITE_UNISWAP_API_KEY` to enable in-app Uniswap Trading API swaps & bridges.
                 </p>
               )}
 
@@ -224,8 +321,8 @@ export function PaymentGatewayPanel({
           )}
 
           <p className={`mt-3 font-mono text-[10px] uppercase ${monoTiny}`}>
-            API flow: check_approval → quote → swap on {paymentChainLabel()}. After USDC arrives,
-            select USDC to contribute.
+            Path: other chain/asset → Uniswap API → USDC/$GAMI on Base (Gami chain) → sale
+            contribution for allocation.
           </p>
 
           {(uniswap.error || gateway.error) && (
@@ -239,8 +336,8 @@ export function PaymentGatewayPanel({
       {paymentMethod === 'fiat' && (
         <div className={panelClass}>
           <p className={textMuted}>
-            Buy USDC on Base with a debit/credit card or Coinbase, then return here and select USDC to
-            contribute. Funds land in your linked allocation wallet.
+            Buy USDC on Base with a debit/credit card or Coinbase, then select USDC to contribute for
+            $GAMI on the Gami chain.
           </p>
           {!isConnected ? (
             <div className="mt-3">
@@ -285,9 +382,6 @@ export function PaymentGatewayPanel({
               VITE_RAMP_HOST_API_KEY (Ramp).
             </p>
           )}
-          <p className={`mt-3 font-mono text-[10px] uppercase ${monoTiny}`}>
-            Never send funds to a sale address. Only buy USDC into your linked wallet.
-          </p>
         </div>
       )}
 

@@ -1,17 +1,31 @@
 import { createConfig as createPrivyConfig } from '@privy-io/wagmi';
 import { createConfig, http } from 'wagmi';
 import { injected } from 'wagmi/connectors';
-import { base, baseSepolia } from 'viem/chains';
+import { arbitrum, base, baseSepolia, mainnet, optimism, polygon } from 'viem/chains';
 
 import { env } from '@/lib/env';
 
 const chainId = env.chainId();
-export const supportedChains = chainId === 8453 ? ([base] as const) : ([baseSepolia] as const);
-export const defaultChain = supportedChains[0];
+
+/**
+ * Sale settlement is on Base (or Base Sepolia in test).
+ * Extra L1/L2 chains are included so Uniswap bridge quotes can be signed
+ * from Ethereum / Arbitrum / Optimism / Polygon into Base USDC / GAMI.
+ */
+export const supportedChains =
+  chainId === 8453
+    ? ([base, mainnet, arbitrum, optimism, polygon] as const)
+    : ([baseSepolia, base, mainnet, arbitrum, optimism, polygon] as const);
+
+export const defaultChain = chainId === 8453 ? base : baseSepolia;
 
 const transports = {
   [base.id]: http(),
   [baseSepolia.id]: http(),
+  [mainnet.id]: http(),
+  [arbitrum.id]: http(),
+  [optimism.id]: http(),
+  [polygon.id]: http(),
 } as const;
 
 /** Privy drives connectors — do not pass injected here. */

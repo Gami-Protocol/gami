@@ -3,24 +3,35 @@ import { useSendTransaction, useSwitchChain, useChainId } from 'wagmi';
 import { waitForTransactionReceipt } from 'wagmi/actions';
 import { formatUnits, hexToBigInt, isHex } from 'viem';
 
-import { getChainId } from '@/lib/contracts';
 import {
   openExternalUrl,
   resolveCryptoSwapUrl,
   type SwapAsset,
 } from '@/lib/payment-gateway';
 import {
+  BASE_USDC,
+  BRIDGE_SOURCE_CHAINS,
+  explorerTxUrl,
+  GAMI_CHAIN_ID,
+  isCrossChain,
+  tokenDecimals,
+  type BridgeAssetSymbol,
+  type BridgeSourceChainId,
+} from '@/lib/uniswap-chains';
+import {
   checkApproval,
-  createSwap,
+  destinationAmountBaseUnits,
+  executeQuote,
   getQuote,
+  gamiTokenOnBase,
   quotedInputAmount,
   quotedOutputAmount,
-  tokenInForSwapAsset,
-  tokenOutUsdc,
+  resolveTokenIn,
+  resolveTokenOut,
   uniswapApiConfigured,
   UniswapTradeApiError,
-  usdcAmountToBaseUnits,
   type QuoteResponse,
+  type TradeDestination,
   type UniswapTx,
 } from '@/lib/uniswap-trade-api';
 import { wagmiConfig } from '@/lib/wagmi';
@@ -42,8 +53,14 @@ export type UniswapQuotePreview = {
   amountInFormatted: string;
   amountOutFormatted: string;
   gasFeeUsd?: string;
+  bridgeFee?: string;
+  estimatedFillTime?: string;
   tokenIn: string;
   tokenOut: string;
+  tokenInChainId: number;
+  tokenOutChainId: number;
+  destination: TradeDestination;
+  crossChain: boolean;
 };
 
 function txValue(value?: string): bigint {
@@ -60,15 +77,18 @@ function toSendTx(tx: UniswapTx) {
     data: tx.data,
     value: txValue(tx.value),
     ...(tx.gasLimit ? { gas: BigInt(tx.gasLimit) } : {}),
+    ...(tx.chainId ? { chainId: tx.chainId } : {}),
   } as const;
 }
 
-function decimalsForToken(token: string): number {
-  const lower = token.toLowerCase();
-  if (lower === tokenOutUsdc().toLowerCase()) return 6;
-  if (lower.endsWith('0000000000000000000000000000000000000000')) return 18;
-  if (lower === '0xfde4c96c8593536e31f229ea8f37b2ada2699bb2') return 6;
-  return 18;
+function outDecimals(destination: TradeDestination): number {
+  return destination === 'gami' ? 18 : 6;
+}
+
+function mapSwapAsset(asset: SwapAsset): BridgeAssetSymbol | 'OTHER' {
+  if (asset === 'usdt') return 'USDT';
+  if (asset === 'eth') return 'ETH';
+  return 'OTHER';
 }
 
 export function useUniswapSwap(options: {
@@ -76,7 +96,6 @@ export function useUniswapSwap(options: {
   amountUsd: string;
   onComplete?: () => void;
 }) {
-  const requiredChainId = getChainId();
   const connectedChainId = useChainId();
   const { switchChainAsync } = useSwitchChain();
   const { sendTransactionAsync } = useSendTransaction();
@@ -88,6 +107,8 @@ export function useUniswapSwap(options: {
   const [pendingApproval, setPendingApproval] = useState<UniswapTx | null>(null);
   const [customToken, setCustomToken] = useState('');
   const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
+  const [sourceChainId, setSourceChainId] = useState<BridgeSourceChainId>(GAMI_CHAIN_ID);
+  const [destination, setDestination] = useState<TradeDestination>('usdc');
 
   const clear = useCallback(() => {
     setPhase('idle');
@@ -98,20 +119,24 @@ export function useUniswapSwap(options: {
     setTxHash(null);
   }, []);
 
-  const ensureNetwork = useCallback(async () => {
-    if (connectedChainId !== requiredChainId) {
-      await switchChainAsync({ chainId: requiredChainId });
-    }
-  }, [connectedChainId, requiredChainId, switchChainAsync]);
+  const ensureSourceNetwork = useCallback(
+    async (chainId: number) => {
+      if (connectedChainId !== chainId) {
+        await switchChainAsync({ chainId });
+      }
+    },
+    [connectedChainId, switchChainAsync],
+  );
 
   const sendAndWait = useCallback(
-    async (tx: UniswapTx) => {
+    async (tx: UniswapTx, chainId: number) => {
+      await ensureSourceNetwork(chainId);
       const hash = await sendTransactionAsync(toSendTx(tx));
       setTxHash(hash);
       await waitForTransactionReceipt(wagmiConfig, { hash });
       return hash;
     },
-    [sendTransactionAsync],
+    [ensureSourceNetwork, sendTransactionAsync],
   );
 
   const fetchQuote = useCallback(
@@ -132,18 +157,30 @@ export function useUniswapSwap(options: {
         setPhase('error');
         return;
       }
+      if (destination === 'gami' && !gamiTokenOnBase()) {
+        setError('Set VITE_GAMI_TOKEN_ADDRESS to route into $GAMI on Base.');
+        setPhase('error');
+        return;
+      }
 
       setPhase('quoting');
       try {
-        const tokenIn = tokenInForSwapAsset(from, customToken.trim() || undefined);
-        const tokenOut = tokenOutUsdc();
-        const amountOut = usdcAmountToBaseUnits(options.amountUsd);
+        const mapped = mapSwapAsset(from);
+        const tokenIn =
+          mapped === 'OTHER'
+            ? resolveTokenIn(sourceChainId, 'USDC', customToken.trim() || undefined)
+            : resolveTokenIn(sourceChainId, mapped);
+        const tokenOut = resolveTokenOut(destination);
+        const tokenOutChainId = GAMI_CHAIN_ID;
+        const amountOut = destinationAmountBaseUnits(destination, options.amountUsd);
 
         const quoteResponse = await getQuote({
           swapper: options.address,
           tokenIn,
           tokenOut,
           amount: amountOut,
+          tokenInChainId: sourceChainId,
+          tokenOutChainId,
           type: 'EXACT_OUTPUT',
         });
 
@@ -153,11 +190,17 @@ export function useUniswapSwap(options: {
           throw new UniswapTradeApiError('Quote missing input amount.');
         }
 
+        const inDecimals =
+          mapped === 'OTHER'
+            ? 18
+            : tokenDecimals(mapped, sourceChainId);
+
         const approvalAmount = ((BigInt(amountIn) * 105n) / 100n).toString();
         const approval = await checkApproval({
           walletAddress: options.address,
           token: tokenIn,
           amount: approvalAmount,
+          chainId: sourceChainId,
         });
 
         setPendingApproval(approval.approval);
@@ -166,11 +209,17 @@ export function useUniswapSwap(options: {
           routing: String(quoteResponse.routing ?? 'CLASSIC'),
           amountIn,
           amountOut: out,
-          amountInFormatted: formatUnits(BigInt(amountIn), decimalsForToken(tokenIn)),
-          amountOutFormatted: formatUnits(BigInt(out), 6),
+          amountInFormatted: formatUnits(BigInt(amountIn), inDecimals),
+          amountOutFormatted: formatUnits(BigInt(out), outDecimals(destination)),
           gasFeeUsd: quoteResponse.quote?.gasFeeUSD,
+          bridgeFee: quoteResponse.quote?.bridgeFee,
+          estimatedFillTime: quoteResponse.quote?.estimatedFillTime,
           tokenIn,
           tokenOut,
+          tokenInChainId: sourceChainId,
+          tokenOutChainId,
+          destination,
+          crossChain: isCrossChain(sourceChainId, tokenOutChainId),
         });
         setPhase('quoted');
       } catch (err) {
@@ -180,7 +229,7 @@ export function useUniswapSwap(options: {
         setPhase('error');
       }
     },
-    [customToken, options.address, options.amountUsd],
+    [customToken, destination, options.address, options.amountUsd, sourceChainId],
   );
 
   const executeSwap = useCallback(async () => {
@@ -192,11 +241,9 @@ export function useUniswapSwap(options: {
 
     setError(null);
     try {
-      await ensureNetwork();
-
       if (pendingApproval) {
         setPhase('approving');
-        await sendAndWait(pendingApproval);
+        await sendAndWait(pendingApproval, preview.tokenInChainId);
       }
 
       setPhase('swapping');
@@ -205,6 +252,8 @@ export function useUniswapSwap(options: {
         tokenIn: preview.tokenIn,
         tokenOut: preview.tokenOut,
         amount: preview.amountOut,
+        tokenInChainId: preview.tokenInChainId,
+        tokenOutChainId: preview.tokenOutChainId,
         type: 'EXACT_OUTPUT',
       });
 
@@ -214,17 +263,24 @@ export function useUniswapSwap(options: {
           walletAddress: options.address,
           token: preview.tokenIn,
           amount: ((BigInt(amountIn) * 105n) / 100n).toString(),
+          chainId: preview.tokenInChainId,
         });
         if (approval.approval) {
           setPhase('approving');
-          await sendAndWait(approval.approval);
+          await sendAndWait(approval.approval, preview.tokenInChainId);
           setPhase('swapping');
         }
       }
 
-      const swapResponse = await createSwap(freshQuote);
+      const result = await executeQuote(freshQuote);
+      if (result.kind === 'order') {
+        setPhase('done');
+        options.onComplete?.();
+        return;
+      }
+
       setPhase('confirming');
-      await sendAndWait(swapResponse.swap);
+      await sendAndWait(result.response.swap, preview.tokenInChainId);
       setPhase('done');
       options.onComplete?.();
     } catch (err) {
@@ -234,7 +290,7 @@ export function useUniswapSwap(options: {
       }
       setPhase('error');
     }
-  }, [ensureNetwork, options, pendingApproval, preview, quote, sendAndWait]);
+  }, [options, pendingApproval, preview, quote, sendAndWait]);
 
   const openDeepLinkFallback = useCallback(
     (from: SwapAsset) => {
@@ -247,6 +303,9 @@ export function useUniswapSwap(options: {
     [options.address, options.amountUsd],
   );
 
+  const sourceChainLabel =
+    BRIDGE_SOURCE_CHAINS.find((c) => c.chainId === sourceChainId)?.label ?? 'Source';
+
   return {
     phase,
     error,
@@ -254,8 +313,16 @@ export function useUniswapSwap(options: {
     pendingApproval,
     customToken,
     setCustomToken,
+    sourceChainId,
+    setSourceChainId,
+    destination,
+    setDestination,
+    sourceChainLabel,
+    gamiConfigured: Boolean(gamiTokenOnBase()),
+    baseUsdc: BASE_USDC,
     apiConfigured: uniswapApiConfigured(),
     txHash,
+    explorerUrl: txHash ? explorerTxUrl(preview?.tokenInChainId ?? GAMI_CHAIN_ID, txHash) : null,
     clear,
     fetchQuote,
     executeSwap,

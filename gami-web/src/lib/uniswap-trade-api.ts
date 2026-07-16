@@ -1,15 +1,16 @@
-import { getChainId } from '@/lib/contracts';
+import { getChainId, getContractAddress } from '@/lib/contracts';
 import { env } from '@/lib/env';
 import {
-  BASE_MAINNET_USDC,
-  BASE_MAINNET_USDT,
-  isBaseMainnet,
-  settlementUsdcAddress,
-  type SwapAsset,
-} from '@/lib/payment-gateway';
+  BASE_USDC,
+  CHAIN_TOKENS,
+  GAMI_CHAIN_ID,
+  isCrossChain,
+  NATIVE_ETH,
+  type BridgeAssetSymbol,
+  type BridgeSourceChainId,
+} from '@/lib/uniswap-chains';
 
-/** Native ETH sentinel used by the Uniswap Trading API. */
-export const NATIVE_ETH = '0x0000000000000000000000000000000000000000' as const;
+export { NATIVE_ETH };
 
 export const UNISWAP_TRADE_API_BASE = 'https://trade-api.gateway.uniswap.org/v1';
 
@@ -36,6 +37,9 @@ export type QuoteResponse = {
     gasFeeUSD?: string;
     gasUseEstimate?: string;
     slippage?: number;
+    bridgeFee?: string;
+    estimatedFillTime?: string;
+    quoteId?: string;
     orderInfo?: {
       outputs?: Array<{ token?: string; startAmount?: string; endAmount?: string }>;
       input?: { token?: string; startAmount?: string; endAmount?: string };
@@ -52,6 +56,8 @@ export type SwapResponse = {
   requestId?: string;
 };
 
+export type TradeDestination = 'usdc' | 'gami';
+
 export class UniswapTradeApiError extends Error {
   constructor(
     message: string,
@@ -67,22 +73,37 @@ export function uniswapApiConfigured(): boolean {
   return Boolean(env.uniswapApiKey());
 }
 
-export function tokenInForSwapAsset(from: SwapAsset, customToken?: string): `0x${string}` {
-  if (from === 'eth') return NATIVE_ETH;
-  if (from === 'usdt') {
-    if (!isBaseMainnet()) {
-      throw new Error('USDT→USDC via Uniswap API is available on Base mainnet. Switch network or use the deep-link fallback.');
-    }
-    return BASE_MAINNET_USDT;
-  }
-  if (!customToken || !/^0x[a-fA-F0-9]{40}$/.test(customToken)) {
-    throw new Error('Enter a valid ERC-20 token address to swap.');
-  }
-  return customToken as `0x${string}`;
+export function gamiTokenOnBase(): `0x${string}` | null {
+  return getContractAddress('GAMI');
 }
 
-export function tokenOutUsdc(): `0x${string}` {
-  return isBaseMainnet() ? BASE_MAINNET_USDC : settlementUsdcAddress();
+export function resolveTokenIn(
+  chainId: BridgeSourceChainId,
+  asset: BridgeAssetSymbol,
+  customToken?: string,
+): `0x${string}` {
+  if (customToken) {
+    if (!/^0x[a-fA-F0-9]{40}$/.test(customToken)) {
+      throw new Error('Enter a valid ERC-20 token address.');
+    }
+    return customToken as `0x${string}`;
+  }
+  const token = CHAIN_TOKENS[chainId]?.[asset];
+  if (!token) {
+    throw new Error(`${asset} is not configured on chain ${chainId}.`);
+  }
+  return token;
+}
+
+export function resolveTokenOut(destination: TradeDestination): `0x${string}` {
+  if (destination === 'gami') {
+    const gami = gamiTokenOnBase();
+    if (!gami) {
+      throw new Error('Set VITE_GAMI_TOKEN_ADDRESS to swap into $GAMI on Base.');
+    }
+    return gami;
+  }
+  return BASE_USDC;
 }
 
 function headers(): HeadersInit {
@@ -133,14 +154,13 @@ async function postJson<T>(path: string, body: unknown): Promise<T> {
   return payload as T;
 }
 
-/** Step 1 — Permit2/proxy approval check. */
+/** Step 1 — Permit2/proxy approval check on the source chain. */
 export async function checkApproval(input: {
   walletAddress: string;
   token: string;
   amount: string;
-  chainId?: number;
+  chainId: number;
 }): Promise<CheckApprovalResponse> {
-  // Native ETH never needs ERC-20 approval.
   if (input.token.toLowerCase() === NATIVE_ETH.toLowerCase()) {
     return { approval: null };
   }
@@ -149,34 +169,48 @@ export async function checkApproval(input: {
     walletAddress: input.walletAddress,
     token: input.token,
     amount: input.amount,
-    chainId: input.chainId ?? getChainId(),
+    chainId: input.chainId,
     includeGasInfo: true,
+    // Help the API attach destination context for bridges.
+    tokenOut: BASE_USDC,
+    tokenOutChainId: GAMI_CHAIN_ID,
   });
 }
 
-/** Step 2 — Aggregator quote (classic V2/V3/V4 routes). */
+/**
+ * Step 2 — Aggregator quote.
+ * Same-chain: V2/V3/V4. Cross-chain into Base: omit protocols so BRIDGE routes are eligible.
+ */
 export async function getQuote(input: {
   swapper: string;
   tokenIn: string;
   tokenOut: string;
   amount: string;
+  tokenInChainId: number;
+  tokenOutChainId: number;
   type?: 'EXACT_INPUT' | 'EXACT_OUTPUT';
-  chainId?: number;
   slippageTolerance?: number;
 }): Promise<QuoteResponse> {
-  const chainId = input.chainId ?? getChainId();
-  return postJson<QuoteResponse>('/quote', {
+  const crossChain = isCrossChain(input.tokenInChainId, input.tokenOutChainId);
+  const body: Record<string, unknown> = {
     type: input.type ?? 'EXACT_OUTPUT',
     amount: input.amount,
     tokenIn: input.tokenIn,
     tokenOut: input.tokenOut,
-    tokenInChainId: chainId,
-    tokenOutChainId: chainId,
+    tokenInChainId: input.tokenInChainId,
+    tokenOutChainId: input.tokenOutChainId,
     swapper: input.swapper,
     slippageTolerance: input.slippageTolerance ?? 0.5,
-    protocols: ['V4', 'V3', 'V2'],
     routingPreference: 'BEST_PRICE',
-  });
+  };
+
+  // For same-chain swaps prefer classic AMM. For bridges, leave protocols unset
+  // so the aggregator can return BRIDGE / chained routes.
+  if (!crossChain) {
+    body.protocols = ['V4', 'V3', 'V2'];
+  }
+
+  return postJson<QuoteResponse>('/quote', body);
 }
 
 /** Strip null permit fields and prepare /swap body from a quote response. */
@@ -188,7 +222,6 @@ export function prepareSwapRequest(quoteResponse: QuoteResponse): Record<string,
   const isUniswapX =
     routing === 'DUTCH_V2' || routing === 'DUTCH_V3' || routing === 'PRIORITY';
 
-  // Proxy-approval / classic path: never send null permit fields.
   if (!isUniswapX && permitData && typeof permitData === 'object') {
     body.permitData = permitData;
   }
@@ -199,35 +232,58 @@ export function prepareSwapRequest(quoteResponse: QuoteResponse): Record<string,
   return body;
 }
 
-/** Step 3a — Classic/bridge/wrap swap calldata (integrator submits on-chain). */
-export async function createSwap(quoteResponse: QuoteResponse): Promise<SwapResponse> {
+function isUniswapXRouting(routing: string): boolean {
+  return routing === 'DUTCH_V2' || routing === 'DUTCH_V3' || routing === 'PRIORITY';
+}
+
+/**
+ * Step 3 — Execute quote:
+ * - UniswapX → POST /order (gasless filler)
+ * - Classic / Bridge / Wrap → POST /swap (integrator submits on-chain)
+ */
+export async function executeQuote(quoteResponse: QuoteResponse): Promise<
+  | { kind: 'swap'; response: SwapResponse }
+  | { kind: 'order'; response: unknown; note: string }
+> {
   const routing = String(quoteResponse.routing ?? 'CLASSIC');
-  if (routing === 'DUTCH_V2' || routing === 'DUTCH_V3' || routing === 'PRIORITY') {
-    throw new UniswapTradeApiError(
-      'UniswapX quote returned. Re-quote with classic AMM protocols or submit via /order.',
-    );
+
+  if (isUniswapXRouting(routing)) {
+    const encodedOrder =
+      (quoteResponse.quote as { encodedOrder?: string } | undefined)?.encodedOrder ??
+      (quoteResponse as { encodedOrder?: string }).encodedOrder;
+    const signature = (quoteResponse as { signature?: string }).signature;
+    if (!encodedOrder || !signature) {
+      throw new UniswapTradeApiError(
+        'UniswapX quote requires a signed order. Prefer classic/bridge routes for in-app funding.',
+      );
+    }
+    const response = await postJson('/order', {
+      encodedOrder,
+      signature,
+      orderType: routing === 'PRIORITY' ? 'Priority' : routing === 'DUTCH_V3' ? 'Dutch_V3' : 'Dutch_V2',
+      chainId: getChainId(),
+    });
+    return {
+      kind: 'order',
+      response,
+      note: 'UniswapX order submitted — a market maker will fill it gaslessly.',
+    };
   }
 
   const response = await postJson<SwapResponse>('/swap', prepareSwapRequest(quoteResponse));
   if (!response.swap?.data || response.swap.data === '0x') {
     throw new UniswapTradeApiError('Empty swap calldata — quote may have expired. Try again.');
   }
-  return response;
+  return { kind: 'swap', response };
 }
 
-/** Step 3b — UniswapX gasless order submission (filler writes to chain). */
-export async function submitOrder(input: {
-  encodedOrder: string;
-  orderType?: string;
-  signature: string;
-  chainId?: number;
-}): Promise<unknown> {
-  return postJson('/order', {
-    encodedOrder: input.encodedOrder,
-    orderType: input.orderType ?? 'Dutch_V2',
-    signature: input.signature,
-    chainId: input.chainId ?? getChainId(),
-  });
+/** @deprecated Use executeQuote — kept for callers that only want classic /swap. */
+export async function createSwap(quoteResponse: QuoteResponse): Promise<SwapResponse> {
+  const result = await executeQuote(quoteResponse);
+  if (result.kind !== 'swap') {
+    throw new UniswapTradeApiError(result.note);
+  }
+  return result.response;
 }
 
 export function quotedOutputAmount(quote: QuoteResponse): string | null {
@@ -250,4 +306,23 @@ export function usdcAmountToBaseUnits(amountUsd: string): string {
     throw new Error('Enter a valid USDC amount for the swap.');
   }
   return String(Math.round(n * 1e6));
+}
+
+/** Exact-output target: USDC on Base, or GAMI (18 decimals) when destination is gami. */
+export function destinationAmountBaseUnits(
+  destination: TradeDestination,
+  amountUsd: string,
+  gamiPreviewAmount?: string,
+): string {
+  if (destination === 'usdc') return usdcAmountToBaseUnits(amountUsd);
+  if (gamiPreviewAmount && /^[0-9]+$/.test(gamiPreviewAmount)) return gamiPreviewAmount;
+  // Sale price $0.012 → convert USD intent into GAMI base units (18 decimals).
+  const usd = Number(amountUsd);
+  if (!Number.isFinite(usd) || usd <= 0) {
+    throw new Error('Enter a valid amount for the $GAMI swap.');
+  }
+  const tokens = usd / 0.012;
+  const whole = Math.floor(tokens);
+  const frac = Math.round((tokens - whole) * 1e6);
+  return (BigInt(whole) * 10n ** 18n + BigInt(frac) * 10n ** 12n).toString();
 }
