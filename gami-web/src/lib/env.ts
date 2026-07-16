@@ -28,6 +28,10 @@ export const env = {
     const value = read('VITE_RAMP_ENVIRONMENT')?.toLowerCase();
     return value === 'demo' ? 'demo' : 'production';
   },
+  /** Uniswap Trading API key (Developer Portal). Prefer a restricted key. */
+  uniswapApiKey: () => read('VITE_UNISWAP_API_KEY'),
+  /** Override Uniswap Trade API base (default: https://trade-api.gateway.uniswap.org/v1). */
+  uniswapApiBase: () => read('VITE_UNISWAP_API_BASE'),
   blockedCountries: () => read('VITE_BLOCKED_COUNTRIES'),
   supabaseFunctionsUrl: () => read('VITE_SUPABASE_FUNCTIONS_URL'),
   personaTemplateId: () => read('VITE_PERSONA_TEMPLATE_ID'),
