@@ -54,7 +54,15 @@ function walletErrorMessage(error: Error): string {
 }
 
 export function SalePage() {
-  const { address, isConnected, isLinking, authenticated, ready: walletReady } = useSaleAccount();
+  const {
+    address,
+    isConnected,
+    isLinking,
+    authenticated,
+    ready: walletReady,
+    walletLabel,
+    isEmbedded,
+  } = useSaleAccount();
   const connectedChainId = useChainId();
   const { switchChain, isPending: isSwitchingChain } = useSwitchChain();
   const { blocked: geoBlocked, country, loading: geoLoading } = useGeoBlock();
@@ -525,20 +533,27 @@ export function SalePage() {
                 <ConnectWallet light />
               </div>
 
-              <div className="my-7 flex items-center justify-between">
+              <div className="my-7 flex items-center justify-between gap-4">
                 <div>
                   <p className="font-mono text-[10px] uppercase text-[#77727e]">
-                    Privy allocation account
+                    {isEmbedded ? 'Privy email wallet' : walletLabel ?? 'Allocation account'}
                   </p>
                   <p className="mt-1 font-mono text-xs font-bold">{walletStatusLabel}</p>
                   {address && (
                     <p className="mt-1 font-mono text-[10px] text-[#77727e]">
                       {address.slice(0, 6)}…{address.slice(-4)}
+                      {walletLabel ? ` · ${walletLabel}` : ''}
+                    </p>
+                  )}
+                  {isConnected && (
+                    <p className="mt-2 font-mono text-[10px] uppercase text-[#7047eb]">
+                      Open the wallet menu to switch, connect MetaMask / WalletConnect, or use your
+                      Privy email wallet
                     </p>
                   )}
                 </div>
                 <span
-                  className={`h-3 w-3 rounded-full border border-black ${
+                  className={`h-3 w-3 shrink-0 rounded-full border border-black ${
                     isConnected ? 'bg-[#67f5a1]' : isLinking || authenticated ? 'bg-[#ffeb55]' : 'bg-[#d5d0db]'
                   }`}
                 />

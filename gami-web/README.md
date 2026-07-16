@@ -51,8 +51,10 @@ VITE_RAMP_ENVIRONMENT=demo
 VITE_BLOCKED_COUNTRIES=US,CU,IR,KP,SY
 ```
 
-Set `VITE_PRIVY_APP_ID` to enable Privy email/wallet sign-in on the sale flow. Users who sign in without an
-existing wallet receive a Privy embedded Ethereum wallet for their token allocation.
+Set `VITE_PRIVY_APP_ID` to enable Privy email/wallet sign-in on the sale flow. Users who sign in with email
+receive a Privy embedded Ethereum wallet. The wallet menu lets them switch to that Privy wallet or connect
+external wallets (MetaMask, Coinbase, Rainbow, WalletConnect). Set `VITE_WALLETCONNECT_PROJECT_ID` for
+WalletConnect QR support.
 
 ### Payment gateway
 

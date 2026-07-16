@@ -10,6 +10,8 @@ export const env = {
   supabaseUrl: () => read('VITE_SUPABASE_URL'),
   supabaseAnonKey: () => read('VITE_SUPABASE_ANON_KEY'),
   privyAppId: () => read('VITE_PRIVY_APP_ID') ?? DEFAULT_PRIVY_APP_ID,
+  /** WalletConnect Cloud project ID for external mobile/desktop wallets. */
+  walletConnectProjectId: () => read('VITE_WALLETCONNECT_PROJECT_ID'),
   /** Explicit launch switch. Leave unset/false until the raise is ready. */
   saleLive: () => read('VITE_SALE_LIVE') === 'true',
   chainId: () => Number(read('VITE_CHAIN_ID') ?? '84532'),
