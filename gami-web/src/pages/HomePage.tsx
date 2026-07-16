@@ -12,7 +12,7 @@ const ECOSYSTEM_CARDS = [
     icon: 'grid',
     cta: 'Launch App',
     ctaStyle: 'outline' as const,
-    href: '/wallet',
+    href: '/app',
   },
   {
     title: 'BROWSER EXT.',
@@ -88,13 +88,13 @@ export function HomePage() {
             </p>
             <div className="flex flex-wrap gap-6">
               <Link
-                to="/wallet"
+                to="/app"
                 className="gami-gradient neo-border px-8 py-4 font-display text-lg font-bold uppercase tracking-wider shadow-brutal transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none"
               >
                 Launch App
               </Link>
               <Link
-                to="/wallet"
+                to="/agents"
                 className="border-2 border-white px-8 py-4 font-display text-lg font-bold uppercase tracking-wider transition-all hover:bg-white hover:text-black"
               >
                 Explore AI Agents
