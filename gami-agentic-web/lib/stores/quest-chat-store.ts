@@ -2,7 +2,7 @@
 
 import { create } from 'zustand';
 
-import { sendAgenticMessage, AgenticApiError } from '@/lib/api/agentic-quest-client';
+import { sendAgenticMessage, AgenticMcpError } from '@/lib/mcp/client';
 import { statsFromXP } from '@/lib/quest-math';
 import type { ChatMessage, QuestDelta, QuestProfile } from '@/lib/types/agentic-quest';
 
@@ -177,9 +177,9 @@ export const useQuestChatStore = create<QuestChatState>((set, get) => ({
       set({ isLoading: false });
     } catch (err) {
       const message =
-        err instanceof AgenticApiError
+        err instanceof AgenticMcpError
           ? `${err.message} (${err.code})`
-          : 'Network error — could not reach the Agent Layer.';
+          : 'Network error — could not reach the MCP Agent Layer.';
 
       set((s) => ({
         isLoading: false,

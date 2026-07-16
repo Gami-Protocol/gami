@@ -11,8 +11,8 @@ Marketing site and token sale portal for the $GAMI raise. Built with **Vite + Re
 | `/agents` | AI Agents product page |
 | `/app` | App dashboard (wallet launch) |
 | `/developers/docs` | Developer documentation |
-| `/developers/sdk` | SDK reference |
-| `/developers/api` | API key access |
+| `/developers/mcp-client` | MCP client reference |
+| `/developers/mcp-server` | MCP server access |
 | `/status` | Protocol system status |
 | `/waitlist` | ICO waitlist launchpad |
 | `/tokenomics` | Allocation chart + burn engine |

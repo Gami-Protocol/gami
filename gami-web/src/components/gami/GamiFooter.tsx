@@ -108,13 +108,13 @@ export function GamiFooter({ variant = 'default' }: { variant?: 'default' | 'ico
                 </Link>
               </li>
               <li>
-                <Link to="/developers/sdk" className={linkClass}>
-                  SDK Reference
+                <Link to="/developers/mcp-client" className={linkClass}>
+                  MCP Client
                 </Link>
               </li>
               <li>
-                <Link to="/developers/api" className={linkClass}>
-                  API Keys
+                <Link to="/developers/mcp-server" className={linkClass}>
+                  MCP Server
                 </Link>
               </li>
               <li>

@@ -21,7 +21,7 @@ export function WhitepaperPage() {
         <section>
           <h2 className="font-display text-2xl font-bold text-white">Layer 1 — $GAMI</h2>
           <p className="mt-4">Governance voting, validator security, staking rewards, AI premium features,
-            SDK licensing, enterprise integrations, protocol fees, treasury management, marketplace settlement.</p>
+            MCP licensing, enterprise integrations, protocol fees, treasury management, marketplace settlement.</p>
         </section>
 
         <section>

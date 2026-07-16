@@ -7,9 +7,9 @@ import { AboutPage } from '@/pages/AboutPage';
 import { AgentsPage } from '@/pages/AgentsPage';
 import { ClaimPage } from '@/pages/ClaimPage';
 import { ContributePage } from '@/pages/ContributePage';
-import { ApiKeysPage } from '@/pages/developers/ApiKeysPage';
 import { DocsPage } from '@/pages/developers/DocsPage';
-import { SdkPage } from '@/pages/developers/SdkPage';
+import { McpClientPage } from '@/pages/developers/McpClientPage';
+import { McpServerPage } from '@/pages/developers/McpServerPage';
 import { HomePage } from '@/pages/HomePage';
 import { LegalLayout } from '@/pages/legal/LegalLayout';
 import { PrivacyPage } from '@/pages/legal/PrivacyPage';
@@ -36,8 +36,10 @@ export default function App() {
             <Route path="/app" element={<WalletPage />} />
             <Route path="/app/wallet" element={<Navigate to="/wallet" replace />} />
             <Route path="/developers/docs" element={<DocsPage />} />
-            <Route path="/developers/sdk" element={<SdkPage />} />
-            <Route path="/developers/api" element={<ApiKeysPage />} />
+            <Route path="/developers/mcp-client" element={<McpClientPage />} />
+            <Route path="/developers/mcp-server" element={<McpServerPage />} />
+            <Route path="/developers/sdk" element={<Navigate to="/developers/mcp-client" replace />} />
+            <Route path="/developers/api" element={<Navigate to="/developers/mcp-server" replace />} />
             <Route path="/status" element={<StatusPage />} />
             <Route path="/waitlist" element={<WaitlistPage />} />
             <Route path="/sale" element={<SalePage />} />
