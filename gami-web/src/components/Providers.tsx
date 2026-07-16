@@ -31,10 +31,23 @@ export function Providers({ children }: { children: ReactNode }) {
           accentColor: '#6E3CFB',
           walletChainType: 'ethereum-only',
           showWalletLoginFirst: false,
+          // External wallets + WalletConnect in login / link modals.
+          walletList: [
+            'detected_ethereum_wallets',
+            'metamask',
+            'coinbase_wallet',
+            'base_account',
+            'rainbow',
+            'wallet_connect',
+          ],
         },
+        // Enables WalletConnect QR for wallets that are not browser extensions.
+        ...(env.walletConnectProjectId()
+          ? { walletConnectCloudProjectId: env.walletConnectProjectId() }
+          : {}),
         embeddedWallets: {
           ethereum: {
-            // Every sale participant needs an allocation wallet, including email logins.
+            // Email (and other) logins get a Privy-generated allocation wallet.
             createOnLogin: 'all-users',
           },
         },
