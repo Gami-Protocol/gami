@@ -7,6 +7,13 @@ Marketing site and token sale portal for the $GAMI raise. Built with **Vite + Re
 | Route | Purpose |
 |-------|---------|
 | `/` | Landing page |
+| `/about` | About Gami Protocol |
+| `/agents` | AI Agents product page |
+| `/app` | App dashboard (wallet launch) |
+| `/developers/docs` | Developer documentation |
+| `/developers/sdk` | SDK reference |
+| `/developers/api` | API key access |
+| `/status` | Protocol system status |
 | `/waitlist` | ICO waitlist launchpad |
 | `/tokenomics` | Allocation chart + burn engine |
 | `/whitepaper` | Full tokenization doc |

@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { GamiBrandLogo } from '@/components/gami/GamiBrandLogo';
 import { GamiTokenLogo } from '@/components/gami/GamiTokenLogo';
 
+const linkClass = 'transition-colors hover:text-white';
+
 export function GamiFooter({ variant = 'default' }: { variant?: 'default' | 'ico' }) {
   const isIco = variant === 'ico';
 
@@ -69,37 +71,22 @@ export function GamiFooter({ variant = 'default' }: { variant?: 'default' | 'ico
               className={`space-y-4 text-sm ${isIco ? 'text-xs font-bold uppercase tracking-widest text-gray-500' : 'text-gray-500'}`}
             >
               <li>
-                <a
-                  href="https://www.gamiprotocol.io/app"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="transition-colors hover:text-white"
-                >
+                <Link to="/app" className={linkClass}>
                   App Dashboard
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="https://www.gamiprotocol.io/agents"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="transition-colors hover:text-white"
-                >
+                <Link to="/agents" className={linkClass}>
                   AI Agents
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="https://www.gamiprotocol.io/app/wallet"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="transition-colors hover:text-white"
-                >
+                <Link to="/wallet" className={linkClass}>
                   {isIco ? 'Wallet' : 'Wallet Extension'}
-                </a>
+                </Link>
               </li>
               <li>
-                <Link to="/whitepaper" className="transition-colors hover:text-white">
+                <Link to="/whitepaper" className={linkClass}>
                   Gami L2
                 </Link>
               </li>
@@ -116,51 +103,31 @@ export function GamiFooter({ variant = 'default' }: { variant?: 'default' | 'ico
               className={`space-y-4 text-sm ${isIco ? 'text-xs font-bold uppercase tracking-widest text-gray-500' : 'text-gray-500'}`}
             >
               <li>
-                <a
-                  href="https://www.gamiprotocol.io/developers/docs"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="transition-colors hover:text-white"
-                >
+                <Link to="/developers/docs" className={linkClass}>
                   Documentation
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="https://www.gamiprotocol.io/developers/sdk"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="transition-colors hover:text-white"
-                >
+                <Link to="/developers/sdk" className={linkClass}>
                   SDK Reference
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="https://www.gamiprotocol.io/developers/api"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="transition-colors hover:text-white"
-                >
+                <Link to="/developers/api" className={linkClass}>
                   API Keys
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="https://www.gamiprotocol.io/app"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="transition-colors hover:text-white"
-                >
+                <Link to="/status" className={linkClass}>
                   Status
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
 
           <div>
             <h4
-              className={`mb-6 font-display text-sm font-bold uppercase tracking-widest ${isIco ? 'text-gami-accent' : 'Company'}`}
+              className={`mb-6 font-display text-sm font-bold uppercase tracking-widest ${isIco ? 'text-gami-accent' : ''}`}
             >
               {isIco ? 'Ecosystem' : 'Company'}
             </h4>
@@ -170,27 +137,27 @@ export function GamiFooter({ variant = 'default' }: { variant?: 'default' | 'ico
               {isIco ? (
                 <>
                   <li>
-                    <Link to="/sale" className="transition-colors hover:text-white">
+                    <Link to="/sale" className={linkClass}>
                       Token Raise
                     </Link>
                   </li>
                   <li>
-                    <Link to="/tokenomics" className="transition-colors hover:text-white">
+                    <Link to="/tokenomics" className={linkClass}>
                       Tokenomics + TGE
                     </Link>
                   </li>
                   <li>
-                    <Link to="/claim" className="transition-colors hover:text-white">
+                    <Link to="/claim" className={linkClass}>
                       Claim
                     </Link>
                   </li>
                   <li>
-                    <Link to="/whitepaper" className="transition-colors hover:text-white">
+                    <Link to="/whitepaper" className={linkClass}>
                       Grants
                     </Link>
                   </li>
                   <li>
-                    <Link to="/legal/terms" className="transition-colors hover:text-white">
+                    <Link to="/legal/terms" className={linkClass}>
                       Terms
                     </Link>
                   </li>
@@ -198,35 +165,30 @@ export function GamiFooter({ variant = 'default' }: { variant?: 'default' | 'ico
               ) : (
                 <>
                   <li>
-                    <a
-                      href="https://www.gamiprotocol.io/"
-                      target="_blank"
-                      rel="noreferrer"
-                      className="transition-colors hover:text-white"
-                    >
+                    <Link to="/about" className={linkClass}>
                       About Us
-                    </a>
+                    </Link>
                   </li>
                   <li>
-                    <Link to="/tokenomics" className="transition-colors hover:text-white">
+                    <Link to="/tokenomics" className={linkClass}>
                       Tokenomics + TGE
                     </Link>
                   </li>
                   <li>
                     <a
                       href="mailto:admin@gamiprotocol.io?subject=Gami%20Protocol%20Careers"
-                      className="transition-colors hover:text-white"
+                      className={linkClass}
                     >
                       Careers
                     </a>
                   </li>
                   <li>
-                    <Link to="/legal/privacy" className="transition-colors hover:text-white">
+                    <Link to="/legal/privacy" className={linkClass}>
                       Privacy
                     </Link>
                   </li>
                   <li>
-                    <Link to="/legal/terms" className="transition-colors hover:text-white">
+                    <Link to="/legal/terms" className={linkClass}>
                       Terms
                     </Link>
                   </li>
