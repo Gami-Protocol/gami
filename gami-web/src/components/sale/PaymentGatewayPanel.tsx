@@ -1,9 +1,14 @@
+import { useState } from 'react';
+
 import { ConnectWallet } from '@/components/ConnectWallet';
 import { usePaymentGateway } from '@/hooks/usePaymentGateway';
+import { useUniswapSwap } from '@/hooks/useUniswapSwap';
+import { getExplorerTxUrl, getChainId } from '@/lib/contracts';
 import {
   fiatGatewayAvailable,
   paymentChainLabel,
   type PaymentMethod,
+  type SwapAsset,
 } from '@/lib/payment-gateway';
 
 type PaymentGatewayPanelProps = {
@@ -23,6 +28,12 @@ const METHODS: Array<[PaymentMethod, string]> = [
   ['fiat', 'Card / Fiat'],
 ];
 
+const SWAP_OPTIONS: Array<[SwapAsset, string]> = [
+  ['usdt', 'USDT → USDC'],
+  ['eth', 'ETH → USDC'],
+  ['other', 'Other token → USDC'],
+];
+
 export function PaymentGatewayPanel({
   paymentMethod,
   onPaymentMethodChange,
@@ -33,17 +44,19 @@ export function PaymentGatewayPanel({
   variant = 'light',
 }: PaymentGatewayPanelProps) {
   const gateway = usePaymentGateway({ address, amountUsd, onFunded });
+  const uniswap = useUniswapSwap({
+    address,
+    amountUsd,
+    onComplete: onFunded,
+  });
+  const [selectedSwap, setSelectedSwap] = useState<SwapAsset>('usdt');
   const light = variant === 'light';
 
   const panelClass = light
     ? 'mt-3 border-2 border-black bg-[#f4f1f8] p-4'
     : 'mt-3 border border-white/15 bg-white/5 p-4';
-  const tabActive = light
-    ? 'bg-[#ffeb55]'
-    : 'bg-primary text-white';
-  const tabIdle = light
-    ? 'bg-white hover:bg-[#f4f1f8]'
-    : 'bg-surface hover:bg-white/10';
+  const tabActive = light ? 'bg-[#ffeb55]' : 'bg-primary text-white';
+  const tabIdle = light ? 'bg-white hover:bg-[#f4f1f8]' : 'bg-surface hover:bg-white/10';
   const tabBase = light
     ? 'border-2 border-black px-2 py-3 font-mono text-[10px] font-bold uppercase'
     : 'border border-white/20 px-2 py-3 font-mono text-[10px] font-bold uppercase';
@@ -57,6 +70,9 @@ export function PaymentGatewayPanel({
   const labelClass = light
     ? 'font-mono text-[11px] font-bold uppercase'
     : 'font-mono text-[11px] font-bold uppercase text-muted';
+  const monoTiny = light ? 'text-[#77727e]' : 'text-muted';
+
+  const swapBusy = ['quoting', 'approving', 'swapping', 'confirming'].includes(uniswap.phase);
 
   return (
     <div>
@@ -83,44 +99,140 @@ export function PaymentGatewayPanel({
       {paymentMethod === 'usdt' && (
         <div className={panelClass}>
           <p className={textMuted}>
-            The sale contract settles in USDC. Swap USDT, ETH, or another crypto to USDC on Base, then
-            return here and select USDC to contribute.
+            The sale settles in USDC. Swap via the Uniswap Trading API (
+            <span className="font-mono">check_approval → quote → swap</span>
+            ), then select USDC to contribute.
           </p>
+
           {!isConnected ? (
             <div className="mt-3">
               <ConnectWallet light={light} className="w-full py-3 text-xs" />
             </div>
           ) : (
-            <div className="mt-3 grid gap-2">
+            <div className="mt-3 space-y-3">
+              <div className="grid grid-cols-3 gap-2">
+                {SWAP_OPTIONS.map(([asset, label]) => (
+                  <button
+                    key={asset}
+                    type="button"
+                    onClick={() => {
+                      setSelectedSwap(asset);
+                      uniswap.clear();
+                    }}
+                    className={`${tabBase} ${selectedSwap === asset ? tabActive : tabIdle}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              {selectedSwap === 'other' && (
+                <input
+                  type="text"
+                  value={uniswap.customToken}
+                  onChange={(event) => uniswap.setCustomToken(event.target.value)}
+                  placeholder="Token address 0x…"
+                  className={
+                    light
+                      ? 'w-full border-2 border-black bg-white px-3 py-2 font-mono text-xs outline-none'
+                      : 'w-full border border-white/20 bg-black/40 px-3 py-2 font-mono text-xs outline-none'
+                  }
+                />
+              )}
+
+              {uniswap.apiConfigured ? (
+                <>
+                  <button
+                    type="button"
+                    disabled={swapBusy}
+                    onClick={() => void uniswap.fetchQuote(selectedSwap)}
+                    className={btnPrimary}
+                  >
+                    {uniswap.phase === 'quoting'
+                      ? 'Fetching Uniswap quote…'
+                      : `Get Uniswap quote for ${amountUsd || '—'} USDC`}
+                  </button>
+
+                  {uniswap.preview && (
+                    <div
+                      className={
+                        light
+                          ? 'border-2 border-black bg-white p-3 font-mono text-[10px]'
+                          : 'border border-white/20 bg-black/30 p-3 font-mono text-[10px]'
+                      }
+                    >
+                      <p className="uppercase opacity-60">Quote · {uniswap.preview.routing}</p>
+                      <p className="mt-2 font-bold">
+                        Pay ~{Number(uniswap.preview.amountInFormatted).toLocaleString(undefined, {
+                          maximumFractionDigits: 6,
+                        })}{' '}
+                        → receive {Number(uniswap.preview.amountOutFormatted).toLocaleString()} USDC
+                      </p>
+                      {uniswap.preview.gasFeeUsd && (
+                        <p className={`mt-1 ${monoTiny}`}>Est. gas ${uniswap.preview.gasFeeUsd}</p>
+                      )}
+                      {uniswap.pendingApproval && (
+                        <p className={`mt-1 ${monoTiny}`}>
+                          Approval required before swap (Permit2 proxy flow).
+                        </p>
+                      )}
+                      <button
+                        type="button"
+                        disabled={swapBusy || uniswap.phase === 'done'}
+                        onClick={() => void uniswap.executeSwap()}
+                        className={`mt-3 w-full ${btnPrimary}`}
+                      >
+                        {uniswap.phase === 'approving'
+                          ? 'Confirm approval in wallet…'
+                          : uniswap.phase === 'swapping'
+                            ? 'Building swap…'
+                            : uniswap.phase === 'confirming'
+                              ? 'Confirming swap…'
+                              : uniswap.phase === 'done'
+                                ? 'Swap complete'
+                                : 'Approve & swap via Uniswap'}
+                      </button>
+                    </div>
+                  )}
+
+                  {uniswap.phase === 'done' && uniswap.txHash && (
+                    <a
+                      href={getExplorerTxUrl(getChainId(), uniswap.txHash)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="block font-mono text-[10px] font-bold uppercase text-[#7047eb] underline"
+                    >
+                      View swap transaction ↗
+                    </a>
+                  )}
+                </>
+              ) : (
+                <p className="font-mono text-[10px] font-bold uppercase text-[#a13b3b]">
+                  Set `VITE_UNISWAP_API_KEY` to enable in-app Uniswap Trading API swaps.
+                </p>
+              )}
+
               <button
                 type="button"
                 disabled={Boolean(gateway.busy)}
-                onClick={() => gateway.swapToUsdc('usdt')}
-                className={btnPrimary}
-              >
-                {gateway.busy === 'usdt' ? 'Opening swap…' : 'Swap USDT → USDC'}
-              </button>
-              <button
-                type="button"
-                disabled={Boolean(gateway.busy)}
-                onClick={() => gateway.swapToUsdc('eth')}
+                onClick={() => uniswap.openDeepLinkFallback(selectedSwap)}
                 className={btnSecondary}
               >
-                {gateway.busy === 'eth' ? 'Opening swap…' : 'Swap ETH → USDC'}
-              </button>
-              <button
-                type="button"
-                disabled={Boolean(gateway.busy)}
-                onClick={() => gateway.swapToUsdc('other')}
-                className={btnSecondary}
-              >
-                {gateway.busy === 'other' ? 'Opening swap…' : 'Swap other crypto → USDC'}
+                Open Uniswap app fallback ↗
               </button>
             </div>
           )}
-          <p className={`mt-3 font-mono text-[10px] uppercase ${light ? 'text-[#77727e]' : 'text-muted'}`}>
-            Opens Uniswap / Aerodrome on Base. After the swap, select USDC to contribute.
+
+          <p className={`mt-3 font-mono text-[10px] uppercase ${monoTiny}`}>
+            API flow: check_approval → quote → swap on {paymentChainLabel()}. After USDC arrives,
+            select USDC to contribute.
           </p>
+
+          {(uniswap.error || gateway.error) && (
+            <p className="mt-3 border-l-4 border-[#a13b3b] bg-[#fff4f4] p-3 font-mono text-[10px] text-[#a13b3b]">
+              {uniswap.error ?? gateway.error}
+            </p>
+          )}
         </div>
       )}
 
@@ -173,13 +285,13 @@ export function PaymentGatewayPanel({
               VITE_RAMP_HOST_API_KEY (Ramp).
             </p>
           )}
-          <p className={`mt-3 font-mono text-[10px] uppercase ${light ? 'text-[#77727e]' : 'text-muted'}`}>
+          <p className={`mt-3 font-mono text-[10px] uppercase ${monoTiny}`}>
             Never send funds to a sale address. Only buy USDC into your linked wallet.
           </p>
         </div>
       )}
 
-      {gateway.error && (
+      {paymentMethod === 'fiat' && gateway.error && (
         <p className="mt-3 border-l-4 border-[#a13b3b] bg-[#fff4f4] p-3 font-mono text-[10px] text-[#a13b3b]">
           {gateway.error}
         </p>

@@ -64,8 +64,10 @@ The sale contract accepts **USDC only**. Card/fiat and other cryptos fund the li
 |-------|----------|-------|
 | Card / Fiat | Coinbase via Privy `fundWallet` | Enable Coinbase/Moonpay funding in the Privy dashboard |
 | Card / Fiat | Ramp Instant | Set `VITE_RAMP_HOST_API_KEY` (`demo` or production) |
-| USDT / ETH / other | Uniswap + Aerodrome deep-links | Swap to USDC on Base, then contribute |
+| USDT / ETH / other | Uniswap Trading API | `check_approval` → `quote` → `swap` (classic V2/V3/V4); deep-link fallback |
 | Optional overrides | `VITE_FIAT_ONRAMP_URL`, `VITE_USDT_SWAP_URL` | Support `{wallet}`, `{amount}`, `{usdc}` |
+
+Set `VITE_UNISWAP_API_KEY` from the [Uniswap Developer Portal](https://developers.uniswap.org/) to enable in-app swaps.
 
 Deploy contracts first (`cd gami-contracts && npm run deploy:sepolia`), then copy addresses from `deployments/84532.json`.
 
