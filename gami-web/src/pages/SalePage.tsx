@@ -12,6 +12,7 @@ import { formatUnits } from 'viem';
 import { ConnectWallet } from '@/components/ConnectWallet';
 import { GamiFooter } from '@/components/gami/GamiFooter';
 import { GamiTokenLogo } from '@/components/gami/GamiTokenLogo';
+import { PaymentGatewayPanel } from '@/components/sale/PaymentGatewayPanel';
 import { useGeoBlock } from '@/hooks/useGeoBlock';
 import { useSaleAccount } from '@/hooks/useSaleAccount';
 import {
@@ -32,13 +33,12 @@ import {
   type SaleStats,
 } from '@/lib/sale';
 import { env } from '@/lib/env';
+import type { PaymentMethod } from '@/lib/payment-gateway';
 
 const CONFIGURED_CAP = 2_160_000;
 const CONFIGURED_PRICE = 0.012;
 const MIN_CONTRIBUTION = 500;
 const USDC_DECIMALS = 6;
-
-type PaymentMethod = 'usdc' | 'usdt' | 'fiat';
 
 const BENEFITS = [
   '1.5x XP Multiplier at TGE',
@@ -71,8 +71,6 @@ export function SalePage() {
   const saleLive = env.saleLive() && saleConfigured;
   const requiredChainId = getChainId();
   const wrongNetwork = isConnected && connectedChainId !== requiredChainId;
-  const fiatOnrampUrl = env.fiatOnrampUrl();
-  const usdtSwapUrl = env.usdtSwapUrl();
   const privyConfigured = Boolean(env.privyAppId());
 
   const { data: onChainRaised } = useReadContract({
@@ -559,50 +557,20 @@ export function SalePage() {
               )}
 
               <div className="mb-6">
-                <p className="font-mono text-[11px] font-bold uppercase">Payment route</p>
-                <div className="mt-2 grid grid-cols-3 gap-2">
-                  {(
-                    [
-                      ['usdc', 'USDC'],
-                      ['usdt', 'USDT'],
-                      ['fiat', 'Card / Fiat'],
-                    ] as const
-                  ).map(([method, label]) => (
-                    <button
-                      key={method}
-                      type="button"
-                      onClick={() => setPaymentMethod(method)}
-                      className={`border-2 border-black px-2 py-3 font-mono text-[10px] font-bold uppercase ${
-                        paymentMethod === method ? 'bg-[#ffeb55]' : 'bg-white hover:bg-[#f4f1f8]'
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-                {paymentMethod !== 'usdc' && (
-                  <div className="mt-3 border-2 border-black bg-[#f4f1f8] p-4">
-                    <p className="text-xs leading-relaxed">
-                      {paymentMethod === 'usdt'
-                        ? 'The sale contract settles in USDC. Swap USDT to USDC on Base, then return here to contribute.'
-                        : 'Buy USDC on Base through the configured regulated on-ramp, then return here to contribute.'}
-                    </p>
-                    {(paymentMethod === 'usdt' ? usdtSwapUrl : fiatOnrampUrl) ? (
-                      <a
-                        href={(paymentMethod === 'usdt' ? usdtSwapUrl : fiatOnrampUrl) as string}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="mt-3 block w-full border-2 border-black bg-[#7047eb] px-4 py-3 text-center font-mono text-xs font-bold uppercase text-white"
-                      >
-                        {paymentMethod === 'usdt' ? 'Swap USDT to USDC ↗' : 'Buy USDC with fiat ↗'}
-                      </a>
-                    ) : (
-                      <p className="mt-3 font-mono text-[10px] font-bold uppercase text-[#a13b3b]">
-                        This payment route is not enabled yet. Do not send funds directly.
-                      </p>
-                    )}
-                  </div>
-                )}
+                <PaymentGatewayPanel
+                  paymentMethod={paymentMethod}
+                  onPaymentMethodChange={setPaymentMethod}
+                  address={address}
+                  isConnected={isConnected}
+                  amountUsd={amount}
+                  onFunded={() => {
+                    void refetchUsdcBalance();
+                    setMessage(
+                      'Complete funding in the provider window. When USDC arrives, select USDC and confirm.',
+                    );
+                  }}
+                  variant="light"
+                />
               </div>
 
               <label

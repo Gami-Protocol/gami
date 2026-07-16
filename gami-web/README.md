@@ -46,11 +46,24 @@ VITE_TOKEN_SALE_ADDRESS=
 VITE_GAMI_TOKEN_ADDRESS=
 VITE_USDC_ADDRESS=
 VITE_VESTING_ADDRESS=
+VITE_RAMP_HOST_API_KEY=
+VITE_RAMP_ENVIRONMENT=demo
 VITE_BLOCKED_COUNTRIES=US,CU,IR,KP,SY
 ```
 
 Set `VITE_PRIVY_APP_ID` to enable Privy email/wallet sign-in on the sale flow. Users who sign in without an
 existing wallet receive a Privy embedded Ethereum wallet for their token allocation.
+
+### Payment gateway
+
+The sale contract accepts **USDC only**. Card/fiat and other cryptos fund the linked wallet first:
+
+| Route | Provider | Notes |
+|-------|----------|-------|
+| Card / Fiat | Coinbase via Privy `fundWallet` | Enable Coinbase/Moonpay funding in the Privy dashboard |
+| Card / Fiat | Ramp Instant | Set `VITE_RAMP_HOST_API_KEY` (`demo` or production) |
+| USDT / ETH / other | Uniswap + Aerodrome deep-links | Swap to USDC on Base, then contribute |
+| Optional overrides | `VITE_FIAT_ONRAMP_URL`, `VITE_USDT_SWAP_URL` | Support `{wallet}`, `{amount}`, `{usdc}` |
 
 Deploy contracts first (`cd gami-contracts && npm run deploy:sepolia`), then copy addresses from `deployments/84532.json`.
 

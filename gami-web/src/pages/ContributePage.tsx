@@ -10,6 +10,7 @@ import { parseUnits } from 'viem';
 import { ConnectWallet } from '@/components/ConnectWallet';
 import { GamiFooter } from '@/components/gami/GamiFooter';
 import { GamiTokenLogo } from '@/components/gami/GamiTokenLogo';
+import { PaymentGatewayPanel } from '@/components/sale/PaymentGatewayPanel';
 import { GeoBlockBanner } from '@/hooks/useGeoBlock';
 import { useSaleAccount } from '@/hooks/useSaleAccount';
 import {
@@ -26,6 +27,7 @@ import {
   previewGamiAllocation,
 } from '@/lib/sale';
 import { env } from '@/lib/env';
+import type { PaymentMethod } from '@/lib/payment-gateway';
 
 type Step = 'waitlist' | 'kyc' | 'eligibility' | 'contribute' | 'confirm';
 
@@ -40,6 +42,7 @@ export function ContributePage() {
   const [step, setStep] = useState<Step>('waitlist');
   const [email, setEmail] = useState('');
   const [amount, setAmount] = useState('100');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('usdc');
   const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
   const [message, setMessage] = useState('');
   const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
@@ -320,6 +323,19 @@ export function ContributePage() {
               Set VITE_TOKEN_SALE_ADDRESS and VITE_USDC_ADDRESS to enable on-chain contributions.
             </p>
           )}
+          <PaymentGatewayPanel
+            paymentMethod={paymentMethod}
+            onPaymentMethodChange={setPaymentMethod}
+            address={address}
+            isConnected={isConnected}
+            amountUsd={amount}
+            onFunded={() =>
+              setMessage(
+                'Complete funding in the provider window. When USDC arrives, select USDC and contribute.',
+              )
+            }
+            variant="dark"
+          />
           <div>
             <label className="font-mono text-xs text-muted">USDC AMOUNT</label>
             <input
@@ -337,10 +353,20 @@ export function ContributePage() {
           <button
             type="button"
             onClick={handleContribute}
-            disabled={status === 'loading' || !saleLive || !saleConfigured || usdcAmount === 0n}
+            disabled={
+              status === 'loading' ||
+              !saleLive ||
+              !saleConfigured ||
+              usdcAmount === 0n ||
+              paymentMethod !== 'usdc'
+            }
             className="sticker-shadow w-full bg-primary py-4 font-display font-bold uppercase disabled:opacity-50"
           >
-            {saleLive ? '4. Approve & Contribute USDC' : '4. Waiting for raise launch'}
+            {!saleLive
+              ? '4. Waiting for raise launch'
+              : paymentMethod !== 'usdc'
+                ? '4. Fund wallet above, then select USDC'
+                : '4. Approve & Contribute USDC'}
           </button>
         </div>
       )}
