@@ -19,6 +19,13 @@ export const env = {
   usdcAddress: () => read('VITE_USDC_ADDRESS'),
   fiatOnrampUrl: () => read('VITE_FIAT_ONRAMP_URL'),
   usdtSwapUrl: () => read('VITE_USDT_SWAP_URL'),
+  /** Ramp Network Instant host API key for card/fiat → USDC on Base. */
+  rampHostApiKey: () => read('VITE_RAMP_HOST_API_KEY'),
+  /** `production` (default) or `demo` for Ramp sandbox widget. */
+  rampEnvironment: () => {
+    const value = read('VITE_RAMP_ENVIRONMENT')?.toLowerCase();
+    return value === 'demo' ? 'demo' : 'production';
+  },
   blockedCountries: () => read('VITE_BLOCKED_COUNTRIES'),
   supabaseFunctionsUrl: () => read('VITE_SUPABASE_FUNCTIONS_URL'),
   personaTemplateId: () => read('VITE_PERSONA_TEMPLATE_ID'),

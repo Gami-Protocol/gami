@@ -38,6 +38,12 @@ export function Providers({ children }: { children: ReactNode }) {
             createOnLogin: 'all-users',
           },
         },
+        // Card / Coinbase funding for sale participants (USDC on Base).
+        fundingMethodConfig: {
+          moonpay: {
+            useSandbox: env.chainId() !== 8453,
+          },
+        },
         supportedChains: [...supportedChains],
         defaultChain,
       }}
