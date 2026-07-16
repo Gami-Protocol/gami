@@ -94,7 +94,7 @@ export const UTILITIES = [
   {
     icon: 'premium',
     title: 'Tier Access',
-    description: 'Unlock premium SDK tiers, higher API limits, exclusive quests, and partner-gated features.',
+    description: 'Unlock premium MCP client tiers, higher tool limits, exclusive quests, and partner-gated features.',
   },
   {
     icon: 'fee',

@@ -32,8 +32,8 @@ const L1_STEPS = [
   },
   {
     num: '2',
-    title: 'Event Bus & SDK',
-    detail: 'Partners emit verified actions — quests, purchases, workouts, referrals — through the Gami SDK without building custom reward infra.',
+    title: 'MCP Server & Client',
+    detail: 'Partners emit verified actions — quests, purchases, workouts, referrals — through the Gami MCP client without building custom reward infra.',
   },
   {
     num: '3',
@@ -195,7 +195,7 @@ export function HomePage() {
             lets any app plug into quests, XP, and on-chain rewards without rebuilding infrastructure from scratch.
           </p>
           <p className="mb-8 text-base leading-relaxed text-gray-500">
-            Partners connect once through the Gami SDK. User actions flow through a verified event bus, AI agents
+            Partners connect once through the Gami MCP client. User actions flow through a verified event bus, AI agents
             orchestrate quest logic and reward multipliers, and proofs anchor to Base for auditable settlement.
           </p>
           <div className="space-y-6">
@@ -264,7 +264,7 @@ export function HomePage() {
                 </div>
               </div>
               <div className="rounded border border-gami-purple/30 bg-gami-purple/10 p-4 font-mono text-xs text-gami-accent">
-                SDK → Event Bus → AI Orchestration → L2 Ledger Anchor
+                MCP Client → MCP Server → AI Orchestration → L2 Ledger Anchor
               </div>
             </div>
           </div>

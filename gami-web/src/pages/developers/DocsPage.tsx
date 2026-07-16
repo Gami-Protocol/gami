@@ -7,13 +7,13 @@ export function DocsPage() {
     <SiteContentPage
       eyebrow="Developers"
       title="Documentation"
-      description="Integrate Gami rewards, quests, and settlement into your product with the protocol SDK and event bus."
+      description="Integrate Gami rewards, quests, and settlement into your product with the MCP server, MCP client, and event bus."
     >
       <section className="space-y-4">
         <h2 className="font-display text-2xl font-bold text-white">Quick start</h2>
         <ol className="list-decimal space-y-3 pl-5">
-          <li>Create an API key for your partner environment.</li>
-          <li>Emit verified user actions through the Gami event bus.</li>
+          <li>Obtain a partner key for the Gami MCP server.</li>
+          <li>Connect your MCP client and call quest tools over Streamable HTTP.</li>
           <li>Let AI agents score quests and settle proofs on Base L2.</li>
         </ol>
       </section>
@@ -26,8 +26,8 @@ export function DocsPage() {
             XP profile across partner apps.
           </li>
           <li>
-            <span className="font-display font-bold text-white">Event Bus &amp; SDK</span> — partners emit
-            quests, purchases, workouts, and referrals without custom infra.
+            <span className="font-display font-bold text-white">MCP Server &amp; Client</span> — partners connect
+            agentic tooling to emit quests, purchases, workouts, and referrals without custom infra.
           </li>
           <li>
             <span className="font-display font-bold text-white">On-Chain Settlement</span> — Merkle-anchored
@@ -38,16 +38,16 @@ export function DocsPage() {
 
       <div className="flex flex-wrap gap-4 border-t border-white/10 pt-8">
         <Link
-          to="/developers/sdk"
+          to="/developers/mcp-client"
           className="border-2 border-white px-6 py-3 font-display text-sm font-bold uppercase tracking-widest transition-all hover:bg-white hover:text-black"
         >
-          SDK Reference
+          MCP Client
         </Link>
         <Link
-          to="/developers/api"
+          to="/developers/mcp-server"
           className="border-2 border-white px-6 py-3 font-display text-sm font-bold uppercase tracking-widest transition-all hover:bg-white hover:text-black"
         >
-          API Keys
+          MCP Server
         </Link>
         <Link
           to="/whitepaper"

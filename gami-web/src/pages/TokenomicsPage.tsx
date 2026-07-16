@@ -16,7 +16,7 @@ const UTILITIES = [
   ],
   [
     'Partner Access',
-    'Partners can stake or subscribe for higher campaign limits, analytics, SDK access, and lower fees.',
+    'Partners can stake or subscribe for higher campaign limits, analytics, MCP access, and lower fees.',
   ],
 ] as const;
 
@@ -29,7 +29,7 @@ const ILLUSTRATIVE_ALLOCATION = [
 
 const TGE_CHECKLIST = [
   'MVP wallet live with XP, quests, and claims.',
-  'SDK integrated with initial design partners.',
+  'MCP client integrated with initial design partners.',
   'Token legal memo completed.',
   'Treasury contracts audited.',
   'Vesting contracts finalized.',
@@ -219,7 +219,7 @@ export function TokenomicsPage() {
           <h2 className="font-display text-2xl font-bold">Launch strategy</h2>
           <p className="mt-4 leading-relaxed text-muted">
             Do not lead with speculative token claims. Lead with protocol utility, partner adoption,
-            SDK usage, points activity, wallet engagement, and transparent reward flows. Token
+            MCP usage, points activity, wallet engagement, and transparent reward flows. Token
             launch should amplify a working ecosystem, not substitute for one.
           </p>
         </article>

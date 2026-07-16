@@ -21,7 +21,7 @@ export function AgentsPage() {
       <section className="space-y-4">
         <h2 className="font-display text-2xl font-bold text-white">How it fits</h2>
         <p className="leading-relaxed">
-          Partners emit actions through the SDK. Agents score and route those events through the rewards
+          Partners emit actions through the MCP client. Agents score and route those events through the rewards
           engine, then proofs anchor on Base for claimable, tamper-resistant settlement.
         </p>
       </section>

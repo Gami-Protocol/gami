@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { SiteContentPage } from '@/components/gami/SiteContentPage';
 
 const SYSTEMS = [
-  { name: 'Protocol API', status: 'Operational' },
+  { name: 'MCP Server', status: 'Operational' },
+  { name: 'MCP Client Hub', status: 'Operational' },
   { name: 'Event Bus', status: 'Operational' },
   { name: 'Base L2 Settlement', status: 'Operational' },
   { name: 'Gami Wallet', status: 'Operational' },
