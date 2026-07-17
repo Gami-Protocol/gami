@@ -12,6 +12,7 @@ import { GProgressBar, GScreen, NovaMascot } from '@/components/gami';
 import { currentUserId, wireProfileSync } from '@/lib/auth';
 import { fetchProfile, hasBackend } from '@/lib/supabase';
 import { toAvatarColorId, toNovaTone } from '@/lib/config';
+import { applyReferralCode, subscribeReferralLinks } from '@/lib/referral';
 import { useOnboardingStore } from '@/lib/store';
 
 export default function Splash() {
@@ -27,6 +28,9 @@ export default function Splash() {
 
   useEffect(() => {
     wireProfileSync();
+    const unsubReferral = subscribeReferralLinks((code) => {
+      void applyReferralCode(code, useOnboardingStore.getState().walletAddress);
+    });
     cardScale.value = withSpring(1, { damping: 12, stiffness: 150 });
     const start = Date.now();
     const tick = setInterval(() => {
@@ -74,6 +78,7 @@ export default function Splash() {
       cancelled = true;
       clearInterval(tick);
       clearTimeout(timer);
+      unsubReferral();
     };
   }, [router, cardScale, onboarded]);
 

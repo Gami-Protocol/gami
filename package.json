@@ -1,6 +1,7 @@
 {
-  "name": "bilt-starter",
+  "name": "gami",
   "version": "1.0.0",
+  "description": "Gami Protocol monorepo for the mobile wallet app, ICO portal, smart contracts, and agentic quest interface.",
   "main": "expo-router/entry",
   "scripts": {
     "android": "expo run:android",
@@ -9,7 +10,8 @@
     "lint": "oxlint --type-aware --type-check",
     "lint:css": "node scripts/lint-css.mjs",
     "format": "oxfmt --write .",
-    "format:check": "oxfmt --check ."
+    "format:check": "oxfmt --check .",
+    "export:waitlist": "node scripts/export-waitlist-wallets.mjs"
   },
   "dependencies": {
     "@ethersproject/shims": "^5.8.0",

@@ -30,6 +30,16 @@ export interface OnboardingState {
   homeRevealSeen: boolean;
   /** Has the First Steps quest been claimed. */
   firstQuestClaimed: boolean;
+  /** Referral code used during onboarding (from deep link). */
+  referralCode: string | null;
+  /** Parent referral code that referred this user. */
+  referralParent: string | null;
+  /** Whether referral XP bonus has been applied. */
+  referralApplied: boolean;
+  /** Linked ICO sale participant id. */
+  icoParticipantId: string | null;
+  /** Current ICO sale phase awareness. */
+  salePhase: 'waitlist' | 'seed' | 'private' | 'public' | 'closed' | null;
 
   // actions
   setStep: (step: number) => void;
@@ -65,6 +75,11 @@ export interface OnboardingState {
   setOnboarded: (v: boolean) => void;
   markHomeRevealSeen: () => void;
   claimFirstQuest: () => void;
+  setReferralCode: (code: string) => void;
+  setReferralParent: (code: string) => void;
+  applyReferralBonus: (xp: number) => void;
+  setIcoParticipantId: (id: string | null) => void;
+  setSalePhase: (phase: OnboardingState['salePhase']) => void;
   resetSession: () => void;
 }
 
@@ -88,6 +103,11 @@ const initial = {
   onboarded: false,
   homeRevealSeen: false,
   firstQuestClaimed: false,
+  referralCode: null as string | null,
+  referralParent: null as string | null,
+  referralApplied: false,
+  icoParticipantId: null as string | null,
+  salePhase: null as OnboardingState['salePhase'],
 };
 
 export const useOnboardingStore = create<OnboardingState>()(
@@ -132,6 +152,16 @@ export const useOnboardingStore = create<OnboardingState>()(
       setOnboarded: (onboarded) => set({ onboarded }),
       markHomeRevealSeen: () => set({ homeRevealSeen: true }),
       claimFirstQuest: () => set({ firstQuestClaimed: true }),
+      setReferralCode: (referralCode) => set({ referralCode }),
+      setReferralParent: (referralParent) => set({ referralParent }),
+      applyReferralBonus: (xp) =>
+        set((s) => ({
+          referralApplied: true,
+          referralParent: s.referralParent ?? s.referralCode,
+          xp: s.xp + xp,
+        })),
+      setIcoParticipantId: (icoParticipantId) => set({ icoParticipantId }),
+      setSalePhase: (salePhase) => set({ salePhase }),
       resetSession: () =>
         // Clears session/profile but NEVER the on-device wallet key (walletAddress kept).
         set((s) => ({

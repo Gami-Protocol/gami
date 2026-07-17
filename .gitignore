@@ -3,6 +3,10 @@
 # dependencies
 node_modules/
 .pnpm-store/
+gami-web/.next/
+gami-contracts/cache/
+gami-contracts/artifacts/
+gami-contracts/typechain-types/
 
 # Expo
 .expo/
@@ -30,6 +34,12 @@ yarn-error.*
 *.pem
 
 # local env files
+.env
+.env.*
+!.env.example
+!.env*.example
+# Public Vite client defaults for gami-web (no secrets).
+!gami-web/.env
 .env*.local
 
 # typescript

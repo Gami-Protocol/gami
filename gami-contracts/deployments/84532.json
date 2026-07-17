@@ -1,0 +1,20 @@
+{
+  "network": "baseSepolia",
+  "chainId": 84532,
+  "deployer": "DEPLOY_WITH_npm_run_deploy:sepolia",
+  "contracts": {
+    "GAMI": "",
+    "VestingVault": "",
+    "TokenSale": "",
+    "FeeRouter": "",
+    "USDC": ""
+  },
+  "saleParams": {
+    "pricePerToken": "12000",
+    "hardCapUsdc": "2160000000000",
+    "perWalletCapUsdc": "2500000000",
+    "phase": "PUBLIC"
+  },
+  "deployedAt": null,
+  "note": "Run: cd gami-contracts && DEPLOYER_PRIVATE_KEY=0x... npm run deploy:sepolia"
+}

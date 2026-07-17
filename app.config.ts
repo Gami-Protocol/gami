@@ -29,6 +29,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       icon: './assets/icon.png',
       supportsTablet: true,
       bundleIdentifier: process.env.BILT_IOS_BUNDLE_ID ?? 'com.yourcompany.yourapp',
+      associatedDomains: process.env.EXPO_PUBLIC_APP_DOMAIN
+        ? [`applinks:${process.env.EXPO_PUBLIC_APP_DOMAIN}`]
+        : [],
     },
     android: {
       adaptiveIcon: {
@@ -36,8 +39,30 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         backgroundColor: '#6E3CFB',
       },
       package: process.env.BILT_ANDROID_PACKAGE ?? 'com.yourcompany.yourapp',
+      intentFilters: process.env.EXPO_PUBLIC_APP_DOMAIN
+        ? [
+            {
+              action: 'VIEW',
+              autoVerify: true,
+              data: [
+                {
+                  scheme: 'https',
+                  host: process.env.EXPO_PUBLIC_APP_DOMAIN,
+                  pathPrefix: '/wallet',
+                },
+              ],
+              category: ['BROWSABLE', 'DEFAULT'],
+            },
+          ]
+        : undefined,
+    },
+    updates: {
+      url: 'https://u.expo.dev/a34177f8-42ca-48d4-8c87-39f82476418e',
     },
     extra: {
+      eas: {
+        projectId: 'a34177f8-42ca-48d4-8c87-39f82476418e',
+      },
       appStoreAppId: process.env.BILT_APP_STORE_APP_ID,
       // Embed the Supabase config into the native build so it is available even
       // if EXPO_PUBLIC_* inlining is missed. Read at runtime via expo-constants.
@@ -47,6 +72,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       // fallback when EXPO_PUBLIC_* inlining is missed in a native build.
       privyAppId: process.env.EXPO_PUBLIC_PRIVY_APP_ID,
       privyClientId: process.env.EXPO_PUBLIC_PRIVY_CLIENT_ID,
+      icoWebUrl: process.env.EXPO_PUBLIC_ICO_WEB_URL,
+      gamiTokenAddress: process.env.EXPO_PUBLIC_GAMI_TOKEN_ADDRESS,
+      vestingAddress: process.env.EXPO_PUBLIC_VESTING_ADDRESS,
     },
     plugins: [
       'expo-router',

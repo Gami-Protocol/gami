@@ -226,6 +226,32 @@ export const QUESTS: Quest[] = [
     duration: '8 MIN',
     tag: 'MULTI-CHAIN',
   },
+  {
+    id: 'join-presale',
+    title: 'Join the Presale',
+    sub: 'Register on gami.xyz/sale',
+    reward: 500,
+    duration: '5 MIN',
+    tag: 'ICO',
+    novaPick: true,
+  },
+  {
+    id: 'verify-kyc',
+    title: 'Verify KYC',
+    sub: 'Complete identity verification for the sale',
+    reward: 200,
+    duration: '10 MIN',
+    tag: 'ICO',
+  },
+  {
+    id: 'claim-tge',
+    title: 'Claim at TGE',
+    sub: 'Claim your vested $GAMI tokens',
+    reward: 1000,
+    duration: '2 MIN',
+    tag: 'ICO',
+    novaPick: true,
+  },
 ];
 
 export interface Badge {
@@ -243,6 +269,7 @@ export const BADGES: Badge[] = [
   { id: 'first-swap', label: 'First Swap', icon: 'repeat', color: 'cyan', unlockXp: 500 },
   { id: 'streak-7', label: '7-Day', icon: 'flame', color: 'magenta', unlockXp: 750 },
   { id: 'holder', label: 'Holder', icon: 'gem', color: 'purple', unlockXp: 1000 },
+  { id: 'verified', label: 'Verified', icon: 'shield-check', color: 'cyan', unlockXp: 1200 },
   { id: 'minter', label: 'Minter', icon: 'image', color: 'green', unlockXp: 1500 },
   { id: 'referral', label: 'Recruiter', icon: 'user-plus', color: 'magenta', unlockXp: 2000 },
   { id: 'bridger', label: 'Bridger', icon: 'milestone', color: 'cyan', unlockXp: 2500 },

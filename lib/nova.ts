@@ -1,5 +1,9 @@
 import { type NovaTone } from '@/lib/config';
-import { currentStats } from '@/lib/gami-sdk';
+import { getActiveChain } from '@/lib/chain';
+import { currentStats, fetchStatsForAddress } from '@/lib/gami-sdk';
+import { isNovaAgentId, type NovaAgentId } from '@/lib/nova-agents';
+import { isNovaProposal, type NovaProposal } from '@/lib/nova-proposals';
+import { type NovaToolTrace } from '@/lib/nova-tools';
 import { useOnboardingStore } from '@/lib/store';
 import { FUNCTIONS_URL, SUPABASE_ANON_KEY } from '@/lib/supabase';
 import { INTERESTS } from '@/lib/config';
@@ -8,6 +12,16 @@ export interface ChatMessage {
   id: string;
   role: 'nova' | 'user';
   text: string;
+  agentId?: NovaAgentId;
+  trace?: NovaToolTrace[];
+  proposal?: NovaProposal;
+}
+
+export interface NovaReplyResult {
+  reply: string;
+  activeAgent: NovaAgentId;
+  trace: NovaToolTrace[];
+  proposal?: NovaProposal;
 }
 
 const TONE_OPENER: Record<NovaTone, string> = {
@@ -77,23 +91,37 @@ interface LiveTurn {
   content: string;
 }
 
-/** Build the wallet context payload sent to the Edge Function. */
-function buildContext() {
+/** Build public wallet context. Signing credentials never leave Privy. */
+async function buildContext() {
   const state = useOnboardingStore.getState();
-  const stats = currentStats();
+  const walletAddress = state.walletAddress ?? undefined;
+  const stats = await fetchStatsForAddress(walletAddress ?? null);
   const interestLabels = state.interests
     .map((id) => INTERESTS.find((i) => i.id === id)?.label ?? id)
     .slice(0, 12);
   return {
+    walletAddress,
+    chain: getActiveChain(),
     handle: state.handle || undefined,
     level: stats.level,
     totalXP: stats.totalXP,
     xpToNextLevel: stats.xpToNextLevel,
     gamiBalance: stats.gamiBalance,
+    claimableGami: stats.claimableGami,
     points: stats.points,
     rank: stats.rank,
     interests: interestLabels,
   };
+}
+
+function fallbackAgent(input: string): NovaAgentId {
+  if (/(quest|xp|reward|earn)/i.test(input)) return 'quests';
+  if (/(token|gami|sale|tge|airdrop|governance|allocation)/i.test(input)) return 'tokenomics';
+  return 'wallet';
+}
+
+function fallbackResult(input: string): NovaReplyResult {
+  return { reply: novaReply(input), activeAgent: fallbackAgent(input), trace: [] };
 }
 
 /**
@@ -101,10 +129,13 @@ function buildContext() {
  * Falls back to the scripted {@link novaReply} on any error so the chat never
  * dead-ends. `history` is the prior conversation (excluding the new input).
  */
-export async function novaReplyLive(input: string, history: ChatMessage[]): Promise<string> {
+export async function novaReplyLive(
+  input: string,
+  history: ChatMessage[],
+): Promise<NovaReplyResult> {
   const tone = useOnboardingStore.getState().novaTone;
 
-  if (!FUNCTIONS_URL) return novaReply(input);
+  if (!FUNCTIONS_URL) return fallbackResult(input);
 
   const turns: LiveTurn[] = history
     .filter((m) => m.text.trim().length > 0)
@@ -119,19 +150,33 @@ export async function novaReplyLive(input: string, history: ChatMessage[]): Prom
         Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
         apikey: SUPABASE_ANON_KEY,
       },
-      body: JSON.stringify({ messages: turns, tone, context: buildContext() }),
+      body: JSON.stringify({ messages: turns, tone, context: await buildContext() }),
     });
 
-    if (!res.ok) return novaReply(input);
+    if (!res.ok) return fallbackResult(input);
 
     const data: unknown = await res.json();
-    let reply = '';
-    if (typeof data === 'object' && data !== null && 'reply' in data) {
-      const raw = (data as Record<'reply', unknown>).reply;
-      if (typeof raw === 'string') reply = raw.trim();
-    }
-    return reply.length > 0 ? reply : novaReply(input);
+    if (!data || typeof data !== 'object') return fallbackResult(input);
+    const raw = data as Record<string, unknown>;
+    const reply = typeof raw.reply === 'string' ? raw.reply.trim() : '';
+    if (!reply || !isNovaAgentId(raw.activeAgent)) return fallbackResult(input);
+    const trace = Array.isArray(raw.trace)
+      ? raw.trace.filter((entry): entry is NovaToolTrace =>
+          Boolean(
+            entry &&
+            typeof entry === 'object' &&
+            typeof (entry as NovaToolTrace).toolId === 'string' &&
+            typeof (entry as NovaToolTrace).label === 'string',
+          ),
+        )
+      : [];
+    return {
+      reply,
+      activeAgent: raw.activeAgent,
+      trace,
+      proposal: isNovaProposal(raw.proposal) ? raw.proposal : undefined,
+    };
   } catch {
-    return novaReply(input);
+    return fallbackResult(input);
   }
 }

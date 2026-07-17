@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Join the $GAMI Genesis waitlist. Explore Gami Protocol's fixed-supply, activity-driven token economy."
+    />
+    <meta name="theme-color" content="#0E0E12" />
+    <title>$GAMI Genesis — Gami Protocol ICO</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&family=Space+Grotesk:ital,wght@0,500;0,600;0,700;1,700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              ink: '#0E0E12',
+              gami: '#6E3CFB',
+              'gami-dark': '#4B24B8',
+              'gami-light': '#9C6CFF',
+            },
+            fontFamily: {
+              display: ['Space Grotesk', 'sans-serif'],
+              sans: ['Inter', 'sans-serif'],
+              mono: ['JetBrains Mono', 'monospace'],
+            },
+            boxShadow: {
+              brutal: '8px 8px 0 #000',
+              purple: '8px 8px 0 #4B24B8',
+            },
+            animation: {
+              float: 'float 6s ease-in-out infinite',
+              drift: 'drift 14s linear infinite',
+            },
+            keyframes: {
+              float: {
+                '0%, 100%': { transform: 'translateY(0) rotate(-4deg)' },
+                '50%': { transform: 'translateY(-18px) rotate(4deg)' },
+              },
+              drift: {
+                '0%': { transform: 'translateX(0)' },
+                '100%': { transform: 'translateX(-50%)' },
+              },
+            },
+          },
+        },
+      };
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+      [x-cloak] {
+        display: none !important;
+      }
+      body {
+        background-color: #0e0e12;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='112' height='100' viewBox='0 0 112 100'%3E%3Cpath d='M28 1 55 17v32L28 65 1 49V17Zm56 0 27 16v32L84 65 57 49V17ZM56 51l27 16v32H29V67Z' fill='none' stroke='%23201c2d' stroke-width='1'/%3E%3C/svg%3E");
+      }
+      .neo {
+        border: 3px solid #000;
+      }
+      .text-glow {
+        text-shadow:
+          0 0 12px rgba(156, 108, 255, 0.85),
+          0 0 42px rgba(110, 60, 251, 0.5);
+      }
+      .text-outline {
+        color: transparent;
+        -webkit-text-stroke: 1px rgba(255, 255, 255, 0.35);
+      }
+      .grid-fade {
+        background-image:
+          linear-gradient(rgba(156, 108, 255, 0.08) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(156, 108, 255, 0.08) 1px, transparent 1px);
+        background-size: 36px 36px;
+        mask-image: linear-gradient(to bottom, black, transparent);
+      }
+      .token-face {
+        transform: rotateX(60deg) rotateZ(-35deg);
+        box-shadow:
+          18px 18px 0 #000,
+          0 0 80px rgba(110, 60, 251, 0.6);
+      }
+      .ticker-track {
+        width: max-content;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+        }
+      }
+    </style>
+  </head>
+  <body
+    x-data="{ menu: false, submitted: false, wallet: '', connecting: false }"
+    class="overflow-x-hidden font-sans text-white antialiased selection:bg-gami selection:text-white"
+  >
+    <header class="fixed inset-x-0 top-0 z-50 border-b-2 border-black bg-ink/90 backdrop-blur-xl">
+      <nav class="mx-auto flex h-20 max-w-7xl items-center justify-between px-5 lg:px-8" aria-label="Main navigation">
+        <a href="#top" class="flex items-center gap-3 font-display text-xl font-bold" aria-label="Gami Protocol home">
+          <span class="neo flex h-10 w-10 items-center justify-center bg-gami text-2xl shadow-[4px_4px_0_#000]">G</span>
+          <span>GAMI<span class="text-gami-light">/</span>PROTOCOL</span>
+        </a>
+        <div class="hidden items-center gap-8 font-mono text-xs font-bold uppercase tracking-widest md:flex">
+          <a class="transition-colors hover:text-gami-light" href="#model">Model</a>
+          <a class="transition-colors hover:text-gami-light" href="#allocation">Allocation</a>
+          <a class="transition-colors hover:text-gami-light" href="#utility">Utility</a>
+          <a class="transition-colors hover:text-gami-light" href="#roadmap">Roadmap</a>
+        </div>
+        <a
+          href="#waitlist"
+          class="neo hidden bg-gami px-5 py-3 font-display text-sm font-bold uppercase shadow-brutal transition-transform hover:translate-x-1 hover:translate-y-1 hover:shadow-none md:block"
+        >
+          Join waitlist
+        </a>
+        <button
+          type="button"
+          class="neo flex h-11 w-11 items-center justify-center bg-gami md:hidden"
+          @click="menu = !menu"
+          :aria-expanded="menu"
+          aria-controls="mobile-menu"
+          aria-label="Toggle navigation"
+        >
+          <span class="font-mono text-xl" x-text="menu ? '×' : '≡'"></span>
+        </button>
+      </nav>
+      <div
+        id="mobile-menu"
+        x-cloak
+        x-show="menu"
+        x-transition
+        @click.outside="menu = false"
+        class="neo mx-4 mb-4 bg-ink p-5 shadow-purple md:hidden"
+      >
+        <div class="grid gap-4 font-mono text-sm font-bold uppercase">
+          <a @click="menu = false" href="#model">Dual token model</a>
+          <a @click="menu = false" href="#allocation">Allocation</a>
+          <a @click="menu = false" href="#utility">Utility</a>
+          <a @click="menu = false" href="#roadmap">Roadmap</a>
+          <a @click="menu = false" class="bg-gami p-3 text-center" href="#waitlist">Join waitlist</a>
+        </div>
+      </div>
+    </header>
+
+    <main id="top">
+      <section class="relative min-h-screen overflow-hidden pb-20 pt-32 lg:pt-40">
+        <div class="grid-fade pointer-events-none absolute inset-0"></div>
+        <div class="pointer-events-none absolute -left-32 top-32 h-96 w-96 rounded-full bg-gami/25 blur-[120px]"></div>
+        <div class="pointer-events-none absolute -right-32 bottom-0 h-96 w-96 rounded-full bg-gami-light/20 blur-[130px]"></div>
+        <div class="relative mx-auto grid max-w-7xl items-start gap-16 px-5 lg:grid-cols-12 lg:px-8">
+          <div class="lg:col-span-7">
+            <div class="mb-7 inline-flex items-center gap-3 border-2 border-gami bg-gami/15 px-4 py-2 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-gami-light">
+              <span class="h-2 w-2 animate-pulse rounded-full bg-gami-light"></span>
+              Phase 01 // Genesis waitlist open
+            </div>
+            <h1 class="font-display text-6xl font-bold uppercase italic leading-[0.82] sm:text-7xl lg:text-[7rem]">
+              $GAMI<br /><span class="text-glow text-gami">Genesis</span>
+            </h1>
+            <p class="mt-8 max-w-2xl text-lg leading-relaxed text-zinc-300 sm:text-xl">
+              Fixed 1B supply. <strong class="text-white">40% community.</strong> XP-driven emissions. Join the
+              waitlist for priority allocation and permanent multipliers.
+            </p>
+            <div class="mt-10 flex flex-wrap gap-4">
+              <a
+                href="#waitlist"
+                class="neo bg-gami px-7 py-4 font-display font-bold uppercase shadow-brutal transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none"
+              >
+                Secure your allocation ↗
+              </a>
+              <a
+                href="#model"
+                class="border-2 border-white px-7 py-4 font-display font-bold uppercase transition-colors hover:bg-white hover:text-black"
+              >
+                Inspect the model
+              </a>
+            </div>
+            <div class="mt-14 grid grid-cols-3 gap-3">
+              <div class="neo bg-black/50 p-4 sm:p-5">
+                <span class="font-display text-2xl font-bold sm:text-4xl">1B</span>
+                <span class="mt-2 block font-mono text-[9px] uppercase text-zinc-500 sm:text-[10px]">Fixed supply</span>
+              </div>
+              <div class="neo bg-black/50 p-4 sm:p-5">
+                <span class="font-display text-2xl font-bold text-gami-light sm:text-4xl">40%</span>
+                <span class="mt-2 block font-mono text-[9px] uppercase text-zinc-500 sm:text-[10px]">Community</span>
+              </div>
+              <div class="neo bg-black/50 p-4 sm:p-5">
+                <span class="font-display text-2xl font-bold sm:text-4xl">&gt;50%</span>
+                <span class="mt-2 block font-mono text-[9px] uppercase text-zinc-500 sm:text-[10px]">Target staked</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="waitlist" class="relative scroll-mt-28 lg:col-span-5">
+            <div class="absolute -right-8 -top-16 hidden h-40 w-40 animate-float sm:block">
+              <div class="token-face neo flex h-full w-full items-center justify-center bg-gradient-to-br from-gami-light to-gami-dark font-display text-7xl font-bold">G</div>
+            </div>
+            <div class="neo relative bg-[#15141c] p-6 shadow-purple sm:p-8">
+              <div x-show="!submitted">
+                <div class="mb-7 flex items-start justify-between gap-4">
+                  <div>
+                    <p class="font-mono text-[10px] uppercase tracking-[0.25em] text-gami-light">Priority access</p>
+                    <h2 class="mt-2 font-display text-3xl font-bold uppercase italic">Join Genesis</h2>
+                  </div>
+                  <span class="neo bg-gami px-2 py-1 font-mono text-[9px] font-bold">LIVE</span>
+                </div>
+                <form @submit.prevent="submitted = true" class="space-y-5">
+                  <label class="block">
+                    <span class="mb-2 block font-mono text-[10px] uppercase tracking-widest text-zinc-500">Full name</span>
+                    <input
+                      required
+                      name="name"
+                      autocomplete="name"
+                      class="neo w-full bg-black/50 p-4 font-mono text-sm outline-none transition-colors placeholder:text-zinc-700 focus:border-gami-light"
+                      placeholder="GAMI PILOT"
+                    />
+                  </label>
+                  <label class="block">
+                    <span class="mb-2 block font-mono text-[10px] uppercase tracking-widest text-zinc-500">Email address</span>
+                    <input
+                      required
+                      type="email"
+                      name="email"
+                      autocomplete="email"
+                      class="neo w-full bg-black/50 p-4 font-mono text-sm outline-none transition-colors placeholder:text-zinc-700 focus:border-gami-light"
+                      placeholder="PILOT@EXAMPLE.COM"
+                    />
+                  </label>
+                  <label class="block">
+                    <span class="mb-2 block font-mono text-[10px] uppercase tracking-widest text-zinc-500">Wallet (optional)</span>
+                    <span class="relative block">
+                      <input
+                        name="wallet"
+                        x-model="wallet"
+                        class="neo w-full bg-black/50 p-4 pr-28 font-mono text-sm outline-none transition-colors placeholder:text-zinc-700 focus:border-gami-light"
+                        placeholder="0X..."
+                      />
+                      <button
+                        type="button"
+                        @click="connecting = true; setTimeout(() => { wallet = '0x71C8...GAMI'; connecting = false }, 700)"
+                        class="absolute bottom-2 right-2 top-2 bg-white px-3 font-display text-[10px] font-bold uppercase text-black hover:bg-gami-light hover:text-white"
+                        x-text="connecting ? 'LINKING...' : wallet ? 'LINKED' : 'CONNECT'"
+                      ></button>
+                    </span>
+                  </label>
+                  <button
+                    type="submit"
+                    class="neo w-full bg-gradient-to-r from-gami to-gami-dark py-5 font-display text-lg font-bold uppercase tracking-wider shadow-brutal transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none"
+                  >
+                    Secure my spot
+                  </button>
+                  <p class="text-center font-mono text-[9px] uppercase leading-relaxed text-zinc-500">
+                    Priority allocation + permanent XP multipliers
+                  </p>
+                </form>
+              </div>
+              <div x-cloak x-show="submitted" x-transition class="py-12 text-center" role="status">
+                <div class="neo mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gami text-4xl shadow-brutal">✓</div>
+                <h2 class="mt-8 font-display text-3xl font-bold uppercase italic">You're in.</h2>
+                <p class="mt-4 text-sm leading-relaxed text-zinc-400">
+                  Your Genesis priority is reserved. Check your inbox for the verification link.
+                </p>
+                <button @click="submitted = false" class="mt-8 border-2 border-white px-6 py-3 font-display text-sm font-bold uppercase hover:bg-white hover:text-black">
+                  Back
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="overflow-hidden border-y-4 border-black bg-gami py-3 font-mono text-xs font-bold uppercase tracking-[0.2em] text-black">
+        <div class="ticker-track flex animate-drift gap-10 whitespace-nowrap">
+          <span>Real activity → verified XP → controlled conversion → $GAMI</span>
+          <span>◆ Fixed 1B supply ◆ Community-first ◆ Anti-inflation by design ◆</span>
+          <span>Real activity → verified XP → controlled conversion → $GAMI</span>
+          <span>◆ Fixed 1B supply ◆ Community-first ◆ Anti-inflation by design ◆</span>
+        </div>
+      </div>
+
+      <section id="model" class="scroll-mt-20 border-b-4 border-black bg-black/55 py-24">
+        <div class="mx-auto max-w-7xl px-5 lg:px-8">
+          <header class="max-w-3xl">
+            <p class="font-mono text-xs font-bold uppercase tracking-[0.25em] text-gami-light">01 // Architecture</p>
+            <h2 class="mt-4 font-display text-4xl font-bold uppercase italic sm:text-6xl">
+              Effort is soulbound.<br /><span class="text-outline">Value moves.</span>
+            </h2>
+            <p class="mt-6 text-zinc-400">The conversion funnel separates engagement from liquidity, acting as an anti-inflation valve.</p>
+          </header>
+          <div class="mt-14 grid gap-7 lg:grid-cols-[1fr_auto_1fr] lg:items-stretch">
+            <article class="neo bg-ink p-7 shadow-brutal">
+              <span class="font-mono text-xs text-gami-light">NON-TRANSFERABLE</span>
+              <h3 class="mt-4 font-display text-4xl font-bold uppercase italic">XP</h3>
+              <p class="mt-3 text-zinc-400">Soulbound proof of effort, reputation, and verified participation.</p>
+              <dl class="mt-8 space-y-4 border-t border-white/10 pt-6 font-mono text-xs">
+                <div class="flex justify-between gap-4"><dt class="text-zinc-600">SUPPLY</dt><dd>EARNED / DYNAMIC</dd></div>
+                <div class="flex justify-between gap-4"><dt class="text-zinc-600">TRANSFER</dt><dd>DISABLED</dd></div>
+                <div class="flex justify-between gap-4"><dt class="text-zinc-600">INPUT</dt><dd>REAL ACTIVITY</dd></div>
+              </dl>
+            </article>
+            <div class="flex items-center justify-center">
+              <div class="neo rotate-0 bg-gami px-5 py-3 font-mono text-xl font-bold shadow-brutal lg:rotate-90">→</div>
+            </div>
+            <article class="neo bg-gradient-to-br from-gami-dark to-ink p-7 shadow-purple">
+              <span class="font-mono text-xs text-gami-light">TRANSFERABLE</span>
+              <h3 class="mt-4 font-display text-4xl font-bold uppercase italic">$GAMI</h3>
+              <p class="mt-3 text-zinc-300">Fixed-supply utility, governance, staking, and protocol value.</p>
+              <dl class="mt-8 space-y-4 border-t border-white/10 pt-6 font-mono text-xs">
+                <div class="flex justify-between gap-4"><dt class="text-zinc-500">SUPPLY</dt><dd>1,000,000,000</dd></div>
+                <div class="flex justify-between gap-4"><dt class="text-zinc-500">TRANSFER</dt><dd>ON-CHAIN</dd></div>
+                <div class="flex justify-between gap-4"><dt class="text-zinc-500">OUTPUT</dt><dd>UTILITY + VALUE</dd></div>
+              </dl>
+            </article>
+          </div>
+          <div class="neo mt-10 bg-white p-6 text-center text-black shadow-brutal sm:p-8">
+            <p class="font-mono text-[10px] font-bold uppercase tracking-[0.3em] text-gami-dark">Protocol-controlled conversion funnel</p>
+            <p class="mt-4 font-display text-xl font-bold uppercase italic sm:text-3xl">Verified activity → XP → Gami points → $GAMI</p>
+            <p class="mx-auto mt-4 max-w-3xl text-sm text-zinc-700">
+              Liquid emissions are unlocked by genuine network participation—not passive time alone. Conversion rates can be tuned to protect the fixed supply.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="allocation" class="scroll-mt-20 py-24">
+        <div class="mx-auto max-w-7xl px-5 lg:px-8">
+          <div class="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+            <header>
+              <p class="font-mono text-xs font-bold uppercase tracking-[0.25em] text-gami-light">02 // Distribution</p>
+              <h2 class="mt-4 font-display text-5xl font-bold uppercase italic sm:text-7xl">1B. Fixed.</h2>
+              <p class="mt-5 max-w-2xl text-zinc-400">The community owns the largest single allocation, with emissions distributed over five years.</p>
+            </header>
+            <div class="neo bg-gami p-6 text-black shadow-brutal">
+              <span class="font-mono text-[10px] font-bold uppercase">Community-first</span>
+              <strong class="block font-display text-5xl">40%</strong>
+              <span class="font-mono text-xs">400M // 5YR LINEAR</span>
+            </div>
+          </div>
+          <div class="neo mt-14 overflow-x-auto bg-black/60 shadow-purple">
+            <table class="w-full min-w-[760px] text-left">
+              <thead class="border-b-4 border-black bg-gami font-mono text-[10px] uppercase tracking-widest">
+                <tr><th class="p-5">Allocation</th><th class="p-5">Share</th><th class="p-5">Tokens</th><th class="p-5">Vesting / release</th></tr>
+              </thead>
+              <tbody class="divide-y divide-white/10 font-mono text-sm">
+                <tr class="hover:bg-white/5"><td class="p-5 font-display font-bold">Community & Ecosystem</td><td class="p-5 text-gami-light">40%</td><td class="p-5">400,000,000</td><td class="p-5 text-zinc-400">Linear emission over 5 years</td></tr>
+                <tr class="hover:bg-white/5"><td class="p-5 font-display font-bold">Team & Advisors</td><td class="p-5 text-gami-light">20%</td><td class="p-5">200,000,000</td><td class="p-5 text-zinc-400">1-year cliff, then 3-year linear</td></tr>
+                <tr class="hover:bg-white/5"><td class="p-5 font-display font-bold">Treasury</td><td class="p-5 text-gami-light">15%</td><td class="p-5">150,000,000</td><td class="p-5 text-zinc-400">Governance-controlled release</td></tr>
+                <tr class="hover:bg-white/5"><td class="p-5 font-display font-bold">Strategic Partners</td><td class="p-5 text-gami-light">15%</td><td class="p-5">150,000,000</td><td class="p-5 text-zinc-400">6-month cliff, then 2-year linear</td></tr>
+                <tr class="hover:bg-white/5"><td class="p-5 font-display font-bold">Seed & Private Investors</td><td class="p-5 text-gami-light">10%</td><td class="p-5">100,000,000</td><td class="p-5 text-zinc-400">25% TGE, then 18-month linear</td></tr>
+              </tbody>
+              <tfoot class="border-t-4 border-black bg-white font-mono text-sm font-bold text-black">
+                <tr><td class="p-5">TOTAL FIXED SUPPLY</td><td class="p-5">100%</td><td class="p-5">1,000,000,000</td><td class="p-5">NO ADDITIONAL MINTING</td></tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="utility" class="scroll-mt-20 border-y-4 border-black bg-black/60 py-24">
+        <div class="mx-auto max-w-7xl px-5 lg:px-8">
+          <header class="text-center">
+            <p class="font-mono text-xs font-bold uppercase tracking-[0.25em] text-gami-light">03 // Utility</p>
+            <h2 class="mt-4 font-display text-4xl font-bold uppercase italic sm:text-6xl">Hold it. Use it. Align.</h2>
+          </header>
+          <div class="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <article class="neo bg-ink p-6 shadow-brutal transition-transform hover:-translate-y-2"><span class="font-mono text-gami-light">01 / STAKE</span><h3 class="mt-5 font-display text-2xl font-bold uppercase">Staking</h3><p class="mt-3 text-sm leading-relaxed text-zinc-400">Boost XP multipliers, earn protocol fees, and increase governance weight.</p></article>
+            <article class="neo bg-gami p-6 text-black shadow-brutal transition-transform hover:-translate-y-2"><span class="font-mono">02 / POOLS</span><h3 class="mt-5 font-display text-2xl font-bold uppercase">Rewards</h3><p class="mt-3 text-sm leading-relaxed text-black/70">Partner-funded quest pools create activity-linked rewards and buy-side demand.</p></article>
+            <article class="neo bg-ink p-6 shadow-brutal transition-transform hover:-translate-y-2"><span class="font-mono text-gami-light">03 / ACCESS</span><h3 class="mt-5 font-display text-2xl font-bold uppercase">Tiers</h3><p class="mt-3 text-sm leading-relaxed text-zinc-400">Unlock premium features, gated quests, MCP client tiers, and higher limits.</p></article>
+            <article class="neo bg-ink p-6 shadow-brutal transition-transform hover:-translate-y-2"><span class="font-mono text-gami-light">04 / FEES</span><h3 class="mt-5 font-display text-2xl font-bold uppercase">Discounts</h3><p class="mt-3 text-sm leading-relaxed text-zinc-400">Pay protocol and cross-chain fees in $GAMI at a preferred rate.</p></article>
+          </div>
+          <div class="neo mt-12 grid overflow-hidden bg-ink shadow-purple lg:grid-cols-2">
+            <div class="p-8 sm:p-12">
+              <p class="font-mono text-xs text-gami-light">DEMAND // SINKS</p>
+              <h3 class="mt-3 font-display text-3xl font-bold uppercase italic">Value accrual</h3>
+              <ul class="mt-7 space-y-4 font-mono text-sm text-zinc-300">
+                <li>↗ Staking lockups — target &gt;50%</li>
+                <li>↗ Fee payment and token discounts</li>
+                <li>↗ Partner campaign funding</li>
+                <li>↗ Premium tiers and governance</li>
+              </ul>
+            </div>
+            <div class="border-t-4 border-black bg-gami p-8 text-black lg:border-l-4 lg:border-t-0 sm:p-12">
+              <p class="font-mono text-xs">SUPPLY // EMISSIONS</p>
+              <h3 class="mt-3 font-display text-3xl font-bold uppercase italic">Controlled release</h3>
+              <ul class="mt-7 space-y-4 font-mono text-sm">
+                <li>→ Community: 5-year linear</li>
+                <li>→ Team: 1-year cliff + 3 years</li>
+                <li>→ Partners: 6-month cliff + 2 years</li>
+                <li>→ Treasury: governance gated</li>
+              </ul>
+            </div>
+          </div>
+          <p class="mt-8 text-center font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">Real activity drives demand // controlled emissions protect supply // utility compounds participation</p>
+        </div>
+      </section>
+
+      <section id="roadmap" class="scroll-mt-20 py-24">
+        <div class="mx-auto max-w-7xl px-5 lg:px-8">
+          <header>
+            <p class="font-mono text-xs font-bold uppercase tracking-[0.25em] text-gami-light">04 // Launch sequence</p>
+            <h2 class="mt-4 font-display text-5xl font-bold uppercase italic sm:text-7xl">Genesis phases</h2>
+          </header>
+          <div class="mt-14 grid gap-6 lg:grid-cols-3">
+            <article class="neo relative bg-gami p-7 text-black shadow-brutal">
+              <span class="absolute right-5 top-4 font-display text-7xl font-bold text-black/15">01</span>
+              <span class="neo inline-block bg-black px-3 py-1 font-mono text-[10px] text-white">NOW // OPEN</span>
+              <h3 class="mt-12 font-display text-2xl font-bold uppercase italic">Whitelist & Testnet</h3>
+              <p class="mt-4 text-sm leading-relaxed text-black/70">Join Genesis, link a wallet, and establish priority through early protocol activity.</p>
+            </article>
+            <article class="neo relative bg-ink p-7 shadow-brutal">
+              <span class="absolute right-5 top-4 font-display text-7xl font-bold text-white/5">02</span>
+              <span class="font-mono text-[10px] text-gami-light">NEXT // PRIVATE</span>
+              <h3 class="mt-12 font-display text-2xl font-bold uppercase italic">Private Genesis Sale</h3>
+              <p class="mt-4 text-sm leading-relaxed text-zinc-500">Seed and strategic participants enter under published lockups and vesting schedules.</p>
+            </article>
+            <article class="neo relative bg-ink p-7 shadow-brutal">
+              <span class="absolute right-5 top-4 font-display text-7xl font-bold text-white/5">03</span>
+              <span class="font-mono text-[10px] text-gami-light">THEN // PUBLIC</span>
+              <h3 class="mt-12 font-display text-2xl font-bold uppercase italic">Public Launch</h3>
+              <p class="mt-4 text-sm leading-relaxed text-zinc-500">Public access, on-chain liquidity, and transparent vesting begin at TGE.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="border-y-4 border-black bg-gami py-20 text-black">
+        <div class="mx-auto flex max-w-7xl flex-col items-start justify-between gap-8 px-5 lg:flex-row lg:items-center lg:px-8">
+          <div>
+            <p class="font-mono text-xs font-bold uppercase tracking-widest">The Genesis window is open</p>
+            <h2 class="mt-3 font-display text-4xl font-bold uppercase italic sm:text-6xl">Earn your place.</h2>
+          </div>
+          <a href="#waitlist" class="neo bg-black px-8 py-5 font-display text-lg font-bold uppercase text-white shadow-[8px_8px_0_#fff] transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none">Join the waitlist ↗</a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="bg-black py-12">
+      <div class="mx-auto flex max-w-7xl flex-col gap-8 px-5 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+        <div class="flex items-center gap-3 font-display text-xl font-bold"><span class="neo flex h-9 w-9 items-center justify-center bg-gami">G</span> GAMI PROTOCOL</div>
+        <nav class="flex flex-wrap gap-5 font-mono text-[10px] uppercase tracking-widest text-zinc-500" aria-label="Footer navigation">
+          <a class="hover:text-white" href="#model">Token model</a>
+          <a class="hover:text-white" href="#allocation">Allocation</a>
+          <a class="hover:text-white" href="#utility">Utility</a>
+          <a class="hover:text-white" href="#roadmap">Roadmap</a>
+        </nav>
+        <p class="font-mono text-[10px] uppercase text-zinc-600">© 2026 Gami Protocol // Fixed supply</p>
+      </div>
+    </footer>
+  </body>
+</html>

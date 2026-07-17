@@ -1,160 +1,118 @@
-# Welcome to your Bilt project
+# Gami Protocol
 
-[![Built with Bilt](https://img.shields.io/endpoint?url=https%3A%2F%2Fapp.bilt.me%2Fapi%2Fbadge)](https://bilt.me)
+Gami is a gamified crypto ecosystem built on Base, featuring a mobile wallet app, an ICO web portal, smart contracts for the $GAMI token, and an AI-powered agentic quest interface.
 
-## Project info
+## Repository structure
 
-**Preview URL**: https://app.bilt.me/project/73c82cd4-2f64-41e0-a0f2-3c4fa607c6bb/preview
+| Directory | Description |
+|-----------|-------------|
+| `/` (root) | React Native / Expo mobile wallet app |
+| [`gami-contracts/`](gami-contracts/) | Solidity smart contracts (ERC-20, token sale, vesting, fee routing) |
+| [`gami-web/`](gami-web/) | ICO web portal — Vite + React + React Router |
+| [`gami-agentic-web/`](gami-agentic-web/) | Agentic Quest Chat interface — Next.js 15 (MCP server + client) |
 
-**Project ID**: `73c82cd4-2f64-41e0-a0f2-3c4fa607c6bb`
+## Mobile wallet app (Expo)
 
-## How can I edit this app?
+### Prerequisites
 
-There are several ways of editing your application.
+Node.js & npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
 
-**Use Bilt**
-
-Simply visit your [Bilt Project](https://app.bilt.me/agent/73c82cd4-2f64-41e0-a0f2-3c4fa607c6bb) and start sending messages. Describe what you want to change, add, or fix in natural language.
-
-Changes made via Bilt are instant - just send a message and your app updates.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can export the source code from Bilt and make changes directly.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+### Getting started
 
 ```sh
-# Step 1: Export and clone your Bilt project.
-# (Download source from Bilt or connect to your git repo)
-git clone <YOUR_GIT_URL>
+git clone https://github.com/Gami-Protocol/gami.git
+cd gami
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
+# Install dependencies
 npm install
 
-# Step 4: Start the Expo development server.
+# Copy environment variables
+cp .env.example .env.local
+
+# Start the Expo development server
 npx expo start
 ```
 
-Scan the QR code with Expo Go on your phone to see your app running locally.
+Scan the QR code with Expo Go ([iOS](https://apps.apple.com/app/expo-go/id982107779) | [Android](https://play.google.com/store/apps/details?id=host.exp.exponent)) to run the app on your device.
 
-**Edit a file directly in GitHub**
+### Tech stack
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- React Native
-- Expo
+- React Native + Expo (SDK 54)
+- Expo Router (file-based navigation)
 - TypeScript
-- AsyncStorage (local data persistence)
-- Expo Router (navigation)
+- Privy (embedded wallet / auth)
+- Supabase (backend & database)
+- Viem (blockchain interactions)
+- Zustand (state management)
+- Tailwind CSS via Uniwind
 
-All generated automatically by Bilt from your natural language instructions.
+## Smart contracts (`gami-contracts/`)
 
-## How can I test this project?
+Solidity contracts for the $GAMI token raise on Base.
 
-**Option 1: Instant Preview (Recommended)**
-
-Open the preview URL in your browser: `https://app.bilt.me/project/73c82cd4-2f64-41e0-a0f2-3c4fa607c6bb/preview`
-
-Scan the QR code with Expo Go ([iOS](https://apps.apple.com/app/expo-go/id982107779) | [Android](https://play.google.com/store/apps/details?id=host.exp.exponent)) on your phone.
-
-**Option 2: Run Locally**
+| Contract | Purpose |
+|----------|---------|
+| `GAMI.sol` | ERC-20 fixed supply (1B tokens) |
+| `TokenSale.sol` | Phased ICO accepting ETH/USDC |
+| `VestingVault.sol` | Cliff + linear vesting with TGE unlock |
+| `FeeRouter.sol` | 40/30/20/10 fee routing (burn/treasury/staking/LP) |
 
 ```sh
+cd gami-contracts
 npm install
-npx expo start
+cp .env.example .env
+npm run compile
+npm test
+
+# Deploy to Base Sepolia
+npm run deploy:sepolia
 ```
 
-Then scan the QR code with Expo Go.
+## ICO web portal (`gami-web/`)
 
-## How can I deploy this project?
+Marketing site and token sale portal for the $GAMI raise. Built with Vite + React + React Router.
 
-Go to your [Bilt Project](https://app.bilt.me/agent/73c82cd4-2f64-41e0-a0f2-3c4fa607c6bb), after that go to Settings -> App Store.
-
-### Deploy with Bilt
-
-Simply send a message to your Bilt project: "Deploy this app to production"
-
-Bilt will handle the build and provide you with download links or submission-ready builds.
-
-## How can I make changes to my app?
-
-**Via Bilt (Easiest)**
-
-Visit your [Bilt Project](https://app.bilt.me/agent/73c82cd4-2f64-41e0-a0f2-3c4fa607c6bb) and send a message describing what you want:
-
-- "Add a dark mode toggle"
-- "Change the button color to blue"
-- "Add a new screen for user settings"
-- "Fix the navigation bar spacing"
-
-Bilt understands natural language and updates your app automatically.
-
-**Via Code**
-
-Export the source, make changes in your IDE, and test locally with `npx expo start`.
-
-## Can I use this with the MCP protocol?
-
-Yes! Bilt is available as a remote MCP server at `https://mcp.bilt.me/mcp`.
-
-Connect any MCP-compatible AI agent (Claude Desktop, OpenClaw, etc.) to programmatically build and modify mobile apps.
-
-**Example MCP integration:**
-
-```json
-{
-  "mcpServers": {
-    "bilt": {
-      "transport": {
-        "type": "sse",
-        "url": "https://mcp.bilt.me/mcp/sse",
-        "headers": {
-          "Authorization": "Bearer YOUR_API_KEY"
-        }
-      }
-    }
-  }
-}
+```sh
+cd gami-web
+npm install
+cp .env.example .env.local
+npm run dev
 ```
 
-Read more:
+Open [http://localhost:3000](http://localhost:3000).
 
-- [Bilt MCP Documentation](https://bilt.me/docs)
-- [MCP Registry](https://registry.modelcontextprotocol.io/v0.1/servers/io.github.buildingapplications%2Fmcp/versions/latest)
+## Agentic Quest Chat (`gami-agentic-web/`)
 
-## Need help?
+AI-powered questing chat interface for the Gami Protocol agent layer. Built with Next.js 15.
 
-- 📚 [Bilt Documentation](https://bilt.me/docs)
-- 💬 [Discord Community](https://discord.gg/3FqNgmSYdZ)
-- 🐦 [Twitter Updates](https://twitter.com/biltmeanapp)
-- 📧 Email: support@bilt.me
+```sh
+cd gami-agentic-web
+npm install
+cp .env.example .env.local
+npm run dev
+```
 
----
+Open [http://localhost:3010](http://localhost:3010).
 
-<div align="center">
+## Development
 
-**Built by AI. No code required.** ✨
+### Linting & formatting
 
-[Try Bilt](https://bilt.me) • [View Docs](https://bilt.me/docs) • [Docs MCP Server](https://bilt.me/docs/mcp)
+```sh
+# Lint (oxlint)
+npm run lint
+npm run lint:css
 
-</div>
+# Format check
+npm run format:check
+
+# Format write
+npm run format
+```
+
+### Run on iOS / Android
+
+```sh
+npm run ios
+npm run android
+```

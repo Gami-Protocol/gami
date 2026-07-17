@@ -4,9 +4,13 @@ import {
   ArrowRight,
   ArrowUp,
   Bell,
+  Coins,
   Compass,
+  Gift,
+  Layers,
   Repeat2,
   Route,
+  Share2,
   Sparkles,
 } from 'lucide-react-native';
 import { type ReactNode, useEffect, useState } from 'react';
@@ -171,6 +175,9 @@ export default function Home() {
             <View className="items-end">
               <Text className="font-mono text-[10px] text-white/70">WALLET</Text>
               <GMono className="text-[18px] font-bold text-white">{balance} GAMI</GMono>
+              {stats.balanceSource === 'chain' ? (
+                <Text className="text-green font-mono text-[9px]">ON-CHAIN</Text>
+              ) : null}
             </View>
           </View>
           <View className="mt-4">
@@ -179,6 +186,17 @@ export default function Home() {
               {stats.xpToNextLevel.toLocaleString()} XP TO LEVEL {stats.level + 1}
             </Text>
           </View>
+          {stats.claimableGami > 0 ? (
+            <Pressable
+              onPress={() => router.push('/(app)/claim')}
+              className="mt-3 flex-row items-center gap-2"
+            >
+              <Gift size={14} color="#FFD23D" />
+              <Text className="text-yellow font-mono text-[11px]">
+                {stats.claimableGami.toFixed(2)} GAMI claimable →
+              </Text>
+            </Pressable>
+          ) : null}
         </GCard>
 
         <View className="mt-5 flex-row justify-between">
@@ -261,6 +279,52 @@ export default function Home() {
         {CAMPAIGNS.slice(0, 3).map((campaign) => (
           <CampaignRow key={campaign.id} campaign={campaign} />
         ))}
+
+        <Text className="text-ink-mute mt-6 mb-3 font-mono text-[10px] tracking-[2px]">
+          MORE FROM GAMI
+        </Text>
+        <GCard onPress={() => router.push('/(app)/sale')}>
+          <View className="flex-row items-center">
+            <View className="bg-yellow/10 h-11 w-11 items-center justify-center rounded-2xl">
+              <Coins size={20} color="#FFD23D" />
+            </View>
+            <View className="ml-3 flex-1">
+              <Text className="text-ink text-[15px] font-bold">Token sale</Text>
+              <Text className="text-ink-mute mt-0.5 text-[12px]">
+                KYC, contribute USDC and track the raise
+              </Text>
+            </View>
+            <ArrowRight size={16} color="#6B6880" />
+          </View>
+        </GCard>
+        <GCard className="mt-3" onPress={() => router.push('/(app)/referral')}>
+          <View className="flex-row items-center">
+            <View className="bg-magenta/10 h-11 w-11 items-center justify-center rounded-2xl">
+              <Share2 size={20} color="#FF3D8B" />
+            </View>
+            <View className="ml-3 flex-1">
+              <Text className="text-ink text-[15px] font-bold">Refer & earn</Text>
+              <Text className="text-ink-mute mt-0.5 text-[12px]">
+                Share your code · +100 XP per invite
+              </Text>
+            </View>
+            <ArrowRight size={16} color="#6B6880" />
+          </View>
+        </GCard>
+        <GCard className="mt-3" onPress={() => router.push('/(app)/badges')}>
+          <View className="flex-row items-center">
+            <View className="bg-cyan/10 h-11 w-11 items-center justify-center rounded-2xl">
+              <Layers size={20} color="#3DD6F5" />
+            </View>
+            <View className="ml-3 flex-1">
+              <Text className="text-ink text-[15px] font-bold">Your stash</Text>
+              <Text className="text-ink-mute mt-0.5 text-[12px]">
+                Badges, stickers and collectibles
+              </Text>
+            </View>
+            <ArrowRight size={16} color="#6B6880" />
+          </View>
+        </GCard>
       </ScrollView>
     </GScreen>
   );

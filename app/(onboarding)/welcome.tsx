@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
-import { Bot, Compass, KeyRound, Link2 } from 'lucide-react-native';
+import * as WebBrowser from 'expo-web-browser';
+import { Bot, Coins, Compass, KeyRound, Link2 } from 'lucide-react-native';
 import { type ReactNode } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -93,6 +94,20 @@ export default function Welcome() {
       <View className="px-6 pb-6">
         <GBackendBanner className="mb-4" />
         <GButtonPrimary
+          label="JOIN TOKEN SALE →"
+          badge={
+            <GSticker color="yellow" tilt={4} className="absolute -top-3 -right-2 z-10">
+              +500 XP
+            </GSticker>
+          }
+          icon={<Coins size={18} color="#fff" />}
+          onPress={() => {
+            const url = process.env.EXPO_PUBLIC_ICO_WEB_URL ?? 'https://gami.xyz/sale';
+            void WebBrowser.openBrowserAsync(url);
+          }}
+        />
+        <GButtonPrimary
+          className="mt-3"
           label="LET'S GO →"
           onPress={() => {
             advanceStep(2);

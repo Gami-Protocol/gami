@@ -7,6 +7,7 @@ import { GCard, GConfetti, GMono, GScreen, GSticker } from '@/components/gami';
 import { GButtonPrimary } from '@/components/gami/GButton';
 import { QUESTS, type Quest } from '@/lib/config';
 import { type EnvelopeStatus, questComplete } from '@/lib/gami-sdk';
+import { verifyIcoQuest, type IcoQuestId } from '@/lib/ico-quests';
 import { haptics } from '@/lib/haptics';
 import { useOnboardingStore } from '@/lib/store';
 
@@ -89,17 +90,25 @@ function QuestCard({
 
 export default function Quests() {
   const firstQuestClaimed = useOnboardingStore((s) => s.firstQuestClaimed);
+  const walletAddress = useOnboardingStore((s) => s.walletAddress);
   const [statuses, setStatuses] = useState<Record<string, CardStatus>>({});
   const [confetti, setConfetti] = useState(false);
 
   const claim = (quest: Quest) => {
     if (statuses[quest.id]) return;
     haptics.success();
-    // Show the submit-to-agent state before the envelope returns.
     setStatuses((p) => ({ ...p, [quest.id]: 'submitting' }));
-    setTimeout(() => {
-      // questComplete returns a queued envelope; the supervisor callback then
-      // walks it queued -> settling -> settled. We never set state ourselves.
+
+    const run = async () => {
+      const icoIds: IcoQuestId[] = ['join-presale', 'verify-kyc', 'claim-tge'];
+      if (icoIds.includes(quest.id as IcoQuestId)) {
+        const check = await verifyIcoQuest(quest.id as IcoQuestId, walletAddress);
+        if (!check.ok) {
+          setStatuses((p) => ({ ...p, [quest.id]: 'failed' }));
+          return;
+        }
+      }
+
       questComplete(quest.id, quest.reward, (env) => {
         setStatuses((p) => ({ ...p, [quest.id]: env.status }));
         if (env.status === 'settled') {
@@ -107,7 +116,9 @@ export default function Quests() {
           setTimeout(() => setConfetti(false), 1500);
         }
       });
-    }, 600);
+    };
+
+    setTimeout(() => void run(), 600);
   };
 
   const data = useMemo(() => QUESTS, []);
