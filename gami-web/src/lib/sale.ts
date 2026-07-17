@@ -2,6 +2,8 @@ import { parseUnits } from 'viem';
 
 import { getContractAddress, getFunctionsBase, getSupabaseUrl } from '@/lib/contracts';
 import { env } from '@/lib/env';
+import { isFirebaseConfigured } from '@/lib/firebase';
+import { joinWaitlistFirestore } from '@/lib/firebase-waitlist';
 
 export interface SaleEligibility {
   wallet_address: string;
@@ -76,6 +78,7 @@ export async function joinWaitlist(input: {
     source: input.source ?? 'web',
   };
 
+  // 1) Redesigned Next.js waitlist API (gami-site)
   const waitlistApi = env.waitlistApiUrl();
   if (waitlistApi) {
     try {
@@ -100,8 +103,19 @@ export async function joinWaitlist(input: {
       }
       return { ok: true };
     } catch {
-      // Fall through to Supabase paths.
+      // Fall through to Firebase / Supabase paths.
     }
+  }
+
+  // 2) Firebase/Firestore when configured
+  if (isFirebaseConfigured()) {
+    return joinWaitlistFirestore({
+      email: payload.email,
+      full_name: payload.full_name ?? undefined,
+      wallet_address: payload.wallet_address ?? undefined,
+      referral_code: payload.referral_code ?? undefined,
+      source: payload.source,
+    });
   }
 
   const functionsBase = getFunctionsBase();
@@ -133,7 +147,7 @@ export async function joinWaitlist(input: {
     return {
       ok: false,
       error:
-        'Backend not configured. Set VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY, or VITE_WAITLIST_API_URL to the gami-site /api/waitlist endpoint.',
+        'Backend not configured. Set VITE_WAITLIST_API_URL (gami-site /api/waitlist), VITE_FIREBASE_*, or VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY.',
     };
   }
 
