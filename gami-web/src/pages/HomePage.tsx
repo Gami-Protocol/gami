@@ -1,8 +1,10 @@
-import { Link } from 'react-router-dom';
+import { FormEvent, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 
 import { GamiFooter } from '@/components/gami/GamiFooter';
 import { GamiLogo } from '@/components/gami/GamiLogo';
 import { QuestNotification } from '@/components/gami/QuestNotification';
+import { joinWaitlist } from '@/lib/sale';
 
 
 const ECOSYSTEM_CARDS = [
@@ -67,6 +69,32 @@ function CardIcon({ type }: { type: string }) {
 }
 
 export function HomePage() {
+  const navigate = useNavigate();
+  const [homeEmail, setHomeEmail] = useState('');
+  const [homeStatus, setHomeStatus] = useState<'idle' | 'loading' | 'error'>('idle');
+  const [homeMessage, setHomeMessage] = useState('');
+
+  async function handleHomeWaitlist(e: FormEvent) {
+    e.preventDefault();
+    setHomeStatus('loading');
+    setHomeMessage('');
+
+    const normalized = homeEmail.trim().toLowerCase();
+    const result = await joinWaitlist({
+      email: normalized,
+      source: 'home',
+    });
+
+    if (!result.ok) {
+      setHomeStatus('error');
+      setHomeMessage(result.error ?? 'Could not join waitlist');
+      return;
+    }
+
+    // Prefill waitlist form so the user can link a wallet for TGE distribution.
+    navigate(`/waitlist?email=${encodeURIComponent(normalized)}`);
+  }
+
   return (
     <>
       {/* Hero */}
@@ -289,20 +317,37 @@ export function HomePage() {
             exclusive $GAMI multipliers.
           </p>
 
-          <form action="/waitlist" className="neo-border flex flex-col gap-2 bg-black p-2 shadow-brutal md:flex-row">
+          <form
+            onSubmit={handleHomeWaitlist}
+            className="neo-border flex flex-col gap-2 bg-black p-2 shadow-brutal md:flex-row"
+          >
             <input
               type="email"
               name="email"
+              required
+              value={homeEmail}
+              onChange={(e) => setHomeEmail(e.target.value)}
               placeholder="Enter your email"
               className="flex-1 bg-transparent p-4 font-bold text-white outline-none placeholder:text-gray-600"
+              autoComplete="email"
             />
-            <Link
-              to="/waitlist"
-              className="bg-white px-10 py-4 font-display font-bold uppercase text-black transition-all hover:bg-gami-accent hover:text-white"
+            <button
+              type="submit"
+              disabled={homeStatus === 'loading'}
+              className="bg-white px-10 py-4 font-display font-bold uppercase text-black transition-all hover:bg-gami-accent hover:text-white disabled:opacity-60"
             >
-              Join Waitlist
-            </Link>
+              {homeStatus === 'loading' ? 'Saving…' : 'Join Waitlist'}
+            </button>
           </form>
+          {homeMessage ? (
+            <p
+              className={`mt-4 font-mono text-sm ${
+                homeStatus === 'error' ? 'text-red-900' : 'text-black/80'
+              }`}
+            >
+              {homeMessage}
+            </p>
+          ) : null}
 
           <div className="mt-8 flex flex-wrap justify-center gap-10 font-mono font-bold text-black">
             <div className="flex flex-col">

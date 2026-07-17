@@ -10,7 +10,8 @@
     "lint": "oxlint --type-aware --type-check",
     "lint:css": "node scripts/lint-css.mjs",
     "format": "oxfmt --write .",
-    "format:check": "oxfmt --check ."
+    "format:check": "oxfmt --check .",
+    "export:waitlist": "node scripts/export-waitlist-wallets.mjs"
   },
   "dependencies": {
     "@ethersproject/shims": "^5.8.0",

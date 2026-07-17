@@ -55,9 +55,50 @@ export async function fetchEligibility(wallet: string): Promise<SaleEligibility 
 
 export async function joinWaitlist(input: {
   email: string;
+  full_name?: string;
   wallet_address?: string;
   referral_code?: string;
-}): Promise<{ ok: boolean; error?: string }> {
+  source?: string;
+}): Promise<{ ok: boolean; error?: string; id?: string; status?: string }> {
+  const email = input.email.trim().toLowerCase();
+  if (!email.includes('@')) {
+    return { ok: false, error: 'Valid email required' };
+  }
+
+  const wallet = input.wallet_address?.trim()
+    ? input.wallet_address.trim().toLowerCase()
+    : undefined;
+  const payload = {
+    email,
+    full_name: input.full_name?.trim() || null,
+    wallet_address: wallet ?? null,
+    referral_code: input.referral_code?.trim() || null,
+    source: input.source ?? 'web',
+  };
+
+  const functionsBase = getFunctionsBase();
+  if (functionsBase) {
+    try {
+      const res = await fetch(`${functionsBase}/waitlist-join`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        error?: string;
+        id?: string;
+        status?: string;
+      };
+      if (!res.ok || data.ok === false) {
+        return { ok: false, error: data.error || 'Failed to join waitlist' };
+      }
+      return { ok: true, id: data.id, status: data.status };
+    } catch {
+      // Fall through to direct Rest insert when the edge function is unavailable.
+    }
+  }
+
   const base = getSupabaseUrl();
   const key = env.supabaseAnonKey();
   if (!base || !key) return { ok: false, error: 'Backend not configured' };
@@ -68,21 +109,22 @@ export async function joinWaitlist(input: {
       'Content-Type': 'application/json',
       apikey: key,
       Authorization: `Bearer ${key}`,
-      Prefer: 'return=minimal',
+      Prefer: 'return=representation',
     },
-    body: JSON.stringify({
-      email: input.email,
-      wallet_address: input.wallet_address ?? null,
-      referral_code: input.referral_code ?? null,
-      source: 'sale',
-    }),
+    body: JSON.stringify(payload),
   });
 
   if (!res.ok) {
     const text = await res.text();
+    // Duplicate email: treat as success so re-submits from the UI are friendly.
+    if (res.status === 409 || text.includes('duplicate key') || text.includes('23505')) {
+      return { ok: true };
+    }
     return { ok: false, error: text || 'Failed to join waitlist' };
   }
-  return { ok: true };
+
+  const rows = (await res.json().catch(() => null)) as Array<{ id?: string; status?: string }> | null;
+  return { ok: true, id: rows?.[0]?.id, status: rows?.[0]?.status };
 }
 
 export async function logClaimEvent(input: {
