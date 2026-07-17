@@ -28,6 +28,11 @@ web-build/
 npm-debug.*
 yarn-debug.*
 yarn-error.*
+firebase-debug.log
+firebase-debug.*.log
+.firebase/
+functions/lib/
+functions/node_modules/
 
 # macOS
 .DS_Store
