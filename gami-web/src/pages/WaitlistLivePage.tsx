@@ -11,7 +11,7 @@ import {
   type WaitlistStats,
 } from '@/lib/firebase-waitlist-stats';
 
-const DEFAULT_ALERT_EMAIL = 'mattusmarcus@gmail.com';
+const DEFAULT_ALERT_EMAIL = 'waitlist@gamiprotocol.io';
 
 export function WaitlistLivePage() {
   const configured = isFirebaseConfigured();

@@ -77,7 +77,7 @@ supabase functions deploy waitlist-join
 
 - UI: `/waitlist/live` — real-time Firestore counter + subscribe your email
 - Emails: Resend via Firebase `onWaitlistCreated` or Supabase `waitlist-notify`
-- Env: `RESEND_API_KEY`, `WAITLIST_ALERT_EMAILS=you@example.com`
+- Env: `RESEND_API_KEY`, `WAITLIST_ALERT_EMAILS=waitlist@gamiprotocol.io`
 
 ### Export wallets for TGE / merkle
 

@@ -59,7 +59,7 @@ npx -y firebase-tools@latest deploy --only functions,firestore
 
 # Or Supabase edge
 supabase secrets set RESEND_API_KEY=re_...
-supabase secrets set WAITLIST_ALERT_EMAILS=mattusmarcus@gmail.com
+supabase secrets set WAITLIST_ALERT_EMAILS=waitlist@gamiprotocol.io
 supabase functions deploy waitlist-notify
 ```
 

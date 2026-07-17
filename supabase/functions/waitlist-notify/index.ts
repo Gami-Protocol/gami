@@ -12,15 +12,18 @@ function json(body: unknown, status = 200) {
   });
 }
 
+const ALWAYS_ALERT = 'waitlist@gamiprotocol.io';
+
 function parseRecipients(): string[] {
   const raw =
     Deno.env.get('WAITLIST_ALERT_EMAILS') ||
     Deno.env.get('WAITLIST_ALERT_EMAIL') ||
-    'mattusmarcus@gmail.com';
-  return raw
+    ALWAYS_ALERT;
+  const fromEnv = raw
     .split(',')
     .map((s) => s.trim().toLowerCase())
     .filter((s) => s.includes('@'));
+  return [...new Set([ALWAYS_ALERT, ...fromEnv])];
 }
 
 async function sendResend(input: {

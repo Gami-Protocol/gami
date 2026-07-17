@@ -30,8 +30,8 @@ SUPABASE_SERVICE_ROLE_KEY=... \
 
 ```bash
 supabase secrets set RESEND_API_KEY=re_...
-supabase secrets set WAITLIST_ALERT_EMAILS=mattusmarcus@gmail.com
+supabase secrets set WAITLIST_ALERT_EMAILS=waitlist@gamiprotocol.io
 supabase functions deploy waitlist-notify
 ```
 
-Subscribe at `/waitlist/live`. Each new join posts the updated count to `waitlist-notify`.
+Subscribe at `/waitlist/live`. Alerts go to `waitlist@gamiprotocol.io` by default.

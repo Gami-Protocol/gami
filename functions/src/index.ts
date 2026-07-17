@@ -13,8 +13,10 @@ const alertFrom = defineString('WAITLIST_ALERT_FROM', {
   default: 'Gami Waitlist <onboarding@resend.dev>',
 });
 const alertEmails = defineString('WAITLIST_ALERT_EMAILS', {
-  default: 'mattusmarcus@gmail.com',
+  default: 'waitlist@gamiprotocol.io',
 });
+
+const ALWAYS_ALERT = 'waitlist@gamiprotocol.io';
 
 function parseRecipients(extra: string[] = []): string[] {
   const fromEnv = alertEmails
@@ -22,7 +24,7 @@ function parseRecipients(extra: string[] = []): string[] {
     .split(',')
     .map((s) => s.trim().toLowerCase())
     .filter((s) => s.includes('@'));
-  return [...new Set([...fromEnv, ...extra])];
+  return [...new Set([ALWAYS_ALERT, ...fromEnv, ...extra])];
 }
 
 async function loadSubscriberEmails(): Promise<string[]> {
