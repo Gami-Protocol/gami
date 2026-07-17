@@ -43,9 +43,10 @@ Deno.serve(async (req) => {
       .eq('wallet_address', wallet)
       .maybeSingle();
 
+    // Wallets are stored lowercase via waitlist normalize trigger / waitlist-join.
     const { data: waitlist } = await supabase
       .from('waitlist')
-      .select('id')
+      .select('id, email, status')
       .eq('wallet_address', wallet)
       .maybeSingle();
 

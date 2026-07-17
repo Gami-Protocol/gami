@@ -128,6 +128,7 @@ export function ContributePage() {
       email,
       wallet_address: address ?? walletParam,
       referral_code: referralCode,
+      source: 'sale',
     });
     if (!result.ok) {
       setStatus('error');

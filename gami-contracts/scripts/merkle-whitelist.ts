@@ -24,7 +24,10 @@ async function main() {
 
   if (wallets.length === 0) {
     console.log('No approved wallets. Usage: merkle-whitelist.ts 0xAddr1 0xAddr2');
-    console.log('Or set PARTICIPANTS_JSON to a sale_participants export.');
+    console.log('Or set PARTICIPANTS_JSON to a sale_participants / waitlist export.');
+    console.log(
+      'Tip: npm run export:waitlist -- --format participants --out ./participants.json',
+    );
     return;
   }
 

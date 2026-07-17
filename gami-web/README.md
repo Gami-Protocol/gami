@@ -14,7 +14,7 @@ Marketing site and token sale portal for the $GAMI raise. Built with **Vite + Re
 | `/developers/mcp-client` | MCP client reference |
 | `/developers/mcp-server` | MCP server access |
 | `/status` | Protocol system status |
-| `/waitlist` | ICO waitlist launchpad |
+| `/waitlist` | ICO waitlist launchpad (persists email + wallet to Supabase) |
 | `/tokenomics` | Allocation chart + burn engine |
 | `/whitepaper` | Full tokenization doc |
 | `/sale` | Live sale dashboard |
@@ -68,6 +68,20 @@ The sale contract accepts **USDC only**. Card/fiat and other cryptos fund the li
 | Optional overrides | `VITE_FIAT_ONRAMP_URL`, `VITE_USDT_SWAP_URL` | Support `{wallet}`, `{amount}`, `{usdc}` |
 
 Deploy contracts first (`cd gami-contracts && npm run deploy:sepolia`), then copy addresses from `deployments/84532.json`.
+
+### Waitlist → Supabase (TGE wallets)
+
+`/waitlist`, the home CTA, and `/sale/contribute` all call `joinWaitlist()`, which posts to the
+`waitlist-join` edge function (with a Rest fallback). Rows land in the Supabase `waitlist` table;
+valid wallets are exposed via `waitlist_distribution` for TGE export:
+
+```bash
+# From monorepo root
+SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... \
+  npm run export:waitlist -- --format csv --out ./waitlist-wallets.csv
+```
+
+See `docs/DISTRIBUTION.md` for the full TGE export flow.
 
 ## Deploy (Vercel)
 

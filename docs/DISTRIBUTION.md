@@ -38,12 +38,63 @@ Configure associated domains in `app.config.ts` when `gami.xyz` is live:
 
 ## ICO Distribution Flow
 
-1. User joins waitlist on gami-web `/sale/contribute`
-2. Receives email with wallet download QR (`/wallet?ref=CODE`)
-3. Opens wallet → referral XP bonus applied
-4. Completes KYC on web → "Verified" badge unlocked
-5. Contributes USDC → +500 XP push notification
-6. TGE → claims via in-app `/claim` screen
+1. User joins waitlist on gami-web `/waitlist` or `/sale/contribute`
+2. Signup is stored in Supabase `waitlist` (email, optional full name, wallet, referral, source)
+3. Receives email with wallet download QR (`/wallet?ref=CODE`)
+4. Opens wallet → referral XP bonus applied
+5. Completes KYC on web → "Verified" badge unlocked
+6. Contributes USDC → row in `sale_participants` + on-chain vesting
+7. TGE → claims via in-app `/claim` screen / web `/claim`
+
+## Waitlist → TGE Wallet Database (Supabase)
+
+All waitlist signups persist to the Supabase `waitlist` table. Rows with a valid EVM
+wallet appear in the `waitlist_distribution` view for export.
+
+| Column | Purpose |
+|--------|---------|
+| `email` | Unique contact / nurture key |
+| `full_name` | Display name from `/waitlist` |
+| `wallet_address` | Lowercased EVM address for TGE distribution |
+| `referral_code` | Attribution |
+| `source` | `web`, `sale`, `home`, etc. |
+| `status` | `registered` → `wallet_linked` → `eligible` → `distributed` |
+
+### Apply migration
+
+```bash
+supabase db push
+# or apply supabase/migrations/20260717000000_waitlist_tge_wallets.sql
+```
+
+Deploy the join endpoint:
+
+```bash
+supabase functions deploy waitlist-join
+```
+
+### Export wallets for TGE / merkle
+
+```bash
+# Full JSON (rows + unique wallets)
+SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... \
+  npm run export:waitlist -- --out ./waitlist-export.json
+
+# CSV for ops / spreadsheets
+npm run export:waitlist -- --format csv --out ./waitlist-wallets.csv
+
+# Shape compatible with gami-contracts merkle-whitelist.ts
+npm run export:waitlist -- --format participants --out ./participants.json
+PARTICIPANTS_JSON=./participants.json npx hardhat run scripts/merkle-whitelist.ts --network base
+```
+
+Web env (gami-web):
+
+```
+VITE_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+VITE_SUPABASE_ANON_KEY=...
+VITE_SUPABASE_FUNCTIONS_URL=https://YOUR_PROJECT.supabase.co/functions/v1
+```
 
 ## Environment Variables (Wallet)
 

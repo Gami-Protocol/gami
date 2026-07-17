@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
 
 import { GamiFooter } from '@/components/gami/GamiFooter';
@@ -13,6 +13,7 @@ import {
   PHASES,
   UTILITIES,
 } from '@/data/ico-tokenomics';
+import { joinWaitlist } from '@/lib/sale';
 
 function UtilityIcon({ type }: { type: string }) {
   if (type === 'xp') return <span className="font-display font-bold">XP</span>;
@@ -57,14 +58,20 @@ function iconBoxClass(icon: string): string {
 }
 
 export function WaitlistPage() {
+  const [searchParams] = useSearchParams();
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [walletLinked, setWalletLinked] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState(() => searchParams.get('email') ?? '');
 
   const { address, isConnected } = useAccount();
   const { connect, connectors, isPending } = useConnect();
   const { disconnect } = useDisconnect();
 
+  const referralCode = searchParams.get('ref') ?? undefined;
   const displayAddress = isConnected && address ? `${address.slice(0, 6)}...${address.slice(-4)}` : '';
 
   useEffect(() => {
@@ -110,8 +117,26 @@ export function WaitlistPage() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
+    setSubmitting(true);
+
+    const result = await joinWaitlist({
+      email,
+      full_name: fullName,
+      wallet_address: isConnected && address ? address : undefined,
+      referral_code: referralCode,
+      source: 'web',
+    });
+
+    setSubmitting(false);
+
+    if (!result.ok) {
+      setError(result.error ?? 'Failed to join waitlist. Please try again.');
+      return;
+    }
+
     setFormSubmitted(true);
   };
 
@@ -166,8 +191,18 @@ export function WaitlistPage() {
                     </div>
                     <h3 className="mb-4 font-display text-3xl font-bold">YOU&apos;RE IN THE GENESIS!</h3>
                     <p className="mb-8 text-gray-400">
-                      Verification link sent. Early waitlist = higher allocation priority &amp; XP multipliers.
+                      You&apos;re saved to the waitlist database
+                      {isConnected && address
+                        ? ` with wallet ${displayAddress} for TGE distribution.`
+                        : '. Connect a wallet anytime to lock in your claim address.'}{' '}
+                      Early waitlist = higher allocation priority &amp; XP multipliers.
                     </p>
+                    <Link
+                      to="/sale/contribute"
+                      className="mb-4 block w-full gami-gradient py-4 text-center font-display font-bold uppercase tracking-widest neo-border shadow-brutal transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none"
+                    >
+                      Continue to Sale
+                    </Link>
                     <button
                       type="button"
                       onClick={() => setFormSubmitted(false)}
@@ -188,17 +223,33 @@ export function WaitlistPage() {
                         <label className="mb-2 block font-mono text-[10px] uppercase tracking-[0.2em] text-gray-500">
                           Full Name
                         </label>
-                        <input type="text" placeholder="GAMI PILOT" required className="form-input" />
+                        <input
+                          type="text"
+                          placeholder="GAMI PILOT"
+                          required
+                          value={fullName}
+                          onChange={(e) => setFullName(e.target.value)}
+                          className="form-input"
+                          autoComplete="name"
+                        />
                       </div>
                       <div>
                         <label className="mb-2 block font-mono text-[10px] uppercase tracking-[0.2em] text-gray-500">
                           Email Address
                         </label>
-                        <input type="email" placeholder="PILOT@GAMIPROTOCOL.COM" required className="form-input" />
+                        <input
+                          type="email"
+                          placeholder="PILOT@GAMIPROTOCOL.COM"
+                          required
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className="form-input"
+                          autoComplete="email"
+                        />
                       </div>
                       <div>
                         <label className="mb-2 block font-mono text-[10px] uppercase tracking-[0.2em] text-gray-500">
-                          Wallet Address (Optional)
+                          Wallet Address (Recommended for TGE)
                         </label>
                         <div className="relative">
                           <input
@@ -216,13 +267,23 @@ export function WaitlistPage() {
                             {walletLinked || isConnected ? 'LINKED' : 'CONNECT'}
                           </button>
                         </div>
+                        <p className="mt-2 font-mono text-[10px] text-gray-600">
+                          Link your wallet so we can distribute $GAMI to you at TGE.
+                        </p>
                       </div>
+
+                      {error ? (
+                        <p className="border border-red-500/40 bg-red-500/10 px-3 py-2 font-mono text-xs text-red-300">
+                          {error}
+                        </p>
+                      ) : null}
 
                       <button
                         type="submit"
-                        className="gami-gradient w-full py-5 font-display text-xl font-bold uppercase tracking-widest neo-border shadow-brutal transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none"
+                        disabled={submitting}
+                        className="gami-gradient w-full py-5 font-display text-xl font-bold uppercase tracking-widest neo-border shadow-brutal transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none disabled:cursor-not-allowed disabled:opacity-60"
                       >
-                        Secure Spot
+                        {submitting ? 'Saving…' : 'Secure Spot'}
                       </button>
 
                       <p className="text-center font-mono text-[10px] leading-tight text-gray-500">
