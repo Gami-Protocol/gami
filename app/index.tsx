@@ -123,7 +123,7 @@ export default function Splash() {
               WALLET
             </Text>
             <Text className="text-ink-mute mt-3 font-mono text-[11px] tracking-[2px]">
-              THE WALLET THAT LEVELS YOU UP
+              DISCOVER · ENGAGE · EARN
             </Text>
           </Animated.View>
         </View>

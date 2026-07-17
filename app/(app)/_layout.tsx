@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { CircleUser, Home, Sparkles, Target } from 'lucide-react-native';
+import { CircleUser, Compass, Home, Sparkles } from 'lucide-react-native';
 import { View } from 'react-native';
 
 export default function AppTabLayout() {
@@ -28,10 +28,10 @@ export default function AppTabLayout() {
         }}
       />
       <Tabs.Screen
-        name="quests"
+        name="discover"
         options={{
-          title: 'QUESTS',
-          tabBarIcon: ({ color }) => <Target color={color} size={22} />,
+          title: 'DISCOVER',
+          tabBarIcon: ({ color }) => <Compass color={color} size={22} />,
         }}
       />
       <Tabs.Screen
@@ -67,6 +67,8 @@ export default function AppTabLayout() {
       <Tabs.Screen name="receive" options={{ href: null }} />
       <Tabs.Screen name="badges" options={{ href: null }} />
       <Tabs.Screen name="scan" options={{ href: null }} />
+      <Tabs.Screen name="quests" options={{ href: null }} />
+      <Tabs.Screen name="campaign" options={{ href: null }} />
       <Tabs.Screen name="claim" options={{ href: null }} />
       <Tabs.Screen name="sale" options={{ href: null }} />
       <Tabs.Screen name="referral" options={{ href: null }} />

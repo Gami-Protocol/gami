@@ -1,9 +1,23 @@
 import { useRouter } from 'expo-router';
-import { ArrowDown, ArrowUp, Coins, Gift, Layers, ScanLine, Share2, Target } from 'lucide-react-native';
+import {
+  ArrowDown,
+  ArrowRight,
+  ArrowUp,
+  Bell,
+  Coins,
+  Compass,
+  Gift,
+  Layers,
+  Repeat2,
+  Route,
+  Share2,
+  Sparkles,
+} from 'lucide-react-native';
 import { type ReactNode, useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
-import { GBody, GCard, GConfetti, GMono, GScreen, GSticker } from '@/components/gami';
+import { GCard, GConfetti, GMono, GProgressBar, GScreen, GSticker } from '@/components/gami';
+import { CAMPAIGNS, type Campaign } from '@/lib/config';
 import { createGamiWallet, currentStats, type LevelStats } from '@/lib/gami-sdk';
 import { useOnboardingStore } from '@/lib/store';
 
@@ -26,19 +40,56 @@ function QuickAction({
   );
 }
 
+function CampaignRow({ campaign }: { campaign: Campaign }) {
+  const router = useRouter();
+  return (
+    <GCard
+      className="mb-3"
+      onPress={() =>
+        router.push({ pathname: '/(app)/campaign', params: { campaignId: campaign.id } })
+      }
+    >
+      <View className="flex-row items-center">
+        <View
+          className="h-12 w-12 items-center justify-center rounded-2xl"
+          style={{ backgroundColor: campaign.colors[0] }}
+        >
+          <Text className="font-mono text-[11px] font-bold text-white">
+            {campaign.brand.slice(0, 2)}
+          </Text>
+        </View>
+        <View className="ml-3 flex-1">
+          <View className="flex-row items-center gap-2">
+            <Text className="text-ink-mute font-mono text-[9px] tracking-wide">
+              {campaign.brand} · {campaign.chain}
+            </Text>
+            {campaign.sponsored ? (
+              <Text className="text-purple-lo font-mono text-[8px]">FEATURED</Text>
+            ) : null}
+          </View>
+          <Text
+            className="text-ink mt-1 text-[15px] font-bold"
+            style={{ fontFamily: 'SpaceGrotesk_700Bold' }}
+          >
+            {campaign.title}
+          </Text>
+        </View>
+        <View className="items-end gap-2">
+          <Text className="text-green font-mono text-[11px] font-bold">+{campaign.reward} XP</Text>
+          <ArrowRight size={16} color="#6B6880" />
+        </View>
+      </View>
+    </GCard>
+  );
+}
+
 export default function Home() {
   const router = useRouter();
-  const {
-    handle,
-    xp,
-    spentGami,
-    hideBalances,
-    homeRevealSeen,
-    markHomeRevealSeen,
-    firstQuestClaimed,
-  } = useOnboardingStore();
+  const { handle, xp, spentGami, hideBalances, homeRevealSeen, markHomeRevealSeen, addXP } =
+    useOnboardingStore();
   const [stats, setStats] = useState<LevelStats>(currentStats());
   const [confetti, setConfetti] = useState(false);
+  const [dailyClaimed, setDailyClaimed] = useState(false);
 
   useEffect(() => {
     let unsub = () => {};
@@ -73,6 +124,8 @@ export default function Home() {
 
   const balance = hideBalances ? '••••' : stats.gamiBalance.toFixed(2);
   const xpDisplay = hideBalances ? '••••' : stats.totalXP.toLocaleString();
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
 
   return (
     <GScreen>
@@ -80,12 +133,30 @@ export default function Home() {
       <ScrollView
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 24, paddingTop: 8 }}
       >
+        <View className="mb-5 flex-row items-center justify-between">
+          <View>
+            <Text className="text-ink-mute font-mono text-[10px] tracking-[2px]">GAMI WALLET</Text>
+            <Text
+              className="text-ink mt-1 text-[25px] font-bold"
+              style={{ fontFamily: 'SpaceGrotesk_700Bold' }}
+            >
+              {greeting}, {handle || 'explorer'}
+            </Text>
+          </View>
+          <Pressable className="border-hairline bg-surface h-11 w-11 items-center justify-center rounded-full border">
+            <Bell size={19} color="#F4F1FF" />
+            <View className="bg-magenta absolute top-2.5 right-2.5 h-2 w-2 rounded-full" />
+          </Pressable>
+        </View>
+
         <GCard gradient glow className="overflow-hidden p-5">
           <View className="flex-row items-start justify-between">
             <View>
-              <Text className="font-mono text-[11px] tracking-widest text-white/70">HEY,</Text>
+              <Text className="font-mono text-[10px] tracking-widest text-white/70">
+                YOUR ENGAGEMENT ID
+              </Text>
               <Text
-                className="font-mono text-[20px] font-bold text-white"
+                className="mt-1 font-mono text-[18px] font-bold text-white"
                 style={{ fontFamily: 'JetBrainsMono_700Bold' }}
               >
                 @{handle || 'noxx_'}
@@ -96,42 +167,39 @@ export default function Home() {
             </GSticker>
           </View>
 
-          <Text
-            className="font-display mt-5 text-[34px] font-bold text-white"
-            style={{ fontFamily: 'SpaceGrotesk_700Bold' }}
-          >
-            WELCOME
-          </Text>
-
-          <View className="mt-4 flex-row items-end justify-between">
+          <View className="mt-6 flex-row items-end justify-between">
             <View>
-              <Text className="font-mono text-[11px] text-white/70">$GAMI</Text>
-              <GMono className="text-[24px] font-bold text-white">{balance}</GMono>
-              {stats.balanceSource === 'chain' ? (
-                <Text className="font-mono text-[9px] text-green">on-chain</Text>
-              ) : null}
+              <Text className="font-mono text-[10px] text-white/70">TOTAL XP</Text>
+              <GMono className="text-[28px] font-bold text-white">{xpDisplay}</GMono>
             </View>
             <View className="items-end">
-              <View className="flex-row items-center gap-1">
-                <View className="bg-green h-2 w-2 rounded-full" />
-                <Text className="font-mono text-[10px] text-white/70">live</Text>
-              </View>
-              <Text className="font-mono text-[11px] text-white/70">XP / Points</Text>
-              <GMono className="text-[20px] font-bold text-white">{xpDisplay}</GMono>
+              <Text className="font-mono text-[10px] text-white/70">WALLET</Text>
+              <GMono className="text-[18px] font-bold text-white">{balance} GAMI</GMono>
+              {stats.balanceSource === 'chain' ? (
+                <Text className="text-green font-mono text-[9px]">ON-CHAIN</Text>
+              ) : null}
             </View>
           </View>
+          <View className="mt-4">
+            <GProgressBar value={stats.progress} />
+            <Text className="mt-2 text-right font-mono text-[9px] text-white/60">
+              {stats.xpToNextLevel.toLocaleString()} XP TO LEVEL {stats.level + 1}
+            </Text>
+          </View>
           {stats.claimableGami > 0 ? (
-            <Pressable onPress={() => router.push('/(app)/claim')} className="mt-4 flex-row items-center gap-2">
+            <Pressable
+              onPress={() => router.push('/(app)/claim')}
+              className="mt-3 flex-row items-center gap-2"
+            >
               <Gift size={14} color="#FFD23D" />
-              <Text className="font-mono text-[11px] text-yellow">
+              <Text className="text-yellow font-mono text-[11px]">
                 {stats.claimableGami.toFixed(2)} GAMI claimable →
               </Text>
             </Pressable>
           ) : null}
         </GCard>
 
-        {/* quick actions */}
-        <View className="mt-6 flex-row justify-between">
+        <View className="mt-5 flex-row justify-between">
           <QuickAction
             icon={<ArrowUp size={20} color="#9A6BFF" />}
             label="SEND"
@@ -143,97 +211,118 @@ export default function Home() {
             onPress={() => router.push('/(app)/receive')}
           />
           <QuickAction
-            icon={<Target size={20} color="#FF3D8B" />}
-            label="QUESTS"
-            onPress={() => router.push('/(app)/quests')}
+            icon={<Repeat2 size={20} color="#FF3D8B" />}
+            label="SWAP"
+            onPress={() => router.push('/(app)/discover')}
           />
           <QuickAction
-            icon={<ScanLine size={20} color="#3DD6F5" />}
-            label="SCAN"
-            onPress={() => router.push('/(app)/scan')}
+            icon={<Route size={20} color="#3DD6F5" />}
+            label="BRIDGE"
+            onPress={() =>
+              router.push({
+                pathname: '/(app)/campaign',
+                params: { campaignId: 'aptos-explorer' },
+              })
+            }
           />
         </View>
 
-        {/* first quest */}
-        {!firstQuestClaimed ? (
-          <GCard className="border-green/50 mt-6" onPress={() => router.push('/(app)/quests')}>
-            <View className="flex-row items-center justify-between">
-              <View className="flex-1 pr-3">
-                <Text
-                  className="font-display text-ink text-[16px] font-bold"
-                  style={{ fontFamily: 'SpaceGrotesk_700Bold' }}
-                >
-                  First quest
-                </Text>
-                <GBody className="mt-0.5">Finish First Steps → +250 XP</GBody>
-              </View>
-              <GSticker color="green" tilt={-4}>
-                +250 XP
-              </GSticker>
-            </View>
-          </GCard>
-        ) : (
-          <GCard className="mt-6" onPress={() => router.push('/(app)/quests')}>
-            <View className="flex-row items-center justify-between">
-              <View className="flex-1 pr-3">
-                <Text
-                  className="font-display text-ink text-[16px] font-bold"
-                  style={{ fontFamily: 'SpaceGrotesk_700Bold' }}
-                >
-                  Active quests
-                </Text>
-                <GBody className="mt-0.5">NOVA picked 3 quests for your vibe</GBody>
-              </View>
-              <Target size={22} color="#9A6BFF" />
-            </View>
-          </GCard>
-        )}
-
-        {/* ICO / sale */}
-        <GCard className="mt-4" onPress={() => router.push('/(app)/sale')}>
+        <GCard
+          className="border-green/40 mt-6"
+          onPress={() => {
+            if (dailyClaimed) return;
+            addXP(10);
+            setDailyClaimed(true);
+            setConfetti(true);
+            setTimeout(() => setConfetti(false), 1200);
+          }}
+        >
           <View className="flex-row items-center justify-between">
-            <View className="flex-1 pr-3">
+            <View className="bg-green/10 h-11 w-11 items-center justify-center rounded-2xl">
+              <Sparkles size={20} color="#3DF5A0" />
+            </View>
+            <View className="ml-3 flex-1">
               <Text
-                className="font-display text-ink text-[16px] font-bold"
+                className="text-ink text-[15px] font-bold"
                 style={{ fontFamily: 'SpaceGrotesk_700Bold' }}
               >
-                Token sale
+                {dailyClaimed ? 'Daily XP claimed' : 'Daily XP is ready'}
               </Text>
-              <GBody className="mt-0.5">KYC, contribute USDC, track the raise</GBody>
+              <Text className="text-ink-mute mt-0.5 text-[12px]">
+                {dailyClaimed ? 'Come back tomorrow for more' : 'Tap to keep your streak alive'}
+              </Text>
             </View>
-            <Coins size={22} color="#FFD23D" />
+            <GSticker color="green" tilt={-3}>
+              +10 XP
+            </GSticker>
           </View>
         </GCard>
 
-        {/* Referral */}
-        <GCard className="mt-4" onPress={() => router.push('/(app)/referral')}>
-          <View className="flex-row items-center justify-between">
-            <View className="flex-1 pr-3">
-              <Text
-                className="font-display text-ink text-[16px] font-bold"
-                style={{ fontFamily: 'SpaceGrotesk_700Bold' }}
-              >
-                Refer & earn
-              </Text>
-              <GBody className="mt-0.5">Share your code · +100 XP per invite</GBody>
+        <View className="mt-7 mb-3 flex-row items-end justify-between">
+          <View>
+            <Text className="text-ink-mute font-mono text-[10px] tracking-[2px]">FOR YOU</Text>
+            <Text
+              className="text-ink mt-1 text-[21px] font-bold"
+              style={{ fontFamily: 'SpaceGrotesk_700Bold' }}
+            >
+              Today&apos;s campaigns
+            </Text>
+          </View>
+          <Pressable
+            onPress={() => router.push('/(app)/discover')}
+            className="flex-row items-center gap-1"
+          >
+            <Text className="text-purple-lo font-mono text-[10px] font-bold">EXPLORE ALL</Text>
+            <Compass size={14} color="#B14BFF" />
+          </Pressable>
+        </View>
+        {CAMPAIGNS.slice(0, 3).map((campaign) => (
+          <CampaignRow key={campaign.id} campaign={campaign} />
+        ))}
+
+        <Text className="text-ink-mute mt-6 mb-3 font-mono text-[10px] tracking-[2px]">
+          MORE FROM GAMI
+        </Text>
+        <GCard onPress={() => router.push('/(app)/sale')}>
+          <View className="flex-row items-center">
+            <View className="bg-yellow/10 h-11 w-11 items-center justify-center rounded-2xl">
+              <Coins size={20} color="#FFD23D" />
             </View>
-            <Share2 size={22} color="#FF3D8B" />
+            <View className="ml-3 flex-1">
+              <Text className="text-ink text-[15px] font-bold">Token sale</Text>
+              <Text className="text-ink-mute mt-0.5 text-[12px]">
+                KYC, contribute USDC and track the raise
+              </Text>
+            </View>
+            <ArrowRight size={16} color="#6B6880" />
           </View>
         </GCard>
-
-        {/* stash / badges */}
-        <GCard className="mt-4" onPress={() => router.push('/(app)/badges')}>
-          <View className="flex-row items-center justify-between">
-            <View className="flex-1 pr-3">
-              <Text
-                className="font-display text-ink text-[16px] font-bold"
-                style={{ fontFamily: 'SpaceGrotesk_700Bold' }}
-              >
-                Your stash
-              </Text>
-              <GBody className="mt-0.5">Badges, stickers & collectibles</GBody>
+        <GCard className="mt-3" onPress={() => router.push('/(app)/referral')}>
+          <View className="flex-row items-center">
+            <View className="bg-magenta/10 h-11 w-11 items-center justify-center rounded-2xl">
+              <Share2 size={20} color="#FF3D8B" />
             </View>
-            <Layers size={22} color="#3DD6F5" />
+            <View className="ml-3 flex-1">
+              <Text className="text-ink text-[15px] font-bold">Refer & earn</Text>
+              <Text className="text-ink-mute mt-0.5 text-[12px]">
+                Share your code · +100 XP per invite
+              </Text>
+            </View>
+            <ArrowRight size={16} color="#6B6880" />
+          </View>
+        </GCard>
+        <GCard className="mt-3" onPress={() => router.push('/(app)/badges')}>
+          <View className="flex-row items-center">
+            <View className="bg-cyan/10 h-11 w-11 items-center justify-center rounded-2xl">
+              <Layers size={20} color="#3DD6F5" />
+            </View>
+            <View className="ml-3 flex-1">
+              <Text className="text-ink text-[15px] font-bold">Your stash</Text>
+              <Text className="text-ink-mute mt-0.5 text-[12px]">
+                Badges, stickers and collectibles
+              </Text>
+            </View>
+            <ArrowRight size={16} color="#6B6880" />
           </View>
         </GCard>
       </ScrollView>
