@@ -128,6 +128,27 @@ Deno.serve(async (req) => {
 
     if (insertError) throw insertError;
 
+    // Fire-and-forget live email alert with updated count.
+    try {
+      const { count } = await supabase
+        .from('waitlist')
+        .select('id', { count: 'exact', head: true });
+      const notifyBase = Deno.env.get('SUPABASE_URL')?.replace(/\/$/, '');
+      if (notifyBase && count != null) {
+        void fetch(`${notifyBase}/functions/v1/waitlist-notify`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            count,
+            event: 'join',
+            joiner_email: inserted.email,
+          }),
+        });
+      }
+    } catch {
+      // Non-blocking.
+    }
+
     return json({
       ok: true,
       id: inserted.id,

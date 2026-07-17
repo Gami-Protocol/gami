@@ -13,7 +13,8 @@
     "format:check": "oxfmt --check .",
     "export:waitlist": "node scripts/export-waitlist-wallets.mjs",
     "firebase:setup-web": "node scripts/setup-firebase-web-app.mjs",
-    "firebase:deploy": "npx -y firebase-tools@latest deploy --only auth,firestore"
+    "firebase:deploy": "npx -y firebase-tools@latest deploy --only auth,firestore,functions",
+    "firebase:functions:build": "npm --prefix functions run build"
   },
   "dependencies": {
     "@ethersproject/shims": "^5.8.0",

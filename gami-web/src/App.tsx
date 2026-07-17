@@ -20,6 +20,7 @@ import { NotFoundPage } from '@/pages/NotFoundPage';
 import { SalePage } from '@/pages/SalePage';
 import { StatusPage } from '@/pages/StatusPage';
 import { TokenomicsPage } from '@/pages/TokenomicsPage';
+import { WaitlistLivePage } from '@/pages/WaitlistLivePage';
 import { WaitlistPage } from '@/pages/WaitlistPage';
 import { WalletPage } from '@/pages/WalletPage';
 import { WhitepaperPage } from '@/pages/WhitepaperPage';
@@ -43,6 +44,7 @@ export default function App() {
             <Route path="/developers/api" element={<Navigate to="/developers/mcp-server" replace />} />
             <Route path="/status" element={<StatusPage />} />
             <Route path="/waitlist" element={<WaitlistPage />} />
+            <Route path="/waitlist/live" element={<WaitlistLivePage />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/login" element={<AuthPage />} />
             <Route path="/sale" element={<SalePage />} />

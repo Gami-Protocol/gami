@@ -25,3 +25,13 @@ SUPABASE_URL=https://YOUR_PROJECT.supabase.co \
 SUPABASE_SERVICE_ROLE_KEY=... \
   npm run export:waitlist -- --format participants --out ./participants.json
 ```
+
+### Live waitlist email alerts
+
+```bash
+supabase secrets set RESEND_API_KEY=re_...
+supabase secrets set WAITLIST_ALERT_EMAILS=mattusmarcus@gmail.com
+supabase functions deploy waitlist-notify
+```
+
+Subscribe at `/waitlist/live`. Each new join posts the updated count to `waitlist-notify`.

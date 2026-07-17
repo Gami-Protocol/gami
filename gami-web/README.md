@@ -15,6 +15,7 @@ Marketing site and token sale portal for the $GAMI raise. Built with **Vite + Re
 | `/developers/mcp-server` | MCP server access |
 | `/status` | Protocol system status |
 | `/waitlist` | ICO waitlist launchpad (Firestore when Firebase is configured) |
+| `/waitlist/live` | Live waitlist counter + email alerts |
 | `/auth` | Firebase Auth (email/password, Google, phone) |
 | `/tokenomics` | Allocation chart + burn engine |
 | `/whitepaper` | Full tokenization doc |

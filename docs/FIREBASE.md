@@ -42,6 +42,28 @@ Also ensure `localhost` and `gami.xyz` are in **Authorized domains**.
 |-------|---------|
 | `/auth` | Email/password, Google, Phone sign-in |
 | `/waitlist` | Writes to Firestore `waitlist` when Firebase is configured |
+| `/waitlist/live` | Live waitlist counter + email alert subscription |
+
+## Live waitlist email alerts
+
+1. Open `/waitlist/live` and subscribe your email (defaults to your ops inbox).
+2. Each new signup increments Firestore `stats/waitlist` (live UI via `onSnapshot`).
+3. Emails are sent by either:
+   - **Firebase Function** `onWaitlistCreated` (set `RESEND_API_KEY`, `WAITLIST_ALERT_EMAILS`)
+   - **Supabase** `waitlist-notify` edge function (same env vars; used when `VITE_WAITLIST_NOTIFY_URL` / Supabase functions URL is set)
+
+```bash
+# Firebase functions
+firebase functions:secrets:set RESEND_API_KEY
+npx -y firebase-tools@latest deploy --only functions,firestore
+
+# Or Supabase edge
+supabase secrets set RESEND_API_KEY=re_...
+supabase secrets set WAITLIST_ALERT_EMAILS=mattusmarcus@gmail.com
+supabase functions deploy waitlist-notify
+```
+
+Avoid enabling **both** client notify URL and the Firebase email function at once, or you may get duplicate emails.
 
 ## Firestore collections
 

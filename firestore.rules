@@ -29,6 +29,20 @@ service cloud.firestore {
     //   - createdAt: timestamp
     //   - updatedAt: timestamp
     //
+    // Collection: stats
+    // Document ID: waitlist
+    // Fields:
+    //   - count: number (public live waitlist total)
+    //   - updatedAt: timestamp
+    //
+    // Collection: waitlist_alert_subscribers
+    // Document ID: {email}
+    // Fields:
+    //   - email: string
+    //   - active: bool
+    //   - createdAt: timestamp
+    //   - updatedAt: timestamp
+    //
     // ===============================================================
     // Helper Functions
     // ===============================================================
@@ -149,6 +163,43 @@ service cloud.firestore {
         && request.resource.data.updatedAt == request.time;
 
       allow delete: if false;
+    }
+
+    // Public live counter for waitlist size (increment-only from clients).
+    match /stats/waitlist {
+      allow read: if true;
+
+      allow create: if request.resource.data.keys().hasOnly(['count', 'updatedAt'])
+        && request.resource.data.count is number
+        && request.resource.data.count == 1
+        && request.resource.data.updatedAt == request.time;
+
+      allow update: if request.resource.data.keys().hasOnly(['count', 'updatedAt'])
+        && request.resource.data.count is number
+        && request.resource.data.count == resource.data.count + 1
+        && request.resource.data.updatedAt == request.time;
+
+      allow delete: if false;
+    }
+
+    // Emails that receive live waitlist count alerts.
+    match /waitlist_alert_subscribers/{emailId} {
+      allow create: if isEmail(emailId)
+        && request.resource.data.keys().hasOnly(['email', 'active', 'createdAt', 'updatedAt'])
+        && request.resource.data.email == emailId
+        && request.resource.data.active == true
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+
+      allow update: if isEmail(emailId)
+        && resource.data.email == emailId
+        && request.resource.data.email == emailId
+        && request.resource.data.keys().hasOnly(['email', 'active', 'createdAt', 'updatedAt'])
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.active is bool;
+
+      allow read, delete: if false;
     }
 
     match /{document=**} {

@@ -38,6 +38,15 @@ export const env = {
   },
   blockedCountries: () => read('VITE_BLOCKED_COUNTRIES'),
   supabaseFunctionsUrl: () => read('VITE_SUPABASE_FUNCTIONS_URL'),
+  /** Edge/Cloud Function that emails waitlist count alerts (Resend). */
+  waitlistNotifyUrl: () => {
+    const explicit = read('VITE_WAITLIST_NOTIFY_URL');
+    if (explicit) return explicit;
+    const functions = read('VITE_SUPABASE_FUNCTIONS_URL');
+    if (functions) return `${functions.replace(/\/$/, '')}/waitlist-notify`;
+    const supabase = read('VITE_SUPABASE_URL');
+    return supabase ? `${supabase.replace(/\/$/, '')}/functions/v1/waitlist-notify` : undefined;
+  },
   personaTemplateId: () => read('VITE_PERSONA_TEMPLATE_ID'),
   kycVerificationUrl: () => read('VITE_KYC_VERIFICATION_URL'),
   appStoreUrl: () => read('VITE_APP_STORE_URL'),

@@ -1,6 +1,10 @@
-import { doc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
 
 import { getFirebase } from '@/lib/firebase';
+import {
+  incrementWaitlistCount,
+  notifyWaitlistCountUpdate,
+} from '@/lib/firebase-waitlist-stats';
 
 export type WaitlistInput = {
   email: string;
@@ -54,6 +58,18 @@ export async function joinWaitlistFirestore(
   };
 
   try {
+    const preexisting = await getDoc(ref).catch(() => null);
+    if (preexisting?.exists()) {
+      if (fb.auth.currentUser) {
+        await updateDoc(ref, shared);
+      }
+      return {
+        ok: true,
+        id,
+        status: (preexisting.data().status as string | undefined) ?? status,
+      };
+    }
+
     if (fb.auth.currentUser) {
       try {
         await updateDoc(ref, shared);
@@ -67,6 +83,16 @@ export async function joinWaitlistFirestore(
       ...shared,
       createdAt: serverTimestamp(),
     });
+
+    const count = await incrementWaitlistCount();
+    if (count != null) {
+      void notifyWaitlistCountUpdate({
+        count,
+        event: 'join',
+        joinerEmail: email,
+      });
+    }
+
     return { ok: true, id, status };
   } catch (error) {
     const code =

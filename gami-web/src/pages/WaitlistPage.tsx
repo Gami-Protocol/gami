@@ -13,7 +13,11 @@ import {
   PHASES,
   UTILITIES,
 } from '@/data/ico-tokenomics';
+import { isFirebaseConfigured } from '@/lib/firebase';
+import { subscribeWaitlistCount } from '@/lib/firebase-waitlist-stats';
 import { joinWaitlist } from '@/lib/sale';
+
+const WAITLIST_CAP = 5000;
 
 function UtilityIcon({ type }: { type: string }) {
   if (type === 'xp') return <span className="font-display font-bold">XP</span>;
@@ -66,6 +70,7 @@ export function WaitlistPage() {
   const [error, setError] = useState('');
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState(() => searchParams.get('email') ?? '');
+  const [waitlistCount, setWaitlistCount] = useState<number | null>(null);
 
   const { address, isConnected } = useAccount();
   const { connect, connectors, isPending } = useConnect();
@@ -73,6 +78,11 @@ export function WaitlistPage() {
 
   const referralCode = searchParams.get('ref') ?? undefined;
   const displayAddress = isConnected && address ? `${address.slice(0, 6)}...${address.slice(-4)}` : '';
+
+  useEffect(() => {
+    if (!isFirebaseConfigured()) return;
+    return subscribeWaitlistCount((stats) => setWaitlistCount(stats.count));
+  }, []);
 
   useEffect(() => {
     document.title = 'GAMI ICO Launchpad — $GAMI Tokenomics & Genesis';
@@ -296,13 +306,19 @@ export function WaitlistPage() {
 
               <div className="mt-8 flex gap-4">
                 <div className="flex-1 border border-white/10 bg-black/40 p-4 font-mono">
-                  <span className="block text-[10px] uppercase text-gray-600">Referral Code</span>
-                  <span className="text-sm font-bold text-gami-accent">GAMI-GENESIS-2026</span>
+                  <span className="block text-[10px] uppercase text-gray-600">On Waitlist</span>
+                  <span className="text-sm font-bold text-gami-accent">
+                    {waitlistCount == null ? '—' : waitlistCount.toLocaleString()}
+                    <span className="text-gray-500"> / {WAITLIST_CAP.toLocaleString()}</span>
+                  </span>
                 </div>
-                <div className="flex-1 border border-white/10 bg-black/40 p-4 font-mono">
-                  <span className="block text-[10px] uppercase text-gray-600">Spots Left</span>
-                  <span className="text-sm font-bold text-white">1,402 / 5,000</span>
-                </div>
+                <Link
+                  to="/waitlist/live"
+                  className="flex-1 border border-white/10 bg-black/40 p-4 font-mono transition-colors hover:border-gami-accent"
+                >
+                  <span className="block text-[10px] uppercase text-gray-600">Live alerts</span>
+                  <span className="text-sm font-bold text-white">Email me updates →</span>
+                </Link>
               </div>
             </div>
           </div>

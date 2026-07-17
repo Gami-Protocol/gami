@@ -73,6 +73,12 @@ Deploy the join endpoint:
 supabase functions deploy waitlist-join
 ```
 
+### Live waitlist count + email alerts
+
+- UI: `/waitlist/live` — real-time Firestore counter + subscribe your email
+- Emails: Resend via Firebase `onWaitlistCreated` or Supabase `waitlist-notify`
+- Env: `RESEND_API_KEY`, `WAITLIST_ALERT_EMAILS=you@example.com`
+
 ### Export wallets for TGE / merkle
 
 ```bash
