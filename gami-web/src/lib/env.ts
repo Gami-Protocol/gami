@@ -9,6 +9,14 @@ const DEFAULT_PRIVY_APP_ID = 'cmr6honh400ee0cjudyfx9hpt';
 export const env = {
   supabaseUrl: () => read('VITE_SUPABASE_URL'),
   supabaseAnonKey: () => read('VITE_SUPABASE_ANON_KEY'),
+  /** Firebase web config (public). Project number / messaging sender: 869899204398 */
+  firebaseApiKey: () => read('VITE_FIREBASE_API_KEY'),
+  firebaseAuthDomain: () => read('VITE_FIREBASE_AUTH_DOMAIN'),
+  firebaseProjectId: () => read('VITE_FIREBASE_PROJECT_ID'),
+  firebaseStorageBucket: () => read('VITE_FIREBASE_STORAGE_BUCKET'),
+  firebaseMessagingSenderId: () => read('VITE_FIREBASE_MESSAGING_SENDER_ID') ?? '869899204398',
+  firebaseAppId: () => read('VITE_FIREBASE_APP_ID'),
+  firebaseMeasurementId: () => read('VITE_FIREBASE_MEASUREMENT_ID'),
   privyAppId: () => read('VITE_PRIVY_APP_ID') ?? DEFAULT_PRIVY_APP_ID,
   /** WalletConnect Cloud project ID for external mobile/desktop wallets. */
   walletConnectProjectId: () => read('VITE_WALLETCONNECT_PROJECT_ID'),

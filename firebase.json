@@ -1,0 +1,22 @@
+{
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "auth": {
+    "providers": {
+      "emailPassword": true,
+      "googleSignIn": {
+        "oAuthBrandDisplayName": "Gami Protocol",
+        "supportEmail": "support@gami.xyz",
+        "authorizedRedirectUris": [
+          "https://gami.xyz",
+          "https://www.gami.xyz",
+          "http://localhost",
+          "http://localhost:3000",
+          "http://localhost:5173"
+        ]
+      }
+    }
+  }
+}

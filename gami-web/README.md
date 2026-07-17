@@ -14,7 +14,8 @@ Marketing site and token sale portal for the $GAMI raise. Built with **Vite + Re
 | `/developers/mcp-client` | MCP client reference |
 | `/developers/mcp-server` | MCP server access |
 | `/status` | Protocol system status |
-| `/waitlist` | ICO waitlist launchpad (persists email + wallet to Supabase) |
+| `/waitlist` | ICO waitlist launchpad (Firestore when Firebase is configured) |
+| `/auth` | Firebase Auth (email/password, Google, phone) |
 | `/tokenomics` | Allocation chart + burn engine |
 | `/whitepaper` | Full tokenization doc |
 | `/sale` | Live sale dashboard |
@@ -38,6 +39,12 @@ Open http://localhost:3000
 All client env vars use the `VITE_` prefix (see `.env.example`):
 
 ```
+VITE_FIREBASE_API_KEY=
+VITE_FIREBASE_AUTH_DOMAIN=
+VITE_FIREBASE_PROJECT_ID=
+VITE_FIREBASE_STORAGE_BUCKET=
+VITE_FIREBASE_MESSAGING_SENDER_ID=869899204398
+VITE_FIREBASE_APP_ID=
 VITE_SUPABASE_URL=
 VITE_SUPABASE_ANON_KEY=
 VITE_PRIVY_APP_ID=
@@ -50,6 +57,8 @@ VITE_RAMP_HOST_API_KEY=
 VITE_RAMP_ENVIRONMENT=demo
 VITE_BLOCKED_COUNTRIES=US,CU,IR,KP,SY
 ```
+
+See `docs/FIREBASE.md` for Auth provider enablement and Firestore deploy.
 
 Set `VITE_PRIVY_APP_ID` to enable Privy email/wallet sign-in on the sale flow. Users who sign in with email
 receive a Privy embedded Ethereum wallet. The wallet menu lets them switch to that Privy wallet or connect

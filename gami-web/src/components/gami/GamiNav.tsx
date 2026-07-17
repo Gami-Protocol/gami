@@ -63,6 +63,12 @@ export function GamiNav() {
 
           <div className="hidden items-center gap-4 lg:flex">
             <Link
+              to="/auth"
+              className="font-display text-xs font-bold tracking-widest text-gray-300 transition-colors hover:text-gami-accent"
+            >
+              SIGN IN
+            </Link>
+            <Link
               to="/waitlist"
               className="border-2 border-white px-6 py-2 font-display text-xs font-bold tracking-widest transition-all hover:bg-white hover:text-black"
             >
@@ -114,6 +120,9 @@ export function GamiNav() {
               </Link>
             ))}
             <hr className="border-white/10" />
+            <Link to="/auth" onClick={() => setMobileMenu(false)}>
+              Sign In
+            </Link>
             <ConnectWallet />
             <Link
               to="/waitlist"

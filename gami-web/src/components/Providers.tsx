@@ -5,6 +5,7 @@ import { WagmiProvider } from 'wagmi';
 import { useState, type ReactNode } from 'react';
 
 import { SyncPrivyWallet } from '@/components/SyncPrivyWallet';
+import { FirebaseAuthProvider } from '@/hooks/useFirebaseAuth';
 import { PrivySaleAccountProvider } from '@/hooks/useSaleAccount';
 import { env } from '@/lib/env';
 import { defaultChain, legacyWagmiConfig, privyWagmiConfig, supportedChains } from '@/lib/wagmi';
@@ -16,7 +17,9 @@ export function Providers({ children }: { children: ReactNode }) {
   if (!privyAppId) {
     return (
       <QueryClientProvider client={queryClient}>
-        <WagmiProvider config={legacyWagmiConfig}>{children}</WagmiProvider>
+        <FirebaseAuthProvider>
+          <WagmiProvider config={legacyWagmiConfig}>{children}</WagmiProvider>
+        </FirebaseAuthProvider>
       </QueryClientProvider>
     );
   }
@@ -62,10 +65,12 @@ export function Providers({ children }: { children: ReactNode }) {
       }}
     >
       <QueryClientProvider client={queryClient}>
-        <PrivyWagmiProvider config={privyWagmiConfig}>
-          <SyncPrivyWallet />
-          <PrivySaleAccountProvider>{children}</PrivySaleAccountProvider>
-        </PrivyWagmiProvider>
+        <FirebaseAuthProvider>
+          <PrivyWagmiProvider config={privyWagmiConfig}>
+            <SyncPrivyWallet />
+            <PrivySaleAccountProvider>{children}</PrivySaleAccountProvider>
+          </PrivyWagmiProvider>
+        </FirebaseAuthProvider>
       </QueryClientProvider>
     </PrivyProvider>
   );
