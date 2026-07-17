@@ -6,7 +6,7 @@ import { env } from '@/lib/env';
 const WALLET_DEEP_LINK = 'gami://onboarding/welcome';
 const APP_STORE_URL = env.appStoreUrl() ?? '#';
 const PLAY_STORE_URL = env.playStoreUrl() ?? '#';
-const TESTFLIGHT_URL = env.testflightUrl() ?? '#';
+const TESTFLIGHT_URL = env.testflightUrl() ?? 'https://testflight.apple.com/join/71dW2rQP';
 
 export function WalletPage() {
   const [params] = useSearchParams();
@@ -55,8 +55,12 @@ export function WalletPage() {
                 <GamiLogo className="h-7 w-7" />
               </div>
               <div>
-                <p className="font-display text-xl font-bold leading-none tracking-tight text-white">GAMI</p>
-                <p className="mt-1 font-mono text-[9px] uppercase tracking-[0.25em] text-white/70">Wallet app</p>
+                <p className="font-display text-xl font-bold leading-none tracking-tight text-white">
+                  GAMI
+                </p>
+                <p className="mt-1 font-mono text-[9px] uppercase tracking-[0.25em] text-white/70">
+                  Wallet app
+                </p>
               </div>
             </div>
             <span className="border border-white/40 bg-white/10 px-2 py-1 font-mono text-[9px] font-bold uppercase tracking-widest text-white">
@@ -69,7 +73,13 @@ export function WalletPage() {
           <p className="font-display text-lg font-bold">Unlock your Gami Wallet</p>
           <p className="mt-1 text-xs text-gray-500">Point your camera at the code</p>
           <div className="relative mx-auto mt-5 w-fit border-2 border-black bg-white p-2">
-            <img src={qrCodeUrl} alt="QR code to open Gami Wallet" className="h-48 w-48" width={192} height={192} />
+            <img
+              src={qrCodeUrl}
+              alt="QR code to open Gami Wallet"
+              className="h-48 w-48"
+              width={192}
+              height={192}
+            />
             <div className="absolute left-1/2 top-1/2 flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center border-2 border-white bg-primary shadow-md">
               <GamiLogo className="h-6 w-6" />
             </div>
@@ -84,7 +94,9 @@ export function WalletPage() {
         </div>
 
         <div className="flex items-center justify-between border-x-2 border-b-2 border-black bg-[#15121f] px-4 py-3">
-          <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-white/50">Powered by $GAMI</p>
+          <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-white/50">
+            Powered by $GAMI
+          </p>
           <div className="flex gap-1" aria-hidden="true">
             <span className="h-2 w-2 bg-primary" />
             <span className="h-2 w-2 bg-gami-accent" />

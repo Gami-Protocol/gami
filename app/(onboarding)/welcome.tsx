@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { Bot, Link2, KeyRound, Zap, Coins } from 'lucide-react-native';
+import { Bot, Coins, Compass, KeyRound, Link2 } from 'lucide-react-native';
 import { type ReactNode } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -25,10 +25,18 @@ interface Prop {
 }
 
 const PROPS: Prop[] = [
-  { icon: <Zap size={20} color="#FFD23D" />, label: 'EARN XP', sub: 'every action counts' },
+  {
+    icon: <Compass size={20} color="#FFD23D" />,
+    label: 'DISCOVER',
+    sub: 'campaigns picked for you',
+  },
   { icon: <KeyRound size={20} color="#3DF5A0" />, label: 'SELF-CUSTODY', sub: 'your keys only' },
-  { icon: <Link2 size={20} color="#3DD6F5" />, label: 'MULTI-CHAIN', sub: 'Gami · Base · Solana' },
-  { icon: <Bot size={20} color="#9A6BFF" />, label: 'MEET NOVA', sub: "your wallet's brain" },
+  {
+    icon: <Link2 size={20} color="#3DD6F5" />,
+    label: 'ANY CHAIN',
+    sub: 'one wallet, every ecosystem',
+  },
+  { icon: <Bot size={20} color="#9A6BFF" />, label: 'ASK NOVA', sub: 'your engagement copilot' },
 ];
 
 function ValueCard({ item, index }: { item: Prop; index: number }) {
@@ -65,13 +73,14 @@ export default function Welcome() {
       >
         <Animated.View style={head}>
           <GSticker color="magenta" tilt={-6} className="mt-4">
-            WEB3
+            WALLET-FIRST
           </GSticker>
           <GHeading size="2xl" className="mt-4">
-            Your wallet,{'\n'}but make it <GHeading.Accent color="magenta">FUN.</GHeading.Accent>
+            Your gateway to{'\n'}
+            <GHeading.Accent color="magenta">everything on-chain.</GHeading.Accent>
           </GHeading>
           <GBody className="mt-3">
-            Stack XP on everything you do. Earn real rewards. Your keys, your chaos.
+            Discover campaigns, move across chains and earn rewards—all from one wallet.
           </GBody>
         </Animated.View>
 

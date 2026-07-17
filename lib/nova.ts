@@ -25,9 +25,9 @@ export interface NovaReplyResult {
 }
 
 const TONE_OPENER: Record<NovaTone, string> = {
-  shy: 'hey... i can help if you want. what do you need?',
-  chill: "yo. i'm your wallet's brain. ask me anything — quests, balances, sending, the lot.",
-  hype: "LET'S GOOO 🚀 I'm NOVA, your wallet's brain. What are we stacking today?!",
+  shy: 'hey... i can find rewards or help you move across chains. what do you need?',
+  chill: "yo. i'm your wallet copilot. ask me what to earn, swap or explore today.",
+  hype: "LET'S GOOO 🚀 I'm NOVA, your wallet copilot. What are we discovering today?!",
 };
 
 /** NOVA's opening line, tuned to the chosen tone. */
@@ -38,10 +38,10 @@ export function novaOpener(): string {
 
 /** Suggestion chips shown under the chat. */
 export const NOVA_SUGGESTIONS = [
-  "What's my level?",
-  'Find me a quest',
-  "What's my $GAMI balance?",
-  'How do I earn XP?',
+  'What can I earn today?',
+  'Find gaming campaigns',
+  'Bridge to Aptos',
+  "What's trending?",
 ];
 
 /**
@@ -63,7 +63,13 @@ export function novaReply(input: string): string {
     return `Your $GAMI balance is ${stats.gamiBalance.toFixed(2)}, plus ${stats.points.toLocaleString()} soulbound Points (those can't be sold — only spent in-protocol)${bang}`;
   }
   if (/(quest|earn|xp|reward|stack)/.test(q)) {
-    return `Head to the Quests tab — I tuned a few to your vibe${bang} "First Swap" pays +500 XP and takes ~5 min. Want me to walk you through it?`;
+    return `Head to Discover — I picked campaigns for your interests${bang} "Explore Aptos" pays +1,000 XP and Gami handles the cross-chain route.`;
+  }
+  if (/(bridge|aptos|sui|base|cross.?chain)/.test(q)) {
+    return `I can find a route and prepare the bridge for you${bang} You review the network, fees and amount before anything moves.`;
+  }
+  if (/(trend|campaign|discover|gaming)/.test(q)) {
+    return `Aptos Explorer and Summer Run are trending right now${bang} Open Discover to see the full campaign, tasks and rewards.`;
   }
   if (/(send|transfer|pay)/.test(q)) {
     return `I can prep a send for you. Tell me the amount and who to — I'll build it, you sign with Face ID. Nothing leaves without your approval${bang}`;
@@ -75,9 +81,9 @@ export function novaReply(input: string): string {
     return TONE_OPENER[tone];
   }
   if (/(thank|thanks|ty|cheers)/.test(q)) {
-    return tone === 'hype' ? 'ANYTIME 🔥 go stack more XP!' : 'anytime. go stack some XP.';
+    return tone === 'hype' ? 'ANYTIME 🔥 go find your next reward!' : 'anytime. go explore.';
   }
-  return `Good question${bang} I can check your level, balances, find quests, or prep a send. Try one of the suggestions below, or ask away.`;
+  return `Good question${bang} I can find campaigns, explain rewards, compare bridge routes, check balances or prep a send.`;
 }
 
 interface LiveTurn {

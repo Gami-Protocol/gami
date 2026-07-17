@@ -1,7 +1,17 @@
 /**
  * Gami wallet SDK — XP from local store, $GAMI from on-chain viem reads.
  *
- * Falls back to derived mock balance when contract addresses are not configured.
+ * Mirrors the documented surface from the Gami engagement network wallet spec so the real
+ * SDK can drop in later without screen changes:
+ *
+ *   import { createGamiWallet } from '@gami/wallet-sdk';
+ *   const wallet = await createGamiWallet();
+ *   const stats = await wallet.checkMyLevel();           // { level, totalXP, xpToNextLevel }
+ *   const off   = wallet.subscribeToLevelUps((user, newLevel, totalXP) => {});
+ *
+ * Backed by the persisted onboardingStore so XP changes are reflected here and
+ * level-up callbacks fire when XP crosses a threshold. Wallet balances use
+ * on-chain reads and fall back to a derived mock when contracts are not configured.
  */
 
 import type { Address } from 'viem';
@@ -125,6 +135,13 @@ function envelopeId(): string {
   return `env_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
 }
 
+/**
+ * Submit a quest-completion write intent. Returns a `queued` envelope
+ * immediately (the write is NOT applied here), then advances the envelope to
+ * `settling` and finally `settled` via the `onUpdate` callback to mimic the
+ * off-app engagement supervisor. XP is applied optimistically at queue time and
+ * never re-applied on settle.
+ */
 export function questComplete(
   questId: string,
   xp: number,

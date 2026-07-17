@@ -89,6 +89,82 @@ export function toNovaTone(v: string): NovaTone {
 /** Brand gradient used across hero elements (135deg). */
 export const BRAND_GRADIENT = ['#6E3CFB', '#B14BFF', '#FF3D8B'] as const;
 
+export interface Campaign {
+  id: string;
+  brand: string;
+  title: string;
+  description: string;
+  reward: number;
+  chain: string;
+  category: string;
+  participants: string;
+  sponsored?: boolean;
+  colors: readonly [string, string];
+  tasks: readonly string[];
+}
+
+/**
+ * Campaigns are the wallet's discovery layer. In production these come from
+ * the campaign marketplace; the local catalog keeps the product useful while
+ * that service is unavailable.
+ */
+export const CAMPAIGNS: Campaign[] = [
+  {
+    id: 'summer-run',
+    brand: 'NIKE',
+    title: 'Summer Run Challenge',
+    description: 'Move, collect and unlock a limited digital reward.',
+    reward: 750,
+    chain: 'BASE',
+    category: 'FASHION',
+    participants: '12.8K',
+    sponsored: true,
+    colors: ['#FF5F35', '#B21F1F'],
+    tasks: ['Watch the campaign film', 'Join the run club', 'Mint the finish badge'],
+  },
+  {
+    id: 'aptos-explorer',
+    brand: 'APTOS',
+    title: 'Explore Aptos',
+    description: 'Bridge once and discover a new on-chain ecosystem.',
+    reward: 1000,
+    chain: 'APTOS',
+    category: 'TRENDING',
+    participants: '8.4K',
+    sponsored: true,
+    colors: ['#00C2A8', '#00796B'],
+    tasks: ['Learn about Aptos', 'Bridge USDC', 'Claim the Explorer badge'],
+  },
+  {
+    id: 'pixel-quest',
+    brand: 'PIXELVERSE',
+    title: 'Enter the Arena',
+    description: 'Play the first chapter and earn an early-player collectible.',
+    reward: 500,
+    chain: 'SOLANA',
+    category: 'GAMING',
+    participants: '5.1K',
+    colors: ['#7B61FF', '#D946EF'],
+    tasks: ['Watch the trailer', 'Create your player', 'Complete chapter one'],
+  },
+  {
+    id: 'base-builders',
+    brand: 'BASE',
+    title: 'Onchain Summer',
+    description: 'Explore apps, collect a badge and meet the builders.',
+    reward: 400,
+    chain: 'BASE',
+    category: 'NEW',
+    participants: '3.7K',
+    colors: ['#175CFF', '#061C66'],
+    tasks: ['Explore a featured app', 'Make an on-chain action', 'Claim your badge'],
+  },
+];
+
+export function campaignById(id: string): Campaign | undefined {
+  return CAMPAIGNS.find((campaign) => campaign.id === id);
+}
+
 export interface Quest {
   id: string;
   title: string;
