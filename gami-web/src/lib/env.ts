@@ -9,6 +9,8 @@ const DEFAULT_PRIVY_APP_ID = 'cmr6honh400ee0cjudyfx9hpt';
 export const env = {
   supabaseUrl: () => read('VITE_SUPABASE_URL'),
   supabaseAnonKey: () => read('VITE_SUPABASE_ANON_KEY'),
+  /** Optional: point legacy Vite waitlist at gami-site /api/waitlist */
+  waitlistApiUrl: () => read('VITE_WAITLIST_API_URL'),
   /** Firebase web config (public). Project number / messaging sender: 869899204398 */
   firebaseApiKey: () => read('VITE_FIREBASE_API_KEY'),
   firebaseAuthDomain: () => read('VITE_FIREBASE_AUTH_DOMAIN'),

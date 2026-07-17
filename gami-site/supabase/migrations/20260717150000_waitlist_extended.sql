@@ -1,0 +1,8 @@
+-- Extended waitlist fields for gami-site redesign
+ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS full_name TEXT;
+ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS country TEXT;
+ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS company TEXT;
+ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS role TEXT;
+ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS interests TEXT;
+ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'registered';
+ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT now();
