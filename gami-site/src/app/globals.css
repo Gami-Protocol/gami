@@ -1,0 +1,107 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+:root {
+  --gami-bg: #09090b;
+  --gami-card: #141418;
+  --gami-primary: #6c3bff;
+  --gami-secondary: #8a63ff;
+  --gami-accent: #3fa9ff;
+  --gami-text: #ffffff;
+  --gami-muted: #a1a1aa;
+  --gami-border: rgba(255, 255, 255, 0.08);
+  --gami-glow: rgba(108, 59, 255, 0.45);
+}
+
+@theme inline {
+  --color-background: var(--gami-bg);
+  --color-foreground: var(--gami-text);
+  --color-card: var(--gami-card);
+  --color-primary: var(--gami-primary);
+  --color-secondary: var(--gami-secondary);
+  --color-accent: var(--gami-accent);
+  --color-muted: var(--gami-muted);
+  --color-border: var(--gami-border);
+  --font-sans: var(--font-geist-sans);
+  --font-display: var(--font-syne);
+  --font-mono: var(--font-geist-mono);
+}
+
+* {
+  border-color: var(--gami-border);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--gami-bg);
+  color: var(--gami-text);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--gami-primary) 55%, transparent);
+  color: white;
+}
+
+.gami-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(ellipse at center, black 20%, transparent 75%);
+}
+
+.gami-glow {
+  background: radial-gradient(circle at center, var(--gami-glow), transparent 65%);
+}
+
+.glass {
+  background: rgba(20, 20, 24, 0.65);
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, #ffffff 0%, #8a63ff 45%, #3fa9ff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.noise {
+  position: relative;
+}
+
+.noise::after {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.field {
+  width: 100%;
+  height: 2.75rem;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.35);
+  padding: 0 1rem;
+  color: white;
+  outline: none;
+}
+
+.field:focus {
+  border-color: rgba(108, 59, 255, 0.7);
+  box-shadow: 0 0 0 3px rgba(108, 59, 255, 0.2);
+}
+
+.field::placeholder {
+  color: #52525b;
+}

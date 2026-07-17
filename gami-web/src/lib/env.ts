@@ -9,6 +9,8 @@ const DEFAULT_PRIVY_APP_ID = 'cmr6honh400ee0cjudyfx9hpt';
 export const env = {
   supabaseUrl: () => read('VITE_SUPABASE_URL'),
   supabaseAnonKey: () => read('VITE_SUPABASE_ANON_KEY'),
+  /** Optional: point legacy Vite waitlist at gami-site /api/waitlist */
+  waitlistApiUrl: () => read('VITE_WAITLIST_API_URL'),
   privyAppId: () => read('VITE_PRIVY_APP_ID') ?? DEFAULT_PRIVY_APP_ID,
   /** WalletConnect Cloud project ID for external mobile/desktop wallets. */
   walletConnectProjectId: () => read('VITE_WALLETCONNECT_PROJECT_ID'),

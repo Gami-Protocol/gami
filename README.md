@@ -8,7 +8,8 @@ Gami is a gamified crypto ecosystem built on Base, featuring a mobile wallet app
 |-----------|-------------|
 | `/` (root) | React Native / Expo mobile wallet app |
 | [`gami-contracts/`](gami-contracts/) | Solidity smart contracts (ERC-20, token sale, vesting, fee routing) |
-| [`gami-web/`](gami-web/) | ICO web portal — Vite + React + React Router |
+| [`gami-web/`](gami-web/) | Legacy ICO portal — Vite + React (sale/claim flows) |
+| [`gami-site/`](gami-site/) | **Marketing website v2** — Next.js 15 (Home, Wallet, Developers, Partners, AI, Roadmap, Waitlist) |
 | [`gami-agentic-web/`](gami-agentic-web/) | Agentic Quest Chat interface — Next.js 15 (MCP server + client) |
 
 ## Mobile wallet app (Expo)

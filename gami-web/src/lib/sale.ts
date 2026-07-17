@@ -76,6 +76,34 @@ export async function joinWaitlist(input: {
     source: input.source ?? 'web',
   };
 
+  const waitlistApi = env.waitlistApiUrl();
+  if (waitlistApi) {
+    try {
+      const res = await fetch(waitlistApi, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName: input.full_name?.trim() || email.split('@')[0],
+          email,
+          walletAddress: wallet || '',
+          referralCode: input.referral_code || '',
+          role: 'community',
+          interests: ['Wallet Beta'],
+        }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        error?: string;
+      };
+      if (!res.ok || data.ok === false) {
+        return { ok: false, error: data.error || 'Failed to join waitlist' };
+      }
+      return { ok: true };
+    } catch {
+      // Fall through to Supabase paths.
+    }
+  }
+
   const functionsBase = getFunctionsBase();
   if (functionsBase) {
     try {
@@ -101,7 +129,13 @@ export async function joinWaitlist(input: {
 
   const base = getSupabaseUrl();
   const key = env.supabaseAnonKey();
-  if (!base || !key) return { ok: false, error: 'Backend not configured' };
+  if (!base || !key) {
+    return {
+      ok: false,
+      error:
+        'Backend not configured. Set VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY, or VITE_WAITLIST_API_URL to the gami-site /api/waitlist endpoint.',
+    };
+  }
 
   const res = await fetch(`${base}/rest/v1/waitlist`, {
     method: 'POST',
