@@ -1,0 +1,209 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: waitlist
+    // Document ID: auto-id (or deterministic email hash from client)
+    // Fields:
+    //   - email: string (required, lowercase email)
+    //   - fullName: string|null (optional)
+    //   - walletAddress: string|null (optional, lowercase 0x + 40 hex)
+    //   - referralCode: string|null (optional)
+    //   - source: string (required, short slug)
+    //   - status: string (registered|wallet_linked|eligible|distributed)
+    //   - uid: string|null (Firebase Auth uid when known)
+    //   - createdAt: timestamp (required on create)
+    //   - updatedAt: timestamp (required)
+    //
+    // Collection: users
+    // Document ID: {uid}
+    // Fields:
+    //   - email: string|null
+    //   - displayName: string|null
+    //   - phoneNumber: string|null
+    //   - photoURL: string|null
+    //   - providers: list<string>
+    //   - createdAt: timestamp
+    //   - updatedAt: timestamp
+    //
+    // Collection: stats
+    // Document ID: waitlist
+    // Fields:
+    //   - count: number (public live waitlist total)
+    //   - updatedAt: timestamp
+    //
+    // Collection: waitlist_alert_subscribers
+    // Document ID: {email}
+    // Fields:
+    //   - email: string
+    //   - active: bool
+    //   - createdAt: timestamp
+    //   - updatedAt: timestamp
+    //
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+
+    function isEmail(value) {
+      return value is string
+        && value.size() >= 5
+        && value.size() <= 254
+        && value == value.lower()
+        && value.matches('^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$');
+    }
+
+    function isOptionalWallet(value) {
+      return value == null
+        || (value is string
+          && value.matches('^0x[a-f0-9]{40}$'));
+    }
+
+    function isOptionalString(value, maxLen) {
+      return value == null
+        || (value is string && value.size() <= maxLen);
+    }
+
+    function isWaitlistStatus(value) {
+      return value in ['registered', 'wallet_linked', 'eligible', 'distributed'];
+    }
+
+    function waitlistKeys() {
+      return ['email', 'fullName', 'walletAddress', 'referralCode', 'source', 'status', 'uid', 'createdAt', 'updatedAt'];
+    }
+
+    function isValidWaitlist(data) {
+      return data.keys().hasOnly(waitlistKeys())
+        && isEmail(data.email)
+        && isOptionalString(data.fullName, 120)
+        && isOptionalWallet(data.walletAddress)
+        && isOptionalString(data.referralCode, 64)
+        && data.source is string
+        && data.source.size() > 0
+        && data.source.size() <= 32
+        && isWaitlistStatus(data.status)
+        && (data.uid == null || (data.uid is string && data.uid.size() > 0))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function userKeys() {
+      return ['email', 'displayName', 'phoneNumber', 'photoURL', 'providers', 'createdAt', 'updatedAt'];
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasOnly(userKeys())
+        && (data.email == null || isEmail(data.email))
+        && isOptionalString(data.displayName, 120)
+        && isOptionalString(data.phoneNumber, 32)
+        && isOptionalString(data.photoURL, 2048)
+        && data.providers is list
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // ===============================================================
+    // Collections
+    // ===============================================================
+
+    match /waitlist/{entryId} {
+      // Public waitlist signup is an explicit product requirement.
+      // Clients cannot list/export the full waitlist; use Admin SDK for TGE export.
+      allow create: if isValidWaitlist(request.resource.data)
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time
+        && (
+          request.resource.data.uid == null
+          || (isAuthenticated() && request.resource.data.uid == request.auth.uid)
+        );
+
+      allow read: if isAuthenticated()
+        && (
+          resource.data.uid == request.auth.uid
+          || (request.auth.token.email != null
+            && resource.data.email == request.auth.token.email.lower())
+        );
+
+      allow update: if isAuthenticated()
+        && isValidWaitlist(request.resource.data)
+        && request.resource.data.email == resource.data.email
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedAt == request.time
+        && (
+          resource.data.uid == request.auth.uid
+          || (resource.data.uid == null && request.resource.data.uid == request.auth.uid)
+          || (request.auth.token.email != null
+            && resource.data.email == request.auth.token.email.lower())
+        );
+
+      allow delete: if false;
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+
+      allow create: if isOwner(userId)
+        && isValidUser(request.resource.data)
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+
+      allow update: if isOwner(userId)
+        && isValidUser(request.resource.data)
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedAt == request.time;
+
+      allow delete: if false;
+    }
+
+    // Public live counter for waitlist size (increment-only from clients).
+    match /stats/waitlist {
+      allow read: if true;
+
+      allow create: if request.resource.data.keys().hasOnly(['count', 'updatedAt'])
+        && request.resource.data.count is number
+        && request.resource.data.count == 1
+        && request.resource.data.updatedAt == request.time;
+
+      allow update: if request.resource.data.keys().hasOnly(['count', 'updatedAt'])
+        && request.resource.data.count is number
+        && request.resource.data.count == resource.data.count + 1
+        && request.resource.data.updatedAt == request.time;
+
+      allow delete: if false;
+    }
+
+    // Emails that receive live waitlist count alerts.
+    match /waitlist_alert_subscribers/{emailId} {
+      allow create: if isEmail(emailId)
+        && request.resource.data.keys().hasOnly(['email', 'active', 'createdAt', 'updatedAt'])
+        && request.resource.data.email == emailId
+        && request.resource.data.active == true
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+
+      allow update: if isEmail(emailId)
+        && resource.data.email == emailId
+        && request.resource.data.email == emailId
+        && request.resource.data.keys().hasOnly(['email', 'active', 'createdAt', 'updatedAt'])
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.active is bool;
+
+      allow read, delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

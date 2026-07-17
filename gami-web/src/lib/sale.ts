@@ -2,6 +2,8 @@ import { parseUnits } from 'viem';
 
 import { getContractAddress, getFunctionsBase, getSupabaseUrl } from '@/lib/contracts';
 import { env } from '@/lib/env';
+import { isFirebaseConfigured } from '@/lib/firebase';
+import { joinWaitlistFirestore } from '@/lib/firebase-waitlist';
 
 export interface SaleEligibility {
   wallet_address: string;
@@ -75,6 +77,17 @@ export async function joinWaitlist(input: {
     referral_code: input.referral_code?.trim() || null,
     source: input.source ?? 'web',
   };
+
+  // Prefer Firebase/Firestore when configured (primary backend).
+  if (isFirebaseConfigured()) {
+    return joinWaitlistFirestore({
+      email: payload.email,
+      full_name: payload.full_name ?? undefined,
+      wallet_address: payload.wallet_address ?? undefined,
+      referral_code: payload.referral_code ?? undefined,
+      source: payload.source,
+    });
+  }
 
   const functionsBase = getFunctionsBase();
   if (functionsBase) {
