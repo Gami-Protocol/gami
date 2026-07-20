@@ -149,8 +149,8 @@ export function AuthPage() {
           <h1 className="mb-4 font-display text-4xl font-bold uppercase italic">Firebase Auth</h1>
           <p className="text-gray-400">
             Add your Firebase web config to <code className="text-gami-accent">gami-web/.env</code>{' '}
-            (<code className="text-gami-accent">VITE_FIREBASE_*</code>) after registering the web app
-            in project number <span className="text-white">869899204398</span>.
+            (<code className="text-gami-accent">VITE_FIREBASE_*</code>) for Firebase project{' '}
+            <span className="text-white">gami-protocol</span>.
           </p>
         </div>
         <GamiFooter />

@@ -18,6 +18,8 @@
         "oAuthBrandDisplayName": "Gami Protocol",
         "supportEmail": "support@gami.xyz",
         "authorizedRedirectUris": [
+          "https://gamiprotocol.io",
+          "https://www.gamiprotocol.io",
           "https://gami.xyz",
           "https://www.gami.xyz",
           "http://localhost",

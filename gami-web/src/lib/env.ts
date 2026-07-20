@@ -6,18 +6,33 @@ function read(name: string): string | undefined {
 /** Public Privy App ID (safe for the browser). Override with VITE_PRIVY_APP_ID if needed. */
 const DEFAULT_PRIVY_APP_ID = 'cmr6honh400ee0cjudyfx9hpt';
 
+/**
+ * Public Firebase web config for project `gami-protocol`.
+ * Safe to ship in the client; restrict abuse via Auth authorized domains + Firestore rules.
+ */
+const DEFAULT_FIREBASE = {
+  apiKey: 'AIzaSyAmH2y1bsVUDvBwaTkzh10lcSNPeafaMJI',
+  authDomain: 'gami-protocol.firebaseapp.com',
+  projectId: 'gami-protocol',
+  storageBucket: 'gami-protocol.firebasestorage.app',
+  messagingSenderId: '476154037926',
+  appId: '1:476154037926:web:124de45220907b40ec5667',
+} as const;
+
 export const env = {
   supabaseUrl: () => read('VITE_SUPABASE_URL'),
   supabaseAnonKey: () => read('VITE_SUPABASE_ANON_KEY'),
   /** Optional: point legacy Vite waitlist at gami-site /api/waitlist */
   waitlistApiUrl: () => read('VITE_WAITLIST_API_URL'),
-  /** Firebase web config (public). Project number / messaging sender: 869899204398 */
-  firebaseApiKey: () => read('VITE_FIREBASE_API_KEY'),
-  firebaseAuthDomain: () => read('VITE_FIREBASE_AUTH_DOMAIN'),
-  firebaseProjectId: () => read('VITE_FIREBASE_PROJECT_ID'),
-  firebaseStorageBucket: () => read('VITE_FIREBASE_STORAGE_BUCKET'),
-  firebaseMessagingSenderId: () => read('VITE_FIREBASE_MESSAGING_SENDER_ID') ?? '869899204398',
-  firebaseAppId: () => read('VITE_FIREBASE_APP_ID'),
+  /** Firebase web config (public). Project: gami-protocol / sender 476154037926 */
+  firebaseApiKey: () => read('VITE_FIREBASE_API_KEY') ?? DEFAULT_FIREBASE.apiKey,
+  firebaseAuthDomain: () => read('VITE_FIREBASE_AUTH_DOMAIN') ?? DEFAULT_FIREBASE.authDomain,
+  firebaseProjectId: () => read('VITE_FIREBASE_PROJECT_ID') ?? DEFAULT_FIREBASE.projectId,
+  firebaseStorageBucket: () =>
+    read('VITE_FIREBASE_STORAGE_BUCKET') ?? DEFAULT_FIREBASE.storageBucket,
+  firebaseMessagingSenderId: () =>
+    read('VITE_FIREBASE_MESSAGING_SENDER_ID') ?? DEFAULT_FIREBASE.messagingSenderId,
+  firebaseAppId: () => read('VITE_FIREBASE_APP_ID') ?? DEFAULT_FIREBASE.appId,
   firebaseMeasurementId: () => read('VITE_FIREBASE_MEASUREMENT_ID'),
   privyAppId: () => read('VITE_PRIVY_APP_ID') ?? DEFAULT_PRIVY_APP_ID,
   /** WalletConnect Cloud project ID for external mobile/desktop wallets. */

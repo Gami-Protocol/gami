@@ -29,6 +29,13 @@ export default function WaitlistPage() {
             <li>· SDK and partner onboarding</li>
             <li>· Live updates to waitlist@gamiprotocol.io</li>
           </ul>
+          <p className="mt-8 text-sm text-zinc-400">
+            Watch the counter live at{' '}
+            <a href="/waitlist/live" className="text-accent underline-offset-4 hover:underline">
+              /waitlist/live
+            </a>
+            .
+          </p>
         </div>
         <div className="glass rounded-[2rem] p-6 md:p-8">
           <WaitlistForm />
