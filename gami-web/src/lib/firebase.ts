@@ -27,7 +27,7 @@ function readConfig() {
     authDomain,
     projectId,
     storageBucket: storageBucket ?? `${projectId}.firebasestorage.app`,
-    messagingSenderId: messagingSenderId ?? '869899204398',
+    messagingSenderId: messagingSenderId ?? '476154037926',
     appId,
     ...(env.firebaseMeasurementId() ? { measurementId: env.firebaseMeasurementId() } : {}),
   };

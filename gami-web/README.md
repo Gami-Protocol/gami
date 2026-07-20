@@ -40,12 +40,12 @@ Open http://localhost:3000
 All client env vars use the `VITE_` prefix (see `.env.example`):
 
 ```
-VITE_FIREBASE_API_KEY=
-VITE_FIREBASE_AUTH_DOMAIN=
-VITE_FIREBASE_PROJECT_ID=
-VITE_FIREBASE_STORAGE_BUCKET=
-VITE_FIREBASE_MESSAGING_SENDER_ID=869899204398
-VITE_FIREBASE_APP_ID=
+VITE_FIREBASE_API_KEY=AIzaSyAmH2y1bsVUDvBwaTkzh10lcSNPeafaMJI
+VITE_FIREBASE_AUTH_DOMAIN=gami-protocol.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=gami-protocol
+VITE_FIREBASE_STORAGE_BUCKET=gami-protocol.firebasestorage.app
+VITE_FIREBASE_MESSAGING_SENDER_ID=476154037926
+VITE_FIREBASE_APP_ID=1:476154037926:web:124de45220907b40ec5667
 VITE_SUPABASE_URL=
 VITE_SUPABASE_ANON_KEY=
 VITE_PRIVY_APP_ID=
@@ -58,6 +58,8 @@ VITE_RAMP_HOST_API_KEY=
 VITE_RAMP_ENVIRONMENT=demo
 VITE_BLOCKED_COUNTRIES=US,CU,IR,KP,SY
 ```
+
+Firebase defaults are baked into `src/lib/env.ts`. Live counter: `/waitlist/live` (`https://gamiprotocol.io/waitlist/live`).
 
 See `docs/FIREBASE.md` for Auth provider enablement and Firestore deploy.
 

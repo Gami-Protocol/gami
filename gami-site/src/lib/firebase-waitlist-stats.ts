@@ -1,16 +1,13 @@
 import {
   doc,
-  getDoc,
-  increment,
   onSnapshot,
-  serverTimestamp,
   setDoc,
   updateDoc,
+  serverTimestamp,
   type Unsubscribe,
 } from 'firebase/firestore';
 
 import { getFirebase } from '@/lib/firebase';
-import { env } from '@/lib/env';
 
 export type WaitlistStats = {
   count: number;
@@ -18,6 +15,15 @@ export type WaitlistStats = {
 };
 
 const STATS_PATH = ['stats', 'waitlist'] as const;
+
+function normalizeAlertEmail(email: string): string | null {
+  const normalized = email.trim().toLowerCase();
+  // Firestore document IDs cannot contain `/`.
+  if (!normalized.includes('@') || normalized.includes('/')) {
+    return null;
+  }
+  return normalized;
+}
 
 export function subscribeWaitlistCount(
   onChange: (stats: WaitlistStats) => void,
@@ -48,40 +54,6 @@ export function subscribeWaitlistCount(
       onError?.(error);
     },
   );
-}
-
-/** Bump the public counter after a brand-new waitlist signup. */
-export async function incrementWaitlistCount(): Promise<number | null> {
-  const fb = getFirebase();
-  if (!fb) return null;
-
-  const ref = doc(fb.db, ...STATS_PATH);
-  const existing = await getDoc(ref);
-
-  if (!existing.exists()) {
-    await setDoc(ref, {
-      count: 1,
-      updatedAt: serverTimestamp(),
-    });
-    return 1;
-  }
-
-  await updateDoc(ref, {
-    count: increment(1),
-    updatedAt: serverTimestamp(),
-  });
-
-  const next = Number(existing.data().count ?? 0) + 1;
-  return next;
-}
-
-function normalizeAlertEmail(email: string): string | null {
-  const normalized = email.trim().toLowerCase();
-  // Firestore document IDs cannot contain `/`.
-  if (!normalized.includes('@') || normalized.includes('/')) {
-    return null;
-  }
-  return normalized;
 }
 
 export async function subscribeWaitlistEmailAlert(
@@ -149,25 +121,4 @@ export async function unsubscribeWaitlistEmailAlert(
       error: error instanceof Error ? error.message : 'Could not unsubscribe',
     };
   }
-}
-
-/** Notify alert emails about the latest count (Resend via edge/Cloud Function). */
-export async function notifyWaitlistCountUpdate(input: {
-  count: number;
-  event?: 'join' | 'digest';
-  joinerEmail?: string;
-}): Promise<void> {
-  const url = env.waitlistNotifyUrl();
-  if (!url) return;
-
-  await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      count: input.count,
-      event: input.event ?? 'join',
-      joiner_email: input.joinerEmail ?? null,
-      source: 'gami-web',
-    }),
-  }).catch(() => undefined);
 }
