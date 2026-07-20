@@ -16,6 +16,15 @@ export type WaitlistStats = {
 
 const STATS_PATH = ['stats', 'waitlist'] as const;
 
+function normalizeAlertEmail(email: string): string | null {
+  const normalized = email.trim().toLowerCase();
+  // Firestore document IDs cannot contain `/`.
+  if (!normalized.includes('@') || normalized.includes('/')) {
+    return null;
+  }
+  return normalized;
+}
+
 export function subscribeWaitlistCount(
   onChange: (stats: WaitlistStats) => void,
   onError?: (error: Error) => void,
@@ -53,24 +62,25 @@ export async function subscribeWaitlistEmailAlert(
   const fb = getFirebase();
   if (!fb) return { ok: false, error: 'Firebase is not configured' };
 
-  const normalized = email.trim().toLowerCase();
-  if (!normalized.includes('@')) {
+  const normalized = normalizeAlertEmail(email);
+  if (!normalized) {
     return { ok: false, error: 'Valid email required' };
   }
 
   const ref = doc(fb.db, 'waitlist_alert_subscribers', normalized);
   try {
-    await setDoc(ref, {
-      email: normalized,
+    // Prefer update for existing subscribers so createdAt stays intact (rules).
+    await updateDoc(ref, {
       active: true,
-      createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
     return { ok: true };
   } catch {
     try {
-      await updateDoc(ref, {
+      await setDoc(ref, {
+        email: normalized,
         active: true,
+        createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
       return { ok: true };
@@ -89,7 +99,11 @@ export async function unsubscribeWaitlistEmailAlert(
   const fb = getFirebase();
   if (!fb) return { ok: false, error: 'Firebase is not configured' };
 
-  const normalized = email.trim().toLowerCase();
+  const normalized = normalizeAlertEmail(email);
+  if (!normalized) {
+    return { ok: false, error: 'Valid email required' };
+  }
+
   try {
     await setDoc(
       doc(fb.db, 'waitlist_alert_subscribers', normalized),

@@ -10,20 +10,23 @@ const DEFAULT_FIREBASE = {
   appId: '1:476154037926:web:124de45220907b40ec5667',
 } as const;
 
-function read(name: string): string | undefined {
-  const value = process.env[name];
+function readPublic(value: string | undefined): string | undefined {
   return typeof value === 'string' && value.length > 0 ? value : undefined;
 }
 
 function readConfig() {
-  const apiKey = read('NEXT_PUBLIC_FIREBASE_API_KEY') ?? DEFAULT_FIREBASE.apiKey;
-  const authDomain = read('NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN') ?? DEFAULT_FIREBASE.authDomain;
-  const projectId = read('NEXT_PUBLIC_FIREBASE_PROJECT_ID') ?? DEFAULT_FIREBASE.projectId;
+  // Direct NEXT_PUBLIC_* access so Next.js can inline these at build time.
+  const apiKey = readPublic(process.env.NEXT_PUBLIC_FIREBASE_API_KEY) ?? DEFAULT_FIREBASE.apiKey;
+  const authDomain =
+    readPublic(process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN) ?? DEFAULT_FIREBASE.authDomain;
+  const projectId =
+    readPublic(process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID) ?? DEFAULT_FIREBASE.projectId;
   const storageBucket =
-    read('NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET') ?? DEFAULT_FIREBASE.storageBucket;
+    readPublic(process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET) ?? DEFAULT_FIREBASE.storageBucket;
   const messagingSenderId =
-    read('NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID') ?? DEFAULT_FIREBASE.messagingSenderId;
-  const appId = read('NEXT_PUBLIC_FIREBASE_APP_ID') ?? DEFAULT_FIREBASE.appId;
+    readPublic(process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID) ??
+    DEFAULT_FIREBASE.messagingSenderId;
+  const appId = readPublic(process.env.NEXT_PUBLIC_FIREBASE_APP_ID) ?? DEFAULT_FIREBASE.appId;
 
   if (!apiKey || !authDomain || !projectId || !appId) return null;
 
