@@ -1,24 +1,28 @@
-# Supabase (Gami ICO backend)
+# Gami Protocol — Supabase
 
-## Waitlist / TGE wallets
+## Waitlist
 
-| Object | Role |
-|--------|------|
-| `waitlist` | Stores signup email, name, wallet, referral, source, status |
+| Resource | Purpose |
+|----------|---------|
+| `waitlist` | Signups (email, name, company, role, wallet, referral codes, status) |
 | `waitlist_distribution` | View of rows with valid `0x` wallets for TGE export |
-| `waitlist-join` | Edge function: validate, normalize, upsert waitlist rows |
-| `sale_participants` | Post-KYC contributors (allocation source of truth) |
+| `waitlist_public_count()` | Public aggregate count RPC (no PII) |
+| `waitlist-join` | Edge function: validate + upsert |
+| `waitlist-welcome` | Confirmation email (Resend) |
+| `waitlist-admin` | Protected admin stats / search / export |
+| `waitlist-notify` | Ops live-count emails → `waitlist@gamiprotocol.io` |
 
-### Deploy
+See `docs/WAITLIST_SUPABASE.md` for the full client + RLS setup.
 
 ```bash
 supabase db push
 supabase functions deploy waitlist-join
+supabase functions deploy waitlist-welcome
+supabase functions deploy waitlist-admin
+supabase functions deploy waitlist-notify
 supabase functions deploy sale-eligibility
 supabase functions deploy sale-stats
 ```
-
-### Export for TGE
 
 ```bash
 SUPABASE_URL=https://YOUR_PROJECT.supabase.co \
@@ -26,12 +30,12 @@ SUPABASE_SERVICE_ROLE_KEY=... \
   npm run export:waitlist -- --format participants --out ./participants.json
 ```
 
-### Live waitlist email alerts
+### Secrets
 
 ```bash
 supabase secrets set RESEND_API_KEY=re_...
 supabase secrets set WAITLIST_ALERT_EMAILS=waitlist@gamiprotocol.io
-supabase functions deploy waitlist-notify
+supabase secrets set WAITLIST_ADMIN_SECRET=long-random-string
 ```
 
 Subscribe at `/waitlist/live`. Alerts go to `waitlist@gamiprotocol.io` by default.

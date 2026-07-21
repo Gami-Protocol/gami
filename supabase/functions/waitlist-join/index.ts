@@ -7,12 +7,21 @@ const corsHeaders = {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const WALLET_RE = /^0x[a-fA-F0-9]{40}$/;
+const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
+}
+
+function generateReferralCode(): string {
+  let code = 'GAMI-';
+  for (let i = 0; i < 6; i++) {
+    code += ALPHABET[Math.floor(Math.random() * ALPHABET.length)];
+  }
+  return code;
 }
 
 Deno.serve(async (req) => {
@@ -29,10 +38,15 @@ Deno.serve(async (req) => {
     const email = String(body.email ?? '')
       .trim()
       .toLowerCase();
-    const fullName = String(body.full_name ?? body.fullName ?? '').trim() || null;
-    const referralCode = String(body.referral_code ?? body.referralCode ?? '').trim() || null;
-    const source = String(body.source ?? 'web').trim() || 'web';
-    const rawWallet = String(body.wallet_address ?? body.walletAddress ?? '').trim();
+    const fullName = String(body.full_name ?? body.fullName ?? body.name ?? '').trim() || null;
+    const company = String(body.company ?? '').trim() || null;
+    const role = String(body.role ?? '').trim() || null;
+    const country = String(body.country ?? '').trim() || null;
+    const referredBy = String(body.referred_by ?? body.referredBy ?? body.referral_code ?? body.referralCode ?? '')
+      .trim()
+      .toUpperCase() || null;
+    const source = String(body.source ?? 'website').trim() || 'website';
+    const rawWallet = String(body.wallet_address ?? body.walletAddress ?? body.wallet ?? '').trim();
     const walletAddress = rawWallet ? rawWallet.toLowerCase() : null;
 
     if (!email || !EMAIL_RE.test(email)) {
@@ -65,7 +79,9 @@ Deno.serve(async (req) => {
 
     const { data: existing } = await supabase
       .from('waitlist')
-      .select('id, email, wallet_address, full_name, referral_code, source, status')
+      .select(
+        'id, email, wallet_address, full_name, company, role, referral_code, referred_by, source, status',
+      )
       .eq('email', email)
       .maybeSingle();
 
@@ -74,23 +90,21 @@ Deno.serve(async (req) => {
       if (walletAddress && walletAddress !== existing.wallet_address) {
         patch.wallet_address = walletAddress;
       }
-      if (fullName && fullName !== existing.full_name) {
-        patch.full_name = fullName;
-      }
-      if (referralCode && !existing.referral_code) {
-        patch.referral_code = referralCode;
-      }
-      if (source && source !== existing.source) {
-        patch.source = source;
-      }
+      if (fullName && fullName !== existing.full_name) patch.full_name = fullName;
+      if (company && company !== existing.company) patch.company = company;
+      if (role && role !== existing.role) patch.role = role;
+      if (referredBy && !existing.referred_by) patch.referred_by = referredBy;
+      if (source && source !== existing.source) patch.source = source;
 
       if (Object.keys(patch).length === 0) {
         return json({
           ok: true,
+          already: true,
           id: existing.id,
           email: existing.email,
           wallet_address: existing.wallet_address,
           status: existing.status,
+          referral_code: existing.referral_code,
           created: false,
         });
       }
@@ -99,19 +113,32 @@ Deno.serve(async (req) => {
         .from('waitlist')
         .update(patch)
         .eq('id', existing.id)
-        .select('id, email, wallet_address, status')
+        .select('id, email, wallet_address, status, referral_code')
         .single();
 
       if (updateError) throw updateError;
 
       return json({
         ok: true,
+        already: true,
         id: updated.id,
         email: updated.email,
         wallet_address: updated.wallet_address,
         status: updated.status,
+        referral_code: updated.referral_code,
         created: false,
       });
+    }
+
+    let referralCode = generateReferralCode();
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const { data: clash } = await supabase
+        .from('waitlist')
+        .select('id')
+        .eq('referral_code', referralCode)
+        .maybeSingle();
+      if (!clash) break;
+      referralCode = generateReferralCode();
     }
 
     const { data: inserted, error: insertError } = await supabase
@@ -119,20 +146,22 @@ Deno.serve(async (req) => {
       .insert({
         email,
         full_name: fullName,
+        company,
+        role,
+        country,
         wallet_address: walletAddress,
         referral_code: referralCode,
+        referred_by: referredBy,
         source,
+        status: walletAddress ? 'wallet_linked' : 'pending',
       })
-      .select('id, email, wallet_address, status')
+      .select('id, email, wallet_address, status, referral_code')
       .single();
 
     if (insertError) throw insertError;
 
-    // Fire-and-forget live email alert with updated count.
     try {
-      const { count } = await supabase
-        .from('waitlist')
-        .select('id', { count: 'exact', head: true });
+      const { count } = await supabase.from('waitlist').select('id', { count: 'exact', head: true });
       const notifyBase = Deno.env.get('SUPABASE_URL')?.replace(/\/$/, '');
       if (notifyBase && count != null) {
         void fetch(`${notifyBase}/functions/v1/waitlist-notify`, {
@@ -142,6 +171,16 @@ Deno.serve(async (req) => {
             count,
             event: 'join',
             joiner_email: inserted.email,
+          }),
+        });
+        void fetch(`${notifyBase}/functions/v1/waitlist-welcome`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: inserted.email,
+            name: fullName ?? 'Pilot',
+            referralCode: inserted.referral_code,
+            referralLink: `https://gamiprotocol.io/?ref=${encodeURIComponent(inserted.referral_code)}`,
           }),
         });
       }
@@ -155,6 +194,7 @@ Deno.serve(async (req) => {
       email: inserted.email,
       wallet_address: inserted.wallet_address,
       status: inserted.status,
+      referral_code: inserted.referral_code,
       created: true,
     });
   } catch (err) {

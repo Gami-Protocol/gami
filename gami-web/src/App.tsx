@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { CookieConsent } from '@/components/CookieConsent';
 import { GamiNav } from '@/components/gami/GamiNav';
 import { Providers } from '@/components/Providers';
+import { AdminPage } from '@/pages/AdminPage';
 import { AboutPage } from '@/pages/AboutPage';
 import { AgentsPage } from '@/pages/AgentsPage';
 import { AuthPage } from '@/pages/AuthPage';
@@ -45,6 +46,7 @@ export default function App() {
             <Route path="/status" element={<StatusPage />} />
             <Route path="/waitlist" element={<WaitlistPage />} />
             <Route path="/waitlist/live" element={<WaitlistLivePage />} />
+            <Route path="/admin" element={<AdminPage />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/login" element={<AuthPage />} />
             <Route path="/sale" element={<SalePage />} />

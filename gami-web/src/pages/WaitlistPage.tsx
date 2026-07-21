@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
-import { useAccount, useConnect, useDisconnect } from 'wagmi';
+import { Link } from 'react-router-dom';
 
 import { GamiFooter } from '@/components/gami/GamiFooter';
 import { GamiTokenLogo } from '@/components/gami/GamiTokenLogo';
+import { WaitlistForm } from '@/components/waitlist/WaitlistForm';
 import {
   ALLOCATION_ROWS,
   DUAL_TOKEN,
@@ -13,9 +13,7 @@ import {
   PHASES,
   UTILITIES,
 } from '@/data/ico-tokenomics';
-import { isFirebaseConfigured } from '@/lib/firebase';
-import { subscribeWaitlistCount } from '@/lib/firebase-waitlist-stats';
-import { joinWaitlist } from '@/lib/sale';
+import { fetchWaitlistPublicCount } from '@/lib/waitlist';
 
 const WAITLIST_CAP = 5000;
 
@@ -62,26 +60,12 @@ function iconBoxClass(icon: string): string {
 }
 
 export function WaitlistPage() {
-  const [searchParams] = useSearchParams();
-  const [formSubmitted, setFormSubmitted] = useState(false);
-  const [walletLinked, setWalletLinked] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState(() => searchParams.get('email') ?? '');
   const [waitlistCount, setWaitlistCount] = useState<number | null>(null);
 
-  const { address, isConnected } = useAccount();
-  const { connect, connectors, isPending } = useConnect();
-  const { disconnect } = useDisconnect();
-
-  const referralCode = searchParams.get('ref') ?? undefined;
-  const displayAddress = isConnected && address ? `${address.slice(0, 6)}...${address.slice(-4)}` : '';
-
   useEffect(() => {
-    if (!isFirebaseConfigured()) return;
-    return subscribeWaitlistCount((stats) => setWaitlistCount(stats.count));
+    void fetchWaitlistPublicCount().then((n) => {
+      if (n != null) setWaitlistCount(n);
+    });
   }, []);
 
   useEffect(() => {
@@ -103,52 +87,6 @@ export function WaitlistPage() {
       }
     };
   }, []);
-
-  const handleConnect = () => {
-    if (isConnected) {
-      setWalletLinked(false);
-      disconnect();
-      return;
-    }
-    setLoading(true);
-    const connector = connectors[0];
-    if (connector) {
-      connect(
-        { connector },
-        {
-          onSettled: () => {
-            setLoading(false);
-            setWalletLinked(true);
-          },
-        },
-      );
-    } else {
-      setLoading(false);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setSubmitting(true);
-
-    const result = await joinWaitlist({
-      email,
-      full_name: fullName,
-      wallet_address: isConnected && address ? address : undefined,
-      referral_code: referralCode,
-      source: 'web',
-    });
-
-    setSubmitting(false);
-
-    if (!result.ok) {
-      setError(result.error ?? 'Failed to join waitlist. Please try again.');
-      return;
-    }
-
-    setFormSubmitted(true);
-  };
 
   return (
     <>
@@ -192,116 +130,7 @@ export function WaitlistPage() {
               <div className="absolute -right-10 -top-10 -z-10 h-64 w-64 bg-gami-purple/30 blur-[100px]" />
 
               <div className="relative overflow-hidden border-4 border-black bg-gami-bg p-8 neo-border shadow-brutal-purple">
-                {formSubmitted ? (
-                  <div className="py-12 text-center">
-                    <div className="gami-gradient neo-border mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full">
-                      <svg className="h-10 w-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                    <h3 className="mb-4 font-display text-3xl font-bold">YOU&apos;RE IN THE GENESIS!</h3>
-                    <p className="mb-8 text-gray-400">
-                      You&apos;re saved to the waitlist database
-                      {isConnected && address
-                        ? ` with wallet ${displayAddress} for TGE distribution.`
-                        : '. Connect a wallet anytime to lock in your claim address.'}{' '}
-                      Early waitlist = higher allocation priority &amp; XP multipliers.
-                    </p>
-                    <Link
-                      to="/sale/contribute"
-                      className="mb-4 block w-full gami-gradient py-4 text-center font-display font-bold uppercase tracking-widest neo-border shadow-brutal transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none"
-                    >
-                      Continue to Sale
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={() => setFormSubmitted(false)}
-                      className="w-full border-2 border-white py-4 font-display font-bold uppercase tracking-widest transition-all hover:bg-white hover:text-black"
-                    >
-                      Back
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <div className="mb-8 flex items-center justify-between">
-                      <h2 className="font-display text-2xl font-bold uppercase italic">$GAMI ICO Waitlist</h2>
-                      <div className="bg-gami-purple px-3 py-1 font-mono text-[10px] font-bold uppercase">LIVE</div>
-                    </div>
-
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                      <div>
-                        <label className="mb-2 block font-mono text-[10px] uppercase tracking-[0.2em] text-gray-500">
-                          Full Name
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="GAMI PILOT"
-                          required
-                          value={fullName}
-                          onChange={(e) => setFullName(e.target.value)}
-                          className="form-input"
-                          autoComplete="name"
-                        />
-                      </div>
-                      <div>
-                        <label className="mb-2 block font-mono text-[10px] uppercase tracking-[0.2em] text-gray-500">
-                          Email Address
-                        </label>
-                        <input
-                          type="email"
-                          placeholder="PILOT@GAMIPROTOCOL.COM"
-                          required
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          className="form-input"
-                          autoComplete="email"
-                        />
-                      </div>
-                      <div>
-                        <label className="mb-2 block font-mono text-[10px] uppercase tracking-[0.2em] text-gray-500">
-                          Wallet Address (Recommended for TGE)
-                        </label>
-                        <div className="relative">
-                          <input
-                            type="text"
-                            value={walletLinked || isConnected ? displayAddress : ''}
-                            placeholder="0X..."
-                            readOnly
-                            className="form-input pr-24"
-                          />
-                          <button
-                            type="button"
-                            onClick={handleConnect}
-                            className="absolute bottom-2 right-2 top-2 bg-white px-3 font-display text-[10px] font-bold uppercase text-black transition-all hover:bg-gami-accent hover:text-white"
-                          >
-                            {walletLinked || isConnected ? 'LINKED' : 'CONNECT'}
-                          </button>
-                        </div>
-                        <p className="mt-2 font-mono text-[10px] text-gray-600">
-                          Link your wallet so we can distribute $GAMI to you at TGE.
-                        </p>
-                      </div>
-
-                      {error ? (
-                        <p className="border border-red-500/40 bg-red-500/10 px-3 py-2 font-mono text-xs text-red-300">
-                          {error}
-                        </p>
-                      ) : null}
-
-                      <button
-                        type="submit"
-                        disabled={submitting}
-                        className="gami-gradient w-full py-5 font-display text-xl font-bold uppercase tracking-widest neo-border shadow-brutal transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {submitting ? 'Saving…' : 'Secure Spot'}
-                      </button>
-
-                      <p className="text-center font-mono text-[10px] leading-tight text-gray-500">
-                        EARLY JOINERS RECEIVE PRIORITY ALLOCATION + LIFETIME XP MULTIPLIERS
-                      </p>
-                    </form>
-                  </>
-                )}
+                <WaitlistForm />
               </div>
 
               <div className="mt-8 flex gap-4">
@@ -566,16 +395,6 @@ export function WaitlistPage() {
       </div>
 
       <GamiFooter variant="ico" />
-
-      {(loading || isPending) && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-6 backdrop-blur-sm">
-          <div className="w-full max-w-sm border-4 border-black bg-gami-bg p-12 text-center neo-border shadow-brutal-purple">
-            <div className="mx-auto mb-8 h-16 w-16 animate-spin rounded-full border-4 border-black border-t-gami-purple" />
-            <h3 className="mb-2 font-display text-2xl font-bold uppercase italic tracking-widest">Connecting...</h3>
-            <p className="font-mono text-xs text-gray-500">AWAITING HANDSHAKE FROM WALLET PROVIDER</p>
-          </div>
-        </div>
-      )}
     </>
   );
 }
