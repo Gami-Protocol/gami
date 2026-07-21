@@ -1,0 +1,17 @@
+# Supabase Edge Functions / CLI config for Gami Protocol
+project_id = "xetqhdzvbfeiedbmopew"
+
+[api]
+enabled = true
+
+[functions.waitlist-join]
+verify_jwt = false
+
+[functions.waitlist-welcome]
+verify_jwt = false
+
+[functions.waitlist-admin]
+verify_jwt = false
+
+[functions.waitlist-notify]
+verify_jwt = false

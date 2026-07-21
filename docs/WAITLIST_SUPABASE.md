@@ -5,12 +5,26 @@ Production waitlist for `gami-web` uses **Supabase** as the primary backend.
 ## Client env (`gami-web/.env` / `.env.local`)
 
 ```bash
-VITE_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
-VITE_SUPABASE_ANON_KEY=YOUR_ANON_KEY
-VITE_SUPABASE_FUNCTIONS_URL=https://YOUR_PROJECT.supabase.co/functions/v1
+VITE_SUPABASE_URL=https://xetqhdzvbfeiedbmopew.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+VITE_SUPABASE_ANON_KEY=sb_publishable_...   # legacy alias
+VITE_SUPABASE_FUNCTIONS_URL=https://xetqhdzvbfeiedbmopew.supabase.co/functions/v1
 ```
 
-Never commit service-role keys. The anon / publishable key is safe for the browser when RLS is enabled.
+## Server env (Edge Functions / gami-site API)
+
+On hosted Supabase Edge Functions these are injected automatically. For local / Next.js:
+
+```bash
+SUPABASE_URL=https://xetqhdzvbfeiedbmopew.supabase.co
+SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+SUPABASE_SECRET_KEY=sb_secret_...            # never commit; paste from API Keys
+SUPABASE_JWKS_URL=https://xetqhdzvbfeiedbmopew.supabase.co/auth/v1/.well-known/jwks.json
+```
+
+Server code uses `@supabase/server` (`withSupabase`, `createAdminClient`). Do not use legacy `SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY` in new code.
+
+Never commit service-role / secret keys. The publishable key is safe for the browser when RLS is enabled.
 
 ## Schema
 
@@ -34,18 +48,31 @@ Key columns on `waitlist`:
 | `referred_by` | code from `?ref=` |
 | `status` | `pending` default; `wallet_linked` when wallet set |
 
-## Edge functions
+## Edge functions (`@supabase/server`)
+
+Waitlist functions use `withSupabase` from `npm:@supabase/server`:
+
+| Function | Auth mode |
+|----------|-----------|
+| `waitlist-join` | `publishable` |
+| `waitlist-welcome` | `publishable` \| `secret` |
+| `waitlist-admin` | `publishable` + `WAITLIST_ADMIN_SECRET` header |
+| `waitlist-notify` | existing Resend notifier |
+
+`supabase/config.toml` sets `verify_jwt = false` for these (required for publishable/secret modes).
 
 ```bash
-supabase secrets set RESEND_API_KEY=re_...
+supabase secrets set SUPABASE_SECRET_KEY=sb_secret_...   # if not auto-injected
 supabase secrets set WAITLIST_ADMIN_SECRET=long-random-string
-supabase secrets set WAITLIST_ALERT_EMAILS=waitlist@gamiprotocol.io
+supabase secrets set RESEND_API_KEY=re_...
 
 supabase functions deploy waitlist-join
 supabase functions deploy waitlist-welcome
-supabase functions deploy waitlist-notify
 supabase functions deploy waitlist-admin
+supabase functions deploy waitlist-notify
 ```
+
+AI skill installed at `.agents/skills/supabase-server` via `npx skills add supabase/server`.
 
 ## App routes
 

@@ -13,6 +13,7 @@
     "@privy-io/react-auth": "^3.34.0",
     "@privy-io/wagmi": "^4.0.14",
     "@ramp-network/ramp-instant-sdk": "^6.2.0",
+    "@supabase/server": "^1.4.0",
     "@supabase/supabase-js": "^2.110.8",
     "@tanstack/react-query": "^5.80.7",
     "@vitejs/plugin-react": "^4.5.2",

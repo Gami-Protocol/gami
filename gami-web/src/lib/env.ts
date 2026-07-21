@@ -21,7 +21,11 @@ const DEFAULT_FIREBASE = {
 
 export const env = {
   supabaseUrl: () => read('VITE_SUPABASE_URL'),
-  supabaseAnonKey: () => read('VITE_SUPABASE_ANON_KEY'),
+  /** Prefer new publishable key; fall back to legacy anon key name. */
+  supabaseAnonKey: () =>
+    read('VITE_SUPABASE_PUBLISHABLE_KEY') ?? read('VITE_SUPABASE_ANON_KEY'),
+  supabasePublishableKey: () =>
+    read('VITE_SUPABASE_PUBLISHABLE_KEY') ?? read('VITE_SUPABASE_ANON_KEY'),
   /** Optional: point legacy Vite waitlist at gami-site /api/waitlist */
   waitlistApiUrl: () => read('VITE_WAITLIST_API_URL'),
   /** Firebase web config (public). Project: gami-protocol / sender 476154037926 */
