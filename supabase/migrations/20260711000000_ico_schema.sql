@@ -1,5 +1,12 @@
 -- Gami Protocol ICO + referral schema
 -- Run via: supabase db push or supabase migration up
+-- Fresh-project safe: creates profiles stub before altering it.
+
+CREATE TABLE IF NOT EXISTS profiles (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email TEXT,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
 
 -- Extend profiles with ICO + referral fields
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS referral_code TEXT UNIQUE;
@@ -7,7 +14,7 @@ ALTER TABLE profiles ADD COLUMN IF NOT EXISTS referral_parent TEXT;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS ico_participant_id UUID;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS sale_phase TEXT;
 
--- Waitlist for pre-sale signups
+-- Waitlist for pre-sale signups (canonical columns live in later migrations / bootstrap)
 CREATE TABLE IF NOT EXISTS waitlist (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email TEXT NOT NULL,
@@ -82,5 +89,7 @@ ALTER TABLE claim_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE referrals ENABLE ROW LEVEL SECURITY;
 
 -- Service role can manage all; anon can insert waitlist
+DROP POLICY IF EXISTS waitlist_insert ON waitlist;
 CREATE POLICY waitlist_insert ON waitlist FOR INSERT TO anon WITH CHECK (true);
+DROP POLICY IF EXISTS waitlist_select_own ON waitlist;
 CREATE POLICY waitlist_select_own ON waitlist FOR SELECT TO authenticated USING (true);

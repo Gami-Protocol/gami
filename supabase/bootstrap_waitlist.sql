@@ -1,7 +1,19 @@
--- Bootstrap production waitlist for gami-protocol Supabase project.
--- Safe to run in the Supabase SQL editor on a fresh project.
+-- =============================================================================
+-- Gami Protocol — canonical waitlist schema (fresh-project safe)
+-- Project: xetqhdzvbfeiedbmopew
+--
+-- Apply in Supabase Dashboard → SQL Editor → New query → Run
+-- OR:  psql "$DATABASE_URL" -f supabase/bootstrap_waitlist.sql
+--
+-- After running: Dashboard → Settings → API → Reload schema (or wait ~10s)
+-- =============================================================================
 
-CREATE TABLE IF NOT EXISTS waitlist (
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+-- ---------------------------------------------------------------------------
+-- Core waitlist table
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.waitlist (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email TEXT NOT NULL,
   full_name TEXT,
@@ -14,25 +26,27 @@ CREATE TABLE IF NOT EXISTS waitlist (
   referred_by TEXT,
   source TEXT DEFAULT 'website',
   status TEXT DEFAULT 'pending',
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now(),
-  UNIQUE (email)
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT waitlist_email_unique UNIQUE (email)
 );
 
-ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS full_name TEXT;
-ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS company TEXT;
-ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS role TEXT;
-ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS country TEXT;
-ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS interests TEXT;
-ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS referred_by TEXT;
-ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT now();
-ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'pending';
-ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS wallet_address TEXT;
-ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS referral_code TEXT;
-ALTER TABLE waitlist ADD COLUMN IF NOT EXISTS source TEXT DEFAULT 'website';
+-- Idempotent column adds (safe if an older partial table already exists)
+ALTER TABLE public.waitlist ADD COLUMN IF NOT EXISTS full_name TEXT;
+ALTER TABLE public.waitlist ADD COLUMN IF NOT EXISTS company TEXT;
+ALTER TABLE public.waitlist ADD COLUMN IF NOT EXISTS role TEXT;
+ALTER TABLE public.waitlist ADD COLUMN IF NOT EXISTS country TEXT;
+ALTER TABLE public.waitlist ADD COLUMN IF NOT EXISTS interests TEXT;
+ALTER TABLE public.waitlist ADD COLUMN IF NOT EXISTS wallet_address TEXT;
+ALTER TABLE public.waitlist ADD COLUMN IF NOT EXISTS referral_code TEXT;
+ALTER TABLE public.waitlist ADD COLUMN IF NOT EXISTS referred_by TEXT;
+ALTER TABLE public.waitlist ADD COLUMN IF NOT EXISTS source TEXT DEFAULT 'website';
+ALTER TABLE public.waitlist ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'pending';
+ALTER TABLE public.waitlist ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT now();
+ALTER TABLE public.waitlist ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT now();
 
-ALTER TABLE waitlist DROP CONSTRAINT IF EXISTS waitlist_status_check;
-ALTER TABLE waitlist
+ALTER TABLE public.waitlist DROP CONSTRAINT IF EXISTS waitlist_status_check;
+ALTER TABLE public.waitlist
   ADD CONSTRAINT waitlist_status_check
   CHECK (
     status IS NULL
@@ -46,24 +60,33 @@ ALTER TABLE waitlist
     )
   );
 
-UPDATE waitlist SET status = 'pending' WHERE status IS NULL OR status = '';
+UPDATE public.waitlist
+SET status = 'pending'
+WHERE status IS NULL OR btrim(status) = '';
 
+-- ---------------------------------------------------------------------------
+-- Indexes
+-- ---------------------------------------------------------------------------
 CREATE UNIQUE INDEX IF NOT EXISTS idx_waitlist_referral_code_unique
-  ON waitlist (referral_code)
+  ON public.waitlist (referral_code)
   WHERE referral_code IS NOT NULL AND referral_code <> '';
 
-CREATE INDEX IF NOT EXISTS idx_waitlist_referred_by ON waitlist (referred_by);
-CREATE INDEX IF NOT EXISTS idx_waitlist_company ON waitlist (company);
-CREATE INDEX IF NOT EXISTS idx_waitlist_source ON waitlist (source);
-CREATE INDEX IF NOT EXISTS idx_waitlist_wallet ON waitlist (wallet_address);
-CREATE INDEX IF NOT EXISTS idx_waitlist_status ON waitlist (status);
-CREATE INDEX IF NOT EXISTS idx_waitlist_created_at ON waitlist (created_at);
-
 CREATE UNIQUE INDEX IF NOT EXISTS idx_waitlist_wallet_unique
-  ON waitlist (wallet_address)
+  ON public.waitlist (wallet_address)
   WHERE wallet_address IS NOT NULL AND wallet_address <> '';
 
-CREATE OR REPLACE FUNCTION normalize_waitlist_row()
+CREATE INDEX IF NOT EXISTS idx_waitlist_referred_by ON public.waitlist (referred_by);
+CREATE INDEX IF NOT EXISTS idx_waitlist_company ON public.waitlist (company);
+CREATE INDEX IF NOT EXISTS idx_waitlist_source ON public.waitlist (source);
+CREATE INDEX IF NOT EXISTS idx_waitlist_wallet ON public.waitlist (wallet_address);
+CREATE INDEX IF NOT EXISTS idx_waitlist_status ON public.waitlist (status);
+CREATE INDEX IF NOT EXISTS idx_waitlist_created_at ON public.waitlist (created_at);
+CREATE INDEX IF NOT EXISTS idx_waitlist_email ON public.waitlist (email);
+
+-- ---------------------------------------------------------------------------
+-- Normalize + generate GAMI-XXXXXX invite codes
+-- ---------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.normalize_waitlist_row()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 AS $$
@@ -92,6 +115,14 @@ BEGIN
     NEW.country := nullif(trim(NEW.country), '');
   END IF;
 
+  IF NEW.interests IS NOT NULL THEN
+    NEW.interests := nullif(trim(NEW.interests), '');
+  END IF;
+
+  IF NEW.source IS NOT NULL THEN
+    NEW.source := nullif(trim(NEW.source), '');
+  END IF;
+
   IF NEW.referred_by IS NOT NULL THEN
     NEW.referred_by := upper(nullif(trim(NEW.referred_by), ''));
   END IF;
@@ -102,18 +133,18 @@ BEGIN
 
   IF NEW.wallet_address IS NOT NULL THEN
     NEW.status := 'wallet_linked';
-  ELSIF NEW.status IS NULL OR NEW.status = '' OR NEW.status = 'registered' THEN
+  ELSIF NEW.status IS NULL OR btrim(NEW.status) = '' OR NEW.status = 'registered' THEN
     NEW.status := 'pending';
   END IF;
 
-  IF NEW.referral_code IS NULL OR trim(NEW.referral_code) = '' THEN
+  IF NEW.referral_code IS NULL OR btrim(NEW.referral_code) = '' THEN
     LOOP
       code := 'GAMI-';
       FOR i IN 1..6 LOOP
         code := code || substr(alphabet, 1 + floor(random() * length(alphabet))::int, 1);
       END LOOP;
       EXIT WHEN NOT EXISTS (
-        SELECT 1 FROM waitlist w WHERE w.referral_code = code
+        SELECT 1 FROM public.waitlist w WHERE w.referral_code = code
       );
     END LOOP;
     NEW.referral_code := code;
@@ -122,27 +153,62 @@ BEGIN
   END IF;
 
   NEW.updated_at := now();
+  IF NEW.created_at IS NULL THEN
+    NEW.created_at := now();
+  END IF;
+
   RETURN NEW;
 END;
 $$;
 
-DROP TRIGGER IF EXISTS trg_normalize_waitlist_row ON waitlist;
+DROP TRIGGER IF EXISTS trg_normalize_waitlist_row ON public.waitlist;
 CREATE TRIGGER trg_normalize_waitlist_row
-  BEFORE INSERT OR UPDATE ON waitlist
+  BEFORE INSERT OR UPDATE ON public.waitlist
   FOR EACH ROW
-  EXECUTE FUNCTION normalize_waitlist_row();
+  EXECUTE FUNCTION public.normalize_waitlist_row();
 
-ALTER TABLE waitlist ENABLE ROW LEVEL SECURITY;
+-- ---------------------------------------------------------------------------
+-- Optional email-alert subscribers (ops)
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.waitlist_alert_subscribers (
+  email TEXT PRIMARY KEY,
+  active BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 
-DROP POLICY IF EXISTS waitlist_insert ON waitlist;
-DROP POLICY IF EXISTS waitlist_select_own ON waitlist;
-DROP POLICY IF EXISTS waitlist_anon_insert ON waitlist;
-DROP POLICY IF EXISTS waitlist_anon_select ON waitlist;
-DROP POLICY IF EXISTS waitlist_anon_update ON waitlist;
-DROP POLICY IF EXISTS waitlist_anon_delete ON waitlist;
+ALTER TABLE public.waitlist_alert_subscribers ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS waitlist_alert_subscribers_insert ON public.waitlist_alert_subscribers;
+DROP POLICY IF EXISTS waitlist_alert_subscribers_update ON public.waitlist_alert_subscribers;
+
+CREATE POLICY waitlist_alert_subscribers_insert
+  ON public.waitlist_alert_subscribers
+  FOR INSERT
+  TO anon, authenticated
+  WITH CHECK (email IS NOT NULL AND length(email) >= 5);
+
+CREATE POLICY waitlist_alert_subscribers_update
+  ON public.waitlist_alert_subscribers
+  FOR UPDATE
+  TO anon, authenticated
+  USING (true)
+  WITH CHECK (true);
+
+-- ---------------------------------------------------------------------------
+-- RLS: public INSERT only (no public SELECT/UPDATE/DELETE of PII)
+-- ---------------------------------------------------------------------------
+ALTER TABLE public.waitlist ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS waitlist_insert ON public.waitlist;
+DROP POLICY IF EXISTS waitlist_select_own ON public.waitlist;
+DROP POLICY IF EXISTS waitlist_anon_insert ON public.waitlist;
+DROP POLICY IF EXISTS waitlist_anon_select ON public.waitlist;
+DROP POLICY IF EXISTS waitlist_anon_update ON public.waitlist;
+DROP POLICY IF EXISTS waitlist_anon_delete ON public.waitlist;
 
 CREATE POLICY waitlist_anon_insert
-  ON waitlist
+  ON public.waitlist
   FOR INSERT
   TO anon, authenticated
   WITH CHECK (
@@ -151,19 +217,36 @@ CREATE POLICY waitlist_anon_insert
     AND length(email) <= 254
   );
 
+-- ---------------------------------------------------------------------------
+-- Privileges (required in addition to RLS)
+-- ---------------------------------------------------------------------------
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+
+GRANT INSERT ON TABLE public.waitlist TO anon, authenticated;
+GRANT ALL ON TABLE public.waitlist TO service_role;
+
+GRANT INSERT, UPDATE ON TABLE public.waitlist_alert_subscribers TO anon, authenticated;
+GRANT ALL ON TABLE public.waitlist_alert_subscribers TO service_role;
+
+-- ---------------------------------------------------------------------------
+-- Public count RPC (no PII)
+-- ---------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.waitlist_public_count()
 RETURNS BIGINT
 LANGUAGE sql
 SECURITY DEFINER
 SET search_path = public
 AS $$
-  SELECT COUNT(*)::BIGINT FROM waitlist;
+  SELECT COUNT(*)::BIGINT FROM public.waitlist;
 $$;
 
 REVOKE ALL ON FUNCTION public.waitlist_public_count() FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.waitlist_public_count() TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.waitlist_public_count() TO anon, authenticated, service_role;
 
-CREATE OR REPLACE VIEW waitlist_distribution AS
+-- ---------------------------------------------------------------------------
+-- Views
+-- ---------------------------------------------------------------------------
+CREATE OR REPLACE VIEW public.waitlist_distribution AS
 SELECT
   id,
   email,
@@ -175,15 +258,14 @@ SELECT
   status,
   created_at,
   updated_at
-FROM waitlist
+FROM public.waitlist
 WHERE wallet_address IS NOT NULL
   AND wallet_address ~ '^0x[a-f0-9]{40}$';
 
-ALTER VIEW waitlist_distribution SET (security_invoker = true);
-GRANT SELECT ON waitlist_distribution TO authenticated;
-GRANT SELECT ON waitlist_distribution TO service_role;
+ALTER VIEW public.waitlist_distribution SET (security_invoker = true);
+GRANT SELECT ON public.waitlist_distribution TO authenticated, service_role;
 
-CREATE OR REPLACE VIEW waitlist_referral_leaderboard AS
+CREATE OR REPLACE VIEW public.waitlist_referral_leaderboard AS
 SELECT
   w.referral_code AS code,
   COUNT(r.id)::INT AS referrals,
@@ -194,19 +276,23 @@ SELECT
     WHEN COUNT(r.id) >= 5 THEN 'Early Access'
     ELSE 'Member'
   END AS reward_tier
-FROM waitlist w
-LEFT JOIN waitlist r ON r.referred_by = w.referral_code
+FROM public.waitlist w
+LEFT JOIN public.waitlist r ON r.referred_by = w.referral_code
 WHERE w.referral_code IS NOT NULL
 GROUP BY w.referral_code
 ORDER BY referrals DESC;
 
-ALTER VIEW waitlist_referral_leaderboard SET (security_invoker = true);
+ALTER VIEW public.waitlist_referral_leaderboard SET (security_invoker = true);
+GRANT SELECT ON public.waitlist_referral_leaderboard TO authenticated, service_role;
 
-COMMENT ON TABLE waitlist IS
+COMMENT ON TABLE public.waitlist IS
   'Pre-sale waitlist signups. Wallet addresses are stored for TGE token distribution.';
-COMMENT ON COLUMN waitlist.referral_code IS
-  'User''s own invite code (GAMI-XXXXXX), generated on insert.';
-COMMENT ON COLUMN waitlist.referred_by IS
+COMMENT ON COLUMN public.waitlist.referral_code IS
+  'User own invite code (GAMI-XXXXXX), generated on insert.';
+COMMENT ON COLUMN public.waitlist.referred_by IS
   'Invite code from ?ref= that brought this signup.';
-COMMENT ON COLUMN waitlist.status IS
+COMMENT ON COLUMN public.waitlist.status IS
   'pending | registered | wallet_linked | kyc_pending | eligible | distributed';
+
+-- Force PostgREST to pick up the new table immediately
+NOTIFY pgrst, 'reload schema';

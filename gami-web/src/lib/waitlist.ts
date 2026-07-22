@@ -204,8 +204,18 @@ export async function joinWaitlistSupabase(
 
   if (error) {
     const msg = error.message || '';
+    const code = error.code || '';
+
+    if (code === 'PGRST205' || msg.includes("Could not find the table 'public.waitlist'")) {
+      return {
+        ok: false,
+        error:
+          "Waitlist table is missing in Supabase. Run supabase/bootstrap_waitlist.sql in the SQL Editor (project xetqhdzvbfeiedbmopew), then retry.",
+      };
+    }
+
     const duplicate =
-      error.code === '23505' ||
+      code === '23505' ||
       msg.includes('duplicate') ||
       msg.includes('unique') ||
       msg.toLowerCase().includes('already exists');
