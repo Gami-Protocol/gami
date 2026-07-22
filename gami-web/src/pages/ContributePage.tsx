@@ -126,8 +126,10 @@ export function ContributePage() {
     setStatus('loading');
     const result = await joinWaitlist({
       email,
+      name: email.split('@')[0] || 'Pilot',
+      role: 'community',
       wallet_address: address ?? walletParam,
-      referral_code: referralCode,
+      referred_by: referralCode,
       source: 'sale',
     });
     if (!result.ok) {
@@ -136,7 +138,11 @@ export function ContributePage() {
       return;
     }
     setStatus('done');
-    setMessage('You are on the waitlist! Continue to KYC.');
+    setMessage(
+      result.alreadyOnWaitlist
+        ? "You're already on the waitlist. Continue to KYC."
+        : 'You are on the waitlist! Continue to KYC.',
+    );
     setStep('kyc');
   }
 

@@ -1,11 +1,9 @@
 import { FormEvent, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { GamiFooter } from '@/components/gami/GamiFooter';
 import { GamiLogo } from '@/components/gami/GamiLogo';
 import { QuestNotification } from '@/components/gami/QuestNotification';
-import { joinWaitlist } from '@/lib/sale';
-
 
 const ECOSYSTEM_CARDS = [
   {
@@ -70,29 +68,29 @@ function CardIcon({ type }: { type: string }) {
 
 export function HomePage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [homeEmail, setHomeEmail] = useState('');
   const [homeStatus, setHomeStatus] = useState<'idle' | 'loading' | 'error'>('idle');
   const [homeMessage, setHomeMessage] = useState('');
 
-  async function handleHomeWaitlist(e: FormEvent) {
+  function handleHomeWaitlist(e: FormEvent) {
     e.preventDefault();
     setHomeStatus('loading');
     setHomeMessage('');
 
     const normalized = homeEmail.trim().toLowerCase();
-    const result = await joinWaitlist({
-      email: normalized,
-      source: 'home',
-    });
-
-    if (!result.ok) {
+    if (!normalized.includes('@')) {
       setHomeStatus('error');
-      setHomeMessage(result.error ?? 'Could not join waitlist');
+      setHomeMessage('Enter a valid email');
       return;
     }
 
-    // Prefill waitlist form so the user can link a wallet for TGE distribution.
-    navigate(`/waitlist?email=${encodeURIComponent(normalized)}`);
+    // Collect remaining fields on /waitlist (name, role, wallet, company).
+    const params = new URLSearchParams();
+    params.set('email', normalized);
+    const ref = searchParams.get('ref');
+    if (ref) params.set('ref', ref);
+    navigate(`/waitlist?${params.toString()}`);
   }
 
   return (

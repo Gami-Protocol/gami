@@ -4,6 +4,8 @@ import { getContractAddress, getFunctionsBase, getSupabaseUrl } from '@/lib/cont
 import { env } from '@/lib/env';
 import { isFirebaseConfigured } from '@/lib/firebase';
 import { joinWaitlistFirestore } from '@/lib/firebase-waitlist';
+import { isSupabaseConfigured } from '@/lib/supabase';
+import { joinWaitlistSupabase, type WaitlistJoinResult } from '@/lib/waitlist';
 
 export interface SaleEligibility {
   wallet_address: string;
@@ -58,27 +60,28 @@ export async function fetchEligibility(wallet: string): Promise<SaleEligibility 
 export async function joinWaitlist(input: {
   email: string;
   full_name?: string;
+  name?: string;
+  company?: string;
+  role?: string;
   wallet_address?: string;
+  wallet?: string;
   referral_code?: string;
+  referred_by?: string;
   source?: string;
-}): Promise<{ ok: boolean; error?: string; id?: string; status?: string }> {
+  country?: string;
+  turnstileToken?: string;
+}): Promise<WaitlistJoinResult> {
   const email = input.email.trim().toLowerCase();
   if (!email.includes('@')) {
     return { ok: false, error: 'Valid email required' };
   }
 
-  const wallet = input.wallet_address?.trim()
-    ? input.wallet_address.trim().toLowerCase()
-    : undefined;
-  const payload = {
-    email,
-    full_name: input.full_name?.trim() || null,
-    wallet_address: wallet ?? null,
-    referral_code: input.referral_code?.trim() || null,
-    source: input.source ?? 'web',
-  };
+  const name = (input.name ?? input.full_name ?? '').trim();
+  const wallet = (input.wallet ?? input.wallet_address)?.trim().toLowerCase();
+  const referredBy = (input.referred_by ?? input.referral_code)?.trim() || undefined;
+  const source = input.source ?? 'website';
 
-  // 1) Redesigned Next.js waitlist API (gami-site)
+  // 1) Redesigned Next.js waitlist API (gami-site) when explicitly configured
   const waitlistApi = env.waitlistApiUrl();
   if (waitlistApi) {
     try {
@@ -86,36 +89,60 @@ export async function joinWaitlist(input: {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          fullName: input.full_name?.trim() || email.split('@')[0],
+          fullName: name || email.split('@')[0],
           email,
+          company: input.company || '',
           walletAddress: wallet || '',
-          referralCode: input.referral_code || '',
-          role: 'community',
+          referralCode: referredBy || '',
+          role: input.role || 'community',
           interests: ['Wallet Beta'],
+          turnstileToken: input.turnstileToken,
         }),
       });
       const data = (await res.json().catch(() => ({}))) as {
         ok?: boolean;
         error?: string;
+        referralCode?: string;
+        referralLink?: string;
       };
       if (!res.ok || data.ok === false) {
         return { ok: false, error: data.error || 'Failed to join waitlist' };
       }
-      return { ok: true };
+      return {
+        ok: true,
+        referralCode: data.referralCode,
+        referralLink: data.referralLink,
+      };
     } catch {
-      // Fall through to Firebase / Supabase paths.
+      // Fall through.
     }
   }
 
-  // 2) Firebase/Firestore when configured
-  if (isFirebaseConfigured()) {
-    return joinWaitlistFirestore({
-      email: payload.email,
-      full_name: payload.full_name ?? undefined,
-      wallet_address: payload.wallet_address ?? undefined,
-      referral_code: payload.referral_code ?? undefined,
-      source: payload.source,
+  // 2) Supabase (primary production backend)
+  if (isSupabaseConfigured()) {
+    return joinWaitlistSupabase({
+      name: name || email.split('@')[0] || 'Pilot',
+      email,
+      company: input.company,
+      wallet,
+      role: input.role || 'community',
+      referredBy,
+      source,
+      country: input.country,
+      turnstileToken: input.turnstileToken,
     });
+  }
+
+  // 3) Firebase/Firestore when configured (and Supabase is not)
+  if (isFirebaseConfigured()) {
+    const result = await joinWaitlistFirestore({
+      email,
+      full_name: name || undefined,
+      wallet_address: wallet,
+      referral_code: referredBy,
+      source,
+    });
+    return result;
   }
 
   const functionsBase = getFunctionsBase();
@@ -124,20 +151,37 @@ export async function joinWaitlist(input: {
       const res = await fetch(`${functionsBase}/waitlist-join`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          email,
+          full_name: name || null,
+          company: input.company ?? null,
+          role: input.role ?? null,
+          wallet_address: wallet ?? null,
+          referred_by: referredBy ?? null,
+          source,
+          country: input.country ?? null,
+        }),
       });
       const data = (await res.json().catch(() => ({}))) as {
         ok?: boolean;
         error?: string;
         id?: string;
         status?: string;
+        referral_code?: string;
+        already?: boolean;
       };
       if (!res.ok || data.ok === false) {
         return { ok: false, error: data.error || 'Failed to join waitlist' };
       }
-      return { ok: true, id: data.id, status: data.status };
+      return {
+        ok: true,
+        id: data.id,
+        status: data.status,
+        alreadyOnWaitlist: data.already,
+        referralCode: data.referral_code,
+      };
     } catch {
-      // Fall through to direct Rest insert when the edge function is unavailable.
+      // Fall through.
     }
   }
 
@@ -147,32 +191,14 @@ export async function joinWaitlist(input: {
     return {
       ok: false,
       error:
-        'Backend not configured. Set VITE_WAITLIST_API_URL (gami-site /api/waitlist), VITE_FIREBASE_*, or VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY.',
+        'Backend not configured. Set VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY (recommended), VITE_WAITLIST_API_URL, or VITE_FIREBASE_*.',
     };
   }
 
-  const res = await fetch(`${base}/rest/v1/waitlist`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      apikey: key,
-      Authorization: `Bearer ${key}`,
-      Prefer: 'return=representation',
-    },
-    body: JSON.stringify(payload),
-  });
-
-  if (!res.ok) {
-    const text = await res.text();
-    // Duplicate email: treat as success so re-submits from the UI are friendly.
-    if (res.status === 409 || text.includes('duplicate key') || text.includes('23505')) {
-      return { ok: true };
-    }
-    return { ok: false, error: text || 'Failed to join waitlist' };
-  }
-
-  const rows = (await res.json().catch(() => null)) as Array<{ id?: string; status?: string }> | null;
-  return { ok: true, id: rows?.[0]?.id, status: rows?.[0]?.status };
+  return {
+    ok: false,
+    error: 'Supabase client unavailable. Check VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.',
+  };
 }
 
 export async function logClaimEvent(input: {
