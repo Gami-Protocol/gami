@@ -109,3 +109,31 @@ See `docs/DISTRIBUTION.md` for the full TGE export flow.
 If Root Directory is left empty, the root `vercel.json` installs and builds from `gami-web/` automatically.
 
 The Expo wallet app at the repo root is not deployed to Vercel; only this Vite portal is.
+
+### Custom domain (`gamiprotocol.io`)
+
+Vercel builds for project `gamiwebapp` are healthy — production alias
+[https://gamiwebapp.vercel.app](https://gamiwebapp.vercel.app) serves the site. If
+`https://gamiprotocol.io` fails with a TLS / “site can’t be reached” error, the
+apex DNS is wrong (not the Vercel build).
+
+At **Name.com**, the apex currently mixes Vercel A records with Neo.space / Titan
+email **website** A records. Clients that land on Titan IPs get a `*.titan.email`
+certificate and the browser aborts. Neo email only needs **MX** records (already
+set); remove the Titan A records from the apex.
+
+| Action | Type | Host | Value |
+|--------|------|------|-------|
+| Keep | A | `@` | `76.76.21.21` (confirm in Vercel → Domains) |
+| Remove | A | `@` | `44.219.244.211`, `34.206.170.199`, `107.23.157.161`, `44.197.32.160` (neo-sites / titan.email) |
+| Keep | MX | `@` | `mx0001.neo.space` / `mx0002.neo.space` |
+| Add | CNAME | `www` | `cname.vercel-dns.com` (or the target Vercel shows) |
+
+Verify after DNS propagates:
+
+```bash
+dig +short gamiprotocol.io A    # should only list Vercel IPs
+curl -I https://gamiprotocol.io # HTTP/2 200, server: Vercel
+```
+
+See [`docs/DOMAIN_DNS.md`](../docs/DOMAIN_DNS.md) for the full diagnosis.
