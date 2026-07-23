@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { GamiFooter } from '@/components/gami/GamiFooter';
 import { GamiTokenLogo } from '@/components/gami/GamiTokenLogo';
 import { WaitlistForm } from '@/components/waitlist/WaitlistForm';
+import { WaitlistSetupBanner } from '@/components/waitlist/WaitlistSetupBanner';
 import {
   ALLOCATION_ROWS,
   DUAL_TOKEN,
@@ -130,6 +131,7 @@ export function WaitlistPage() {
               <div className="absolute -right-10 -top-10 -z-10 h-64 w-64 bg-gami-purple/30 blur-[100px]" />
 
               <div className="relative overflow-hidden border-4 border-black bg-gami-bg p-8 neo-border shadow-brutal-purple">
+                <WaitlistSetupBanner />
                 <WaitlistForm />
               </div>
 
