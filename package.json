@@ -12,6 +12,10 @@
     "format": "oxfmt --write .",
     "format:check": "oxfmt --check .",
     "export:waitlist": "node scripts/export-waitlist-wallets.mjs",
+    "waitlist:setup": "node scripts/apply-waitlist-schema.mjs",
+    "waitlist:status": "node scripts/waitlist-status.mjs",
+    "waitlist:export": "node scripts/export-waitlist-wallets.mjs",
+    "waitlist:export:tge": "node scripts/export-waitlist-wallets.mjs --view tge_ready --format merkle",
     "firebase:setup-web": "node scripts/setup-firebase-web-app.mjs",
     "firebase:deploy": "npx -y firebase-tools@latest deploy --only auth,firestore,functions",
     "firebase:functions:build": "npm --prefix functions run build"
