@@ -6,6 +6,27 @@ import { env } from '@/lib/env';
 const WALLET_DEEP_LINK = 'gami://onboarding/welcome';
 const TESTFLIGHT_URL = env.testflightUrl() ?? 'https://testflight.apple.com/join/71dW2rQP';
 
+function ComingSoonBadge() {
+  return (
+    <span className="border border-white/20 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-widest text-white/40">
+      Coming Soon
+    </span>
+  );
+}
+
+function DisabledDownloadButton({ label }: { label: string }) {
+  return (
+    <span
+      role="button"
+      aria-disabled="true"
+      className="flex cursor-not-allowed items-center justify-center gap-2 border-2 border-white/10 py-3 font-display font-bold uppercase text-white/40"
+    >
+      {label}
+      <ComingSoonBadge />
+    </span>
+  );
+}
+
 export function WalletPage() {
   const [params] = useSearchParams();
   const ref = params.get('ref');
@@ -121,18 +142,8 @@ export function WalletPage() {
         >
           TestFlight (iOS)
         </a>
-        <span className="flex cursor-not-allowed items-center justify-center gap-2 border-2 border-white/10 py-3 font-display font-bold uppercase text-white/40">
-          Google Play (Android)
-          <span className="border border-white/20 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-widest text-white/40">
-            Coming Soon
-          </span>
-        </span>
-        <span className="flex cursor-not-allowed items-center justify-center gap-2 border-2 border-white/10 py-3 font-display font-bold uppercase text-white/40">
-          Chrome Extension
-          <span className="border border-white/20 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-widest text-white/40">
-            Coming Soon
-          </span>
-        </span>
+        <DisabledDownloadButton label="Google Play (Android)" />
+        <DisabledDownloadButton label="Chrome Extension" />
       </div>
     </div>
   );
