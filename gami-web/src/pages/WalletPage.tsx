@@ -4,8 +4,6 @@ import { GamiLogo } from '@/components/gami/GamiLogo';
 import { env } from '@/lib/env';
 
 const WALLET_DEEP_LINK = 'gami://onboarding/welcome';
-const APP_STORE_URL = env.appStoreUrl() ?? '#';
-const PLAY_STORE_URL = env.playStoreUrl() ?? '#';
 const TESTFLIGHT_URL = env.testflightUrl() ?? 'https://testflight.apple.com/join/71dW2rQP';
 
 export function WalletPage() {
@@ -123,18 +121,18 @@ export function WalletPage() {
         >
           TestFlight (iOS)
         </a>
-        <a
-          href={PLAY_STORE_URL}
-          className="block border-2 border-white/20 py-3 font-display font-bold uppercase hover:border-primary"
-        >
+        <span className="flex cursor-not-allowed items-center justify-center gap-2 border-2 border-white/10 py-3 font-display font-bold uppercase text-white/40">
           Google Play (Android)
-        </a>
-        <a
-          href={webAppUrl}
-          className="block border-2 border-white/20 py-3 font-mono text-sm hover:border-primary"
-        >
-          Try Web Preview
-        </a>
+          <span className="border border-white/20 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-widest text-white/40">
+            Coming Soon
+          </span>
+        </span>
+        <span className="flex cursor-not-allowed items-center justify-center gap-2 border-2 border-white/10 py-3 font-display font-bold uppercase text-white/40">
+          Chrome Extension
+          <span className="border border-white/20 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-widest text-white/40">
+            Coming Soon
+          </span>
+        </span>
       </div>
     </div>
   );
