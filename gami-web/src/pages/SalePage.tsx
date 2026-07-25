@@ -706,10 +706,10 @@ export function SalePage() {
               )}
               {isConnected && saleLive && !isEligible && (
                 <Link
-                  to="/sale/contribute"
+                  to="/sale/kyc"
                   className="mt-4 block text-center font-mono text-xs font-bold text-[#7047eb] underline"
                 >
-                  Complete whitelist + KYC first →
+                  Complete identity verification (KYC) →
                 </Link>
               )}
               {isConnected && !saleLive && (

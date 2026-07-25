@@ -10,6 +10,7 @@ import { parseUnits } from 'viem';
 import { ConnectWallet } from '@/components/ConnectWallet';
 import { GamiFooter } from '@/components/gami/GamiFooter';
 import { GamiTokenLogo } from '@/components/gami/GamiTokenLogo';
+import { KycVerificationPanel } from '@/components/sale/KycVerificationPanel';
 import { PaymentGatewayPanel } from '@/components/sale/PaymentGatewayPanel';
 import { GeoBlockBanner } from '@/hooks/useGeoBlock';
 import { useSaleAccount } from '@/hooks/useSaleAccount';
@@ -146,25 +147,6 @@ export function ContributePage() {
     setStep('kyc');
   }
 
-  async function handleKyc() {
-    if (!isConnected || !address) {
-      setMessage('Connect your wallet first.');
-      return;
-    }
-    const verificationUrl = env.kycVerificationUrl();
-    if (!verificationUrl) {
-      setStatus('error');
-      setMessage('Identity verification is not configured. Contributions remain disabled.');
-      return;
-    }
-
-    const url = verificationUrl.replace('{wallet}', encodeURIComponent(address));
-    window.open(url, '_blank', 'noopener,noreferrer');
-    setStatus('idle');
-    setMessage('Complete verification with the provider, then check your eligibility.');
-    setStep('eligibility');
-  }
-
   async function handleCheckEligibility() {
     setStatus('loading');
     const data = await refreshEligibility();
@@ -288,17 +270,30 @@ export function ContributePage() {
 
       {step === 'kyc' && (
         <div className="mt-8 space-y-4">
-          <p className="text-sm text-muted">
-            Connect your wallet and complete identity verification with the configured provider.
-          </p>
-          <button
-            type="button"
-            onClick={handleKyc}
-            disabled={status === 'loading' || !isConnected}
-            className="sticker-shadow w-full bg-primary py-4 font-display font-bold uppercase disabled:opacity-50"
-          >
-            2. Complete KYC
-          </button>
+          <KycVerificationPanel
+            initialEmail={email}
+            onVerified={async () => {
+              setStatus('done');
+              setMessage('Identity verified. Confirm eligibility to continue.');
+              await refreshEligibility();
+              setStep('eligibility');
+            }}
+            onPending={async () => {
+              setStatus('idle');
+              setMessage('KYC submitted. Confirm eligibility once approved.');
+              await refreshEligibility();
+              setStep('eligibility');
+            }}
+          />
+          {eligibility?.kyc_status === 'approved' ? (
+            <button
+              type="button"
+              onClick={() => setStep('eligibility')}
+              className="w-full border-2 border-green-500/40 py-3 font-display text-sm font-bold uppercase text-green-300"
+            >
+              Already verified — continue
+            </button>
+          ) : null}
         </div>
       )}
 

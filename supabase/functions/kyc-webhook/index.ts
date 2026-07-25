@@ -69,11 +69,13 @@ Deno.serve(async (req) => {
       });
     }
 
+    const wallet = String(wallet_address).toLowerCase();
+
     const { data, error } = await supabase
       .from('sale_participants')
       .upsert(
         {
-          wallet_address: wallet_address.toLowerCase(),
+          wallet_address: wallet,
           kyc_status,
           email: email ?? null,
           phase: phase ?? 'public',
@@ -86,9 +88,22 @@ Deno.serve(async (req) => {
 
     if (error) throw error;
 
+    // Sync any builtin application row for this wallet (no-op if none).
+    await supabase
+      .from('kyc_applications')
+      .update({
+        status: kyc_status,
+        provider: body.provider ?? 'external',
+        provider_ref: body.provider_ref ?? null,
+        reviewed_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('wallet_address', wallet);
+
     return new Response(JSON.stringify({ ok: true, participant: data }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
+
   } catch (err) {
     const message = err instanceof Error ? err.message : 'unknown error';
     return new Response(JSON.stringify({ error: message }), {

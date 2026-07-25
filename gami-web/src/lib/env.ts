@@ -69,6 +69,8 @@ export const env = {
     return supabase ? `${supabase.replace(/\/$/, '')}/functions/v1/waitlist-notify` : undefined;
   },
   personaTemplateId: () => read('VITE_PERSONA_TEMPLATE_ID'),
+  /** `builtin` (default form), `persona`, or other hosted provider label. */
+  kycProvider: () => read('VITE_KYC_PROVIDER') ?? 'builtin',
   kycVerificationUrl: () => read('VITE_KYC_VERIFICATION_URL'),
   appStoreUrl: () => read('VITE_APP_STORE_URL'),
   playStoreUrl: () => read('VITE_PLAY_STORE_URL'),
