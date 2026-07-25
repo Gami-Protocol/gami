@@ -95,6 +95,16 @@ SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... \
 
 See `docs/DISTRIBUTION.md` for the full TGE export flow.
 
+## Identity verification (KYC)
+
+Contributions require `sale_participants.kyc_status = approved`.
+
+- Builtin flow: `/sale/kyc` and step 2 on `/sale/contribute`
+- Backend: Supabase `kyc-submit` / `kyc-review` / `kyc-webhook`
+- Ops review: `/admin` → **KYC queue** (when `KYC_REQUIRE_MANUAL_REVIEW=true`)
+
+See [`docs/KYC.md`](../docs/KYC.md).
+
 ## Deploy (Vercel)
 
 **Option A — Root Directory = `gami-web` (recommended)**
