@@ -41,10 +41,6 @@ export function WaitlistLivePage() {
   const [schemaMissing, setSchemaMissing] = useState(false);
 
   useEffect(() => {
-    document.title = 'Live Waitlist — Gami Protocol';
-  }, []);
-
-  useEffect(() => {
     if (!configured) return;
     let prev = -1;
 

@@ -1,11 +1,13 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 
 import { CookieConsent } from '@/components/CookieConsent';
+import { Seo } from '@/components/Seo';
 import { GamiNav } from '@/components/gami/GamiNav';
 import { Providers } from '@/components/Providers';
 import { AdminPage } from '@/pages/AdminPage';
 import { AboutPage } from '@/pages/AboutPage';
 import { AgentsPage } from '@/pages/AgentsPage';
+import { AuthCallbackPage } from '@/pages/AuthCallbackPage';
 import { AuthPage } from '@/pages/AuthPage';
 import { ClaimPage } from '@/pages/ClaimPage';
 import { ContributePage } from '@/pages/ContributePage';
@@ -30,6 +32,7 @@ export default function App() {
   return (
     <Providers>
       <div className="hexagon-bg min-h-screen font-sans text-white selection:bg-gami-accent selection:text-white">
+        <Seo />
         <GamiNav />
         <main>
           <Routes>
@@ -49,6 +52,8 @@ export default function App() {
             <Route path="/admin" element={<AdminPage />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/login" element={<AuthPage />} />
+            <Route path="/auth/callback" element={<AuthCallbackPage />} />
+            <Route path="/callback" element={<AuthCallbackPage />} />
             <Route path="/sale" element={<SalePage />} />
             <Route path="/sale/contribute" element={<ContributePage />} />
             <Route path="/claim" element={<ClaimPage />} />

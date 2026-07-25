@@ -134,6 +134,20 @@ Verify after DNS propagates:
 ```bash
 dig +short gamiprotocol.io A    # should only list Vercel IPs
 curl -I https://gamiprotocol.io # HTTP/2 200, server: Vercel
+curl -sI https://gamiprotocol.io/robots.txt   # text/plain (not HTML)
+curl -sI https://gamiprotocol.io/sitemap.xml  # XML (not HTML)
 ```
+
+### SEO + auth callbacks
+
+Production ships:
+
+- `/robots.txt` and `/sitemap.xml` (must not rewrite to the SPA HTML shell)
+- Open Graph / Twitter / JSON-LD tags in `index.html`
+- Per-route titles via `src/components/Seo.tsx`
+- `/auth/callback` and `/callback` routes for OAuth/Privy redirect landings
+
+In **Privy** and **Firebase Authorized domains**, allow `gamiprotocol.io`,
+`www.gamiprotocol.io`, and `gamiwebapp.vercel.app`.
 
 See [`docs/DOMAIN_DNS.md`](../docs/DOMAIN_DNS.md) for the full diagnosis.

@@ -69,26 +69,6 @@ export function WaitlistPage() {
     });
   }, []);
 
-  useEffect(() => {
-    document.title = 'GAMI ICO Launchpad — $GAMI Tokenomics & Genesis';
-    const meta = document.querySelector('meta[name="description"]');
-    if (meta) {
-      meta.setAttribute(
-        'content',
-        'Fixed supply. Community-first. XP-driven. Join the $GAMI ICO waitlist for priority access, multipliers, and governance rights.',
-      );
-    }
-    return () => {
-      document.title = 'Gami Protocol — Universal Gamification Infrastructure';
-      if (meta) {
-        meta.setAttribute(
-          'content',
-          "Earn XP, rewards, and tokens across apps and games using Gami Protocol's AI-powered gamification engine.",
-        );
-      }
-    };
-  }, []);
-
   return (
     <>
       <div className="flex-grow pt-24 lg:pt-32">

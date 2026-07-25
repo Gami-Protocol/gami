@@ -29,6 +29,20 @@ export const metadata: Metadata = {
   },
   description:
     'Reward every interaction across apps, chains, and AI. Gami is the infrastructure for intelligent rewards, quests, loyalty, and engagement.',
+  alternates: {
+    canonical: '/',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+      'max-video-preview': -1,
+    },
+  },
   openGraph: {
     title: 'Gami Protocol — Universal AI Gamification Layer',
     description:
@@ -36,11 +50,22 @@ export const metadata: Metadata = {
     url: 'https://gamiprotocol.io',
     siteName: 'Gami Protocol',
     type: 'website',
+    locale: 'en_US',
+    images: [
+      {
+        url: '/brand/gami-logo-landing.png',
+        width: 1024,
+        height: 1024,
+        alt: 'Gami Protocol',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Gami Protocol',
     description: 'The Universal AI Gamification Layer',
+    site: '@gamiprotocol',
+    images: ['/brand/gami-logo-landing.png'],
   },
   icons: {
     icon: [{ url: '/favicon.svg' }, { url: '/favicon.png' }],

@@ -1,0 +1,14 @@
+# https://gamiprotocol.io/robots.txt
+User-agent: *
+Allow: /
+
+# App / auth surfaces — keep out of the organic index
+Disallow: /admin
+Disallow: /auth
+Disallow: /auth/
+Disallow: /login
+Disallow: /callback
+Disallow: /claim
+Disallow: /sale/contribute
+
+Sitemap: https://gamiprotocol.io/sitemap.xml
