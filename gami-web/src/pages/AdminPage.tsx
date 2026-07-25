@@ -94,10 +94,6 @@ export function AdminPage() {
   );
 
   useEffect(() => {
-    document.title = 'Waitlist Admin — Gami Protocol';
-  }, []);
-
-  useEffect(() => {
     if (unlocked && secret) void load(secret);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- unlock once on mount
 

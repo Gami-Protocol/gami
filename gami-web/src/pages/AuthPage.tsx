@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import type { ConfirmationResult, RecaptchaVerifier } from 'firebase/auth';
 
@@ -15,6 +15,7 @@ import {
   signUpWithEmail,
 } from '@/lib/firebase-auth';
 import { isFirebaseConfigured } from '@/lib/firebase';
+import { safeInternalPath } from '@/lib/seo';
 
 type Mode = 'sign-in' | 'sign-up' | 'phone' | 'reset';
 
@@ -32,17 +33,7 @@ export function AuthPage() {
   const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
   const [message, setMessage] = useState('');
   const recaptchaRef = useRef<RecaptchaVerifier | null>(null);
-  const nextPath = params.get('next') || '/waitlist';
-
-  useEffect(() => {
-    document.title = 'Sign in — Gami Protocol';
-  }, []);
-
-  useEffect(() => {
-    if (ready && user) {
-      // Stay on page if they just signed in so they see success, unless next is set.
-    }
-  }, [ready, user]);
+  const nextPath = safeInternalPath(params.get('next'), '/waitlist');
 
   function clearFeedback() {
     setStatus('idle');

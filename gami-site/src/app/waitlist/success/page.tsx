@@ -4,6 +4,7 @@ import { ButtonLink } from '@/components/ui/button';
 
 export const metadata: Metadata = {
   title: 'You are now part of Gami',
+  robots: { index: false, follow: false },
 };
 
 export default async function WaitlistSuccessPage({

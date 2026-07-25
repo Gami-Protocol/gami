@@ -62,3 +62,25 @@ curl -I https://gamiprotocol.io
 Working production alias while DNS is corrected:
 
 - https://gamiwebapp.vercel.app
+
+## SEO crawl notes
+
+Until apex DNS is cleaned up, Google Search Console and other crawlers can report
+**callback / fetch errors** for `gamiprotocol.io` because some A records fail TLS.
+Also ensure `/robots.txt` and `/sitemap.xml` return plain text/XML (not the SPA
+HTML shell). After deploy, verify:
+
+```bash
+curl -sI https://gamiwebapp.vercel.app/robots.txt   # text/plain
+curl -sI https://gamiwebapp.vercel.app/sitemap.xml  # application/xml or text/xml
+```
+
+## Auth callback allowlists
+
+Add these origins in **Privy** and **Firebase Auth → Authorized domains** so
+sign-in redirects do not fail once the custom domain is stable:
+
+- `gamiprotocol.io`
+- `www.gamiprotocol.io`
+- `gamiwebapp.vercel.app`
+- callback paths: `/auth/callback` and `/callback`

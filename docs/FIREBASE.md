@@ -35,7 +35,11 @@ Also ensure these are in **Authorized domains**:
 - `localhost`
 - `gamiprotocol.io`
 - `www.gamiprotocol.io`
+- `gamiwebapp.vercel.app`
 - `gami.xyz` (legacy)
+
+Configure OAuth redirect / callback URLs to include `/auth/callback` on those hosts
+(and keep Privy Allowed Origins in sync).
 
 ## App routes
 

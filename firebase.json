@@ -20,11 +20,17 @@
         "authorizedRedirectUris": [
           "https://gamiprotocol.io",
           "https://www.gamiprotocol.io",
+          "https://gamiprotocol.io/auth/callback",
+          "https://www.gamiprotocol.io/auth/callback",
+          "https://gamiwebapp.vercel.app",
+          "https://gamiwebapp.vercel.app/auth/callback",
           "https://gami.xyz",
           "https://www.gami.xyz",
           "http://localhost",
           "http://localhost:3000",
-          "http://localhost:5173"
+          "http://localhost:5173",
+          "http://localhost:3000/auth/callback",
+          "http://localhost:5173/auth/callback"
         ]
       }
     }
