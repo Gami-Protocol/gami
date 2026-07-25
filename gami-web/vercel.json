@@ -27,7 +27,7 @@
       ]
     },
     {
-      "source": "/(robots.txt|sitemap.xml|og-image.png|favicon.png|favicon.svg)",
+      "source": "/(robots.txt|sitemap.xml|llms.txt|llms-full.txt|og-image.png|favicon.png|favicon.svg)",
       "headers": [
         {
           "key": "Cache-Control",
@@ -36,5 +36,10 @@
       ]
     }
   ],
-  "rewrites": [{ "source": "/((?!robots\\.txt|sitemap\\.xml).*)", "destination": "/index.html" }]
+  "rewrites": [
+    {
+      "source": "/((?!robots\\.txt|sitemap\\.xml|llms\\.txt|llms-full\\.txt).*)",
+      "destination": "/index.html"
+    }
+  ]
 }

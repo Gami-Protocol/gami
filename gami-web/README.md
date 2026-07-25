@@ -143,11 +143,13 @@ curl -sI https://gamiprotocol.io/sitemap.xml  # XML (not HTML)
 Production ships:
 
 - `/robots.txt` and `/sitemap.xml` (must not rewrite to the SPA HTML shell)
-- Open Graph / Twitter / JSON-LD tags in `index.html`
-- Per-route titles via `src/components/Seo.tsx`
+- `/llms.txt` + `/llms-full.txt` for ChatGPT / AI citation
+- Open Graph / Twitter / FAQ + Organization JSON-LD in `index.html`
+- Homepage FAQ section + per-route titles via `src/components/Seo.tsx`
 - `/auth/callback` and `/callback` routes for OAuth/Privy redirect landings
+- Optional `VITE_GOOGLE_SITE_VERIFICATION` for Search Console
 
 In **Privy** and **Firebase Authorized domains**, allow `gamiprotocol.io`,
 `www.gamiprotocol.io`, and `gamiwebapp.vercel.app`.
 
-See [`docs/DOMAIN_DNS.md`](../docs/DOMAIN_DNS.md) for the full diagnosis.
+See [`docs/DOMAIN_DNS.md`](../docs/DOMAIN_DNS.md) and [`docs/SEO_TRAFFIC.md`](../docs/SEO_TRAFFIC.md).

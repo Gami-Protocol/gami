@@ -1,6 +1,7 @@
 import { FormEvent, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 
+import { DiscoveryFaq } from '@/components/gami/DiscoveryFaq';
 import { GamiFooter } from '@/components/gami/GamiFooter';
 import { GamiLogo } from '@/components/gami/GamiLogo';
 import { QuestNotification } from '@/components/gami/QuestNotification';
@@ -297,6 +298,8 @@ export function HomePage() {
           <div className="absolute -bottom-6 -right-6 -z-10 h-full w-full border-2 border-gami-purple" />
         </div>
       </section>
+
+      <DiscoveryFaq />
 
       {/* Waitlist CTA */}
       <section className="relative overflow-hidden bg-gami-purple py-32">
