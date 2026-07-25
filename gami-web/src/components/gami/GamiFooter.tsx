@@ -86,6 +86,11 @@ export function GamiFooter({ variant = 'default' }: { variant?: 'default' | 'ico
                 </Link>
               </li>
               <li>
+                <Link to="/#faq" className={linkClass}>
+                  FAQ
+                </Link>
+              </li>
+              <li>
                 <Link to="/whitepaper" className={linkClass}>
                   Gami L2
                 </Link>

@@ -36,7 +36,25 @@ export function AboutPage() {
         </ul>
       </section>
 
+      <section className="space-y-4">
+        <h2 className="font-display text-2xl font-bold text-white">Get started</h2>
+        <p className="leading-relaxed">
+          Join the waitlist for the $GAMI launch, download the wallet when available, or read the
+          developer docs to integrate quests and rewards. Common questions are answered on the{' '}
+          <Link to="/#faq" className="text-gami-accent underline-offset-2 hover:underline">
+            homepage FAQ
+          </Link>
+          .
+        </p>
+      </section>
+
       <div className="flex flex-wrap gap-4 border-t border-white/10 pt-8">
+        <Link
+          to="/waitlist"
+          className="gami-gradient neo-border px-6 py-3 font-display text-sm font-bold uppercase tracking-widest text-white"
+        >
+          Join Waitlist
+        </Link>
         <Link
           to="/tokenomics"
           className="border-2 border-white px-6 py-3 font-display text-sm font-bold uppercase tracking-widest transition-all hover:bg-white hover:text-black"
@@ -45,7 +63,7 @@ export function AboutPage() {
         </Link>
         <Link
           to="/whitepaper"
-          className="gami-gradient neo-border px-6 py-3 font-display text-sm font-bold uppercase tracking-widest text-white"
+          className="border-2 border-white px-6 py-3 font-display text-sm font-bold uppercase tracking-widest transition-all hover:bg-white hover:text-black"
         >
           Whitepaper
         </Link>

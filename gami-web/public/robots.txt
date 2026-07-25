@@ -1,8 +1,11 @@
 # https://gamiprotocol.io/robots.txt
+# Google + AI crawlers welcome on public marketing pages.
+
 User-agent: *
 Allow: /
-
-# App / auth surfaces — keep out of the organic index
+Allow: /llms.txt
+Allow: /llms-full.txt
+Allow: /sitemap.xml
 Disallow: /admin
 Disallow: /auth
 Disallow: /auth/
@@ -11,4 +14,36 @@ Disallow: /callback
 Disallow: /claim
 Disallow: /sale/contribute
 
+# Google
+User-agent: Googlebot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+# OpenAI / ChatGPT
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+# Other major answer engines
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
 Sitemap: https://gamiprotocol.io/sitemap.xml
+# AI discovery
+# https://gamiprotocol.io/llms.txt

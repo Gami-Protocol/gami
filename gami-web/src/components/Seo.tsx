@@ -2,11 +2,20 @@ import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import {
+  buildBreadcrumbJsonLd,
+  buildFaqJsonLd,
+  buildOrganizationJsonLd,
+} from '@/content/discovery';
+import {
   DEFAULT_OG_IMAGE,
   SITE_NAME,
   absoluteUrl,
   seoForPath,
 } from '@/lib/seo';
+
+const FAQ_SCRIPT_ID = 'gami-faq-jsonld';
+const BREADCRUMB_SCRIPT_ID = 'gami-breadcrumb-jsonld';
+const ORG_SCRIPT_ID = 'gami-org-jsonld';
 
 function upsertMeta(selector: string, attrs: Record<string, string>) {
   let el = document.head.querySelector(selector) as HTMLMetaElement | null;
@@ -29,10 +38,23 @@ function upsertLink(rel: string, href: string) {
   el.setAttribute('href', href);
 }
 
+function upsertJsonLd(id: string, data: Record<string, unknown> | null) {
+  const existing = document.getElementById(id);
+  if (!data) {
+    existing?.remove();
+    return;
+  }
+  const el = (existing as HTMLScriptElement | null) ?? document.createElement('script');
+  el.id = id;
+  el.type = 'application/ld+json';
+  el.textContent = JSON.stringify(data);
+  if (!existing) document.head.appendChild(el);
+}
+
 /**
- * Keeps title/description/canonical/OG tags in sync with the active route.
- * Static tags in index.html cover non-JS crawlers for the homepage shell;
- * robots.txt + sitemap.xml are the primary crawl entry points.
+ * Route meta for Google + AI crawlers.
+ * Static homepage tags live in index.html; this keeps SPA navigations accurate
+ * and injects FAQ / breadcrumb JSON-LD where useful.
  */
 export function Seo() {
   const { pathname } = useLocation();
@@ -51,6 +73,19 @@ export function Seo() {
       name: 'robots',
       content: entry.noindex ? 'noindex, nofollow' : 'index, follow, max-image-preview:large',
     });
+
+    // Help ChatGPT / AI browsers discover the citation brief.
+    let llms = document.head.querySelector(
+      'link[rel="alternate"][title="llms.txt"]',
+    ) as HTMLLinkElement | null;
+    if (!llms) {
+      llms = document.createElement('link');
+      llms.rel = 'alternate';
+      llms.title = 'llms.txt';
+      llms.type = 'text/plain';
+      document.head.appendChild(llms);
+    }
+    llms.href = '/llms.txt';
 
     upsertLink('canonical', url);
 
@@ -83,6 +118,21 @@ export function Seo() {
       name: 'twitter:image',
       content: DEFAULT_OG_IMAGE,
     });
+
+    const googleVerification = import.meta.env.VITE_GOOGLE_SITE_VERIFICATION as string | undefined;
+    if (googleVerification?.trim()) {
+      upsertMeta('meta[name="google-site-verification"]', {
+        name: 'google-site-verification',
+        content: googleVerification.trim(),
+      });
+    }
+
+    upsertJsonLd(ORG_SCRIPT_ID, buildOrganizationJsonLd());
+    upsertJsonLd(
+      BREADCRUMB_SCRIPT_ID,
+      entry.noindex ? null : buildBreadcrumbJsonLd(entry.path, entry.title),
+    );
+    upsertJsonLd(FAQ_SCRIPT_ID, pathname === '/' ? buildFaqJsonLd() : null);
   }, [pathname]);
 
   return null;
