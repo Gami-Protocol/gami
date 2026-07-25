@@ -29,15 +29,18 @@ Block wallet connections and KYC from:
 
 | Provider | Integration | Notes |
 |----------|-------------|-------|
-| Persona | SDK + webhook | Recommended for US compliance |
+| **Builtin** (`/sale/kyc`) | Form + wallet signature + `kyc-submit` | Default — see `docs/KYC.md` |
+| Persona | Hosted URL + webhook | Recommended for US compliance |
 | Sumsub | SDK + webhook | Strong EU coverage |
 | Synaps | Webhook | Lightweight crypto-native |
 
 ## Compliance Implementation
 
 - `gami-web` enforces geo-block via IP + wallet region signals
+- Builtin KYC stores hashed document numbers in `kyc_applications`
 - `TokenSale.sol` uses Merkle whitelist for private phase
 - `sale_participants.kyc_status` must be `approved` before contribution
+- Set `KYC_REQUIRE_MANUAL_REVIEW=true` in production for ops approval via `/admin`
 - All transactions logged with wallet address, amount, timestamp, jurisdiction
 
 ## Counsel Engagement Checklist

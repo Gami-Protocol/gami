@@ -10,5 +10,6 @@ Disallow: /login
 Disallow: /callback
 Disallow: /claim
 Disallow: /sale/contribute
+Disallow: /sale/kyc
 
 Sitemap: https://gamiprotocol.io/sitemap.xml

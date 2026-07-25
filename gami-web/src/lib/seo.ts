@@ -83,6 +83,12 @@ const ROUTES: SeoEntry[] = [
     noindex: true,
   },
   {
+    path: '/sale/kyc',
+    title: 'Identity Verification — Gami Protocol',
+    description: 'Complete KYC to unlock $GAMI token sale contributions.',
+    noindex: true,
+  },
+  {
     path: '/claim',
     title: 'Claim — Gami Protocol',
     description: 'Claim vested $GAMI after TGE from the vesting vault.',

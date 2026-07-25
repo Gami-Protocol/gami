@@ -2,6 +2,11 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { GamiFooter } from '@/components/gami/GamiFooter';
 import { env } from '@/lib/env';
+import {
+  fetchKycAdminQueue,
+  reviewKycApplication,
+  type KycAdminRow,
+} from '@/lib/kyc';
 import { REFERRAL_REWARD_TIERS } from '@/lib/waitlist';
 
 type AdminStats = {
@@ -45,6 +50,10 @@ export function AdminPage() {
   const [qEmail, setQEmail] = useState('');
   const [qWallet, setQWallet] = useState('');
   const [qCompany, setQCompany] = useState('');
+  const [tab, setTab] = useState<'waitlist' | 'kyc'>('waitlist');
+  const [kycRows, setKycRows] = useState<KycAdminRow[]>([]);
+  const [kycPending, setKycPending] = useState(0);
+  const [kycBusyId, setKycBusyId] = useState<string | null>(null);
 
   const endpoint = useMemo(() => adminUrl(), []);
 
@@ -93,13 +102,50 @@ export function AdminPage() {
     [endpoint, qCompany, qEmail, qWallet],
   );
 
+  const loadKyc = useCallback(
+    async (adminSecret: string) => {
+      setLoading(true);
+      setError('');
+      const result = await fetchKycAdminQueue(adminSecret, { status: 'pending' });
+      setLoading(false);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      setKycRows(result.rows);
+      setKycPending(result.pending);
+    },
+    [],
+  );
+
   useEffect(() => {
-    if (unlocked && secret) void load(secret);
+    if (unlocked && secret) {
+      void load(secret);
+      void loadKyc(secret);
+    }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- unlock once on mount
 
   function onUnlock(e: FormEvent) {
     e.preventDefault();
-    void load(secret.trim());
+    const value = secret.trim();
+    void load(value);
+    void loadKyc(value);
+  }
+
+  async function decideKyc(id: string, decision: 'approved' | 'rejected') {
+    setKycBusyId(id);
+    setError('');
+    const result = await reviewKycApplication(secret, {
+      id,
+      decision,
+      rejection_reason: decision === 'rejected' ? 'Rejected by admin review' : undefined,
+    });
+    setKycBusyId(null);
+    if (!result.ok) {
+      setError(result.error);
+      return;
+    }
+    await loadKyc(secret);
   }
 
   function exportCsv() {
@@ -141,14 +187,15 @@ export function AdminPage() {
       <div className="mx-auto max-w-6xl px-6 pb-20 pt-28">
         <p className="mb-3 font-mono text-xs uppercase tracking-[0.3em] text-gami-accent">Ops</p>
         <h1 className="mb-8 font-display text-4xl font-bold uppercase italic md:text-5xl">
-          Waitlist admin
+          Ops admin
         </h1>
 
         {!unlocked ? (
           <form onSubmit={onUnlock} className="max-w-md space-y-4 border-2 border-white/10 bg-black/40 p-8 neo-border">
             <p className="text-sm text-gray-400">
-              Enter the <code className="text-gami-accent">WAITLIST_ADMIN_SECRET</code> configured on
-              the Supabase <code className="text-gami-accent">waitlist-admin</code> edge function.
+              Enter the <code className="text-gami-accent">WAITLIST_ADMIN_SECRET</code> (or{' '}
+              <code className="text-gami-accent">KYC_ADMIN_SECRET</code>) configured on Supabase edge
+              functions.
             </p>
             <input
               type="password"
@@ -172,6 +219,94 @@ export function AdminPage() {
           <div className="space-y-8">
             {error ? <p className="font-mono text-xs text-red-300">{error}</p> : null}
 
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setTab('waitlist')}
+                className={`border-2 px-4 py-2 font-display text-xs font-bold uppercase tracking-widest ${
+                  tab === 'waitlist' ? 'border-gami-accent text-gami-accent' : 'border-white/20 text-gray-400'
+                }`}
+              >
+                Waitlist
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setTab('kyc');
+                  void loadKyc(secret);
+                }}
+                className={`border-2 px-4 py-2 font-display text-xs font-bold uppercase tracking-widest ${
+                  tab === 'kyc' ? 'border-gami-accent text-gami-accent' : 'border-white/20 text-gray-400'
+                }`}
+              >
+                KYC queue ({kycPending})
+              </button>
+            </div>
+
+            {tab === 'kyc' ? (
+              <div className="space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  <StatCard label="Pending KYC" value={kycPending} />
+                </div>
+                <div className="overflow-x-auto border-2 border-white/10 neo-border">
+                  <table className="min-w-full text-left font-mono text-xs">
+                    <thead className="bg-white/5 text-[10px] uppercase tracking-widest text-gray-500">
+                      <tr>
+                        <th className="px-3 py-3">Wallet</th>
+                        <th className="px-3 py-3">Name</th>
+                        <th className="px-3 py-3">Email</th>
+                        <th className="px-3 py-3">Country</th>
+                        <th className="px-3 py-3">Doc</th>
+                        <th className="px-3 py-3">Created</th>
+                        <th className="px-3 py-3">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {kycRows.map((row) => (
+                        <tr key={row.id} className="border-t border-white/5">
+                          <td className="px-3 py-2">{row.wallet_address}</td>
+                          <td className="px-3 py-2">{row.full_legal_name}</td>
+                          <td className="px-3 py-2">{row.email}</td>
+                          <td className="px-3 py-2">
+                            {row.residence_country}/{row.nationality}
+                          </td>
+                          <td className="px-3 py-2">
+                            {row.document_type} ·••{row.document_last4}
+                          </td>
+                          <td className="px-3 py-2">{new Date(row.created_at).toLocaleString()}</td>
+                          <td className="px-3 py-2">
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                disabled={kycBusyId === row.id}
+                                onClick={() => void decideKyc(row.id, 'approved')}
+                                className="border border-green-500/50 px-2 py-1 text-green-300 disabled:opacity-50"
+                              >
+                                Approve
+                              </button>
+                              <button
+                                type="button"
+                                disabled={kycBusyId === row.id}
+                                onClick={() => void decideKyc(row.id, 'rejected')}
+                                className="border border-red-500/50 px-2 py-1 text-red-300 disabled:opacity-50"
+                              >
+                                Reject
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {!kycRows.length ? (
+                    <p className="p-6 text-sm text-gray-500">No pending KYC applications.</p>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
+
+            {tab === 'waitlist' ? (
+            <>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <StatCard label="Total signups" value={stats?.total ?? 0} />
               <StatCard label="Today" value={stats?.today ?? 0} />
@@ -277,6 +412,8 @@ export function AdminPage() {
                 <p className="p-6 text-sm text-gray-500">No rows match this search.</p>
               ) : null}
             </div>
+            </>
+            ) : null}
           </div>
         )}
       </div>

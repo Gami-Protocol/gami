@@ -11,6 +11,7 @@ import { AuthCallbackPage } from '@/pages/AuthCallbackPage';
 import { AuthPage } from '@/pages/AuthPage';
 import { ClaimPage } from '@/pages/ClaimPage';
 import { ContributePage } from '@/pages/ContributePage';
+import { KycPage } from '@/pages/KycPage';
 import { DocsPage } from '@/pages/developers/DocsPage';
 import { McpClientPage } from '@/pages/developers/McpClientPage';
 import { McpServerPage } from '@/pages/developers/McpServerPage';
@@ -56,6 +57,7 @@ export default function App() {
             <Route path="/callback" element={<AuthCallbackPage />} />
             <Route path="/sale" element={<SalePage />} />
             <Route path="/sale/contribute" element={<ContributePage />} />
+            <Route path="/sale/kyc" element={<KycPage />} />
             <Route path="/claim" element={<ClaimPage />} />
             <Route path="/wallet" element={<WalletPage />} />
             <Route path="/tokenomics" element={<TokenomicsPage />} />
