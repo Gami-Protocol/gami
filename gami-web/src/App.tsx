@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 import { CookieConsent } from '@/components/CookieConsent';
 import { Seo } from '@/components/Seo';
@@ -71,6 +72,7 @@ export default function App() {
           </Routes>
         </main>
         <CookieConsent />
+        <SpeedInsights />
       </div>
     </Providers>
   );
