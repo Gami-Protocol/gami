@@ -5,6 +5,7 @@ import { ConnectWallet } from '@/components/ConnectWallet';
 import { GamiBrandLogo } from '@/components/gami/GamiBrandLogo';
 
 const NAV_LINKS = [
+  { href: '/foundation', label: 'Foundation' },
   { href: '/app', label: 'Product' },
   { href: '/agents', label: 'Agents' },
   { href: '/wallet', label: 'Wallet' },

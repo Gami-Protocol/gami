@@ -25,6 +25,12 @@ const ROUTES: SeoEntry[] = [
       'Learn how Gami Protocol powers wallet-first engagement, XP, and rewards across apps and games on Base.',
   },
   {
+    path: '/foundation',
+    title: 'Gami Foundation — Light-based structure for onchain play',
+    description:
+      'Gami Foundation stewards the open, light-based layers of Gami Protocol — clear, composable infrastructure for builders and communities.',
+  },
+  {
     path: '/agents',
     title: 'AI Agents — Gami Protocol',
     description:
