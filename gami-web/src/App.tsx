@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 
 import { CookieConsent } from '@/components/CookieConsent';
 import { Seo } from '@/components/Seo';
@@ -11,6 +11,7 @@ import { AuthCallbackPage } from '@/pages/AuthCallbackPage';
 import { AuthPage } from '@/pages/AuthPage';
 import { ClaimPage } from '@/pages/ClaimPage';
 import { ContributePage } from '@/pages/ContributePage';
+import { FoundationPage } from '@/pages/FoundationPage';
 import { KycPage } from '@/pages/KycPage';
 import { DocsPage } from '@/pages/developers/DocsPage';
 import { McpClientPage } from '@/pages/developers/McpClientPage';
@@ -29,49 +30,65 @@ import { WaitlistPage } from '@/pages/WaitlistPage';
 import { WalletPage } from '@/pages/WalletPage';
 import { WhitepaperPage } from '@/pages/WhitepaperPage';
 
+function AppShell() {
+  const { pathname } = useLocation();
+  const isFoundation = pathname === '/foundation';
+
+  return (
+    <div
+      className={
+        isFoundation
+          ? 'min-h-screen bg-[#F4F6FB] font-sans text-[#16141F] selection:bg-[#5B2FE0]/25'
+          : 'hexagon-bg min-h-screen font-sans text-white selection:bg-gami-accent selection:text-white'
+      }
+    >
+      <Seo />
+      {!isFoundation ? <GamiNav /> : null}
+      <main>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/foundation" element={<FoundationPage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/agents" element={<AgentsPage />} />
+          <Route path="/app" element={<WalletPage />} />
+          <Route path="/app/wallet" element={<Navigate to="/wallet" replace />} />
+          <Route path="/developers/docs" element={<DocsPage />} />
+          <Route path="/developers/mcp-client" element={<McpClientPage />} />
+          <Route path="/developers/mcp-server" element={<McpServerPage />} />
+          <Route path="/developers/sdk" element={<Navigate to="/developers/mcp-client" replace />} />
+          <Route path="/developers/api" element={<Navigate to="/developers/mcp-server" replace />} />
+          <Route path="/status" element={<StatusPage />} />
+          <Route path="/waitlist" element={<WaitlistPage />} />
+          <Route path="/waitlist/live" element={<WaitlistLivePage />} />
+          <Route path="/admin" element={<AdminPage />} />
+          <Route path="/auth" element={<AuthPage />} />
+          <Route path="/login" element={<AuthPage />} />
+          <Route path="/auth/callback" element={<AuthCallbackPage />} />
+          <Route path="/callback" element={<AuthCallbackPage />} />
+          <Route path="/sale" element={<SalePage />} />
+          <Route path="/sale/contribute" element={<ContributePage />} />
+          <Route path="/sale/kyc" element={<KycPage />} />
+          <Route path="/claim" element={<ClaimPage />} />
+          <Route path="/wallet" element={<WalletPage />} />
+          <Route path="/tokenomics" element={<TokenomicsPage />} />
+          <Route path="/whitepaper" element={<WhitepaperPage />} />
+          <Route path="/legal" element={<LegalLayout />}>
+            <Route path="terms" element={<TermsPage />} />
+            <Route path="privacy" element={<PrivacyPage />} />
+            <Route path="risk" element={<RiskPage />} />
+          </Route>
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </main>
+      <CookieConsent />
+    </div>
+  );
+}
+
 export default function App() {
   return (
     <Providers>
-      <div className="hexagon-bg min-h-screen font-sans text-white selection:bg-gami-accent selection:text-white">
-        <Seo />
-        <GamiNav />
-        <main>
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/agents" element={<AgentsPage />} />
-            <Route path="/app" element={<WalletPage />} />
-            <Route path="/app/wallet" element={<Navigate to="/wallet" replace />} />
-            <Route path="/developers/docs" element={<DocsPage />} />
-            <Route path="/developers/mcp-client" element={<McpClientPage />} />
-            <Route path="/developers/mcp-server" element={<McpServerPage />} />
-            <Route path="/developers/sdk" element={<Navigate to="/developers/mcp-client" replace />} />
-            <Route path="/developers/api" element={<Navigate to="/developers/mcp-server" replace />} />
-            <Route path="/status" element={<StatusPage />} />
-            <Route path="/waitlist" element={<WaitlistPage />} />
-            <Route path="/waitlist/live" element={<WaitlistLivePage />} />
-            <Route path="/admin" element={<AdminPage />} />
-            <Route path="/auth" element={<AuthPage />} />
-            <Route path="/login" element={<AuthPage />} />
-            <Route path="/auth/callback" element={<AuthCallbackPage />} />
-            <Route path="/callback" element={<AuthCallbackPage />} />
-            <Route path="/sale" element={<SalePage />} />
-            <Route path="/sale/contribute" element={<ContributePage />} />
-            <Route path="/sale/kyc" element={<KycPage />} />
-            <Route path="/claim" element={<ClaimPage />} />
-            <Route path="/wallet" element={<WalletPage />} />
-            <Route path="/tokenomics" element={<TokenomicsPage />} />
-            <Route path="/whitepaper" element={<WhitepaperPage />} />
-            <Route path="/legal" element={<LegalLayout />}>
-              <Route path="terms" element={<TermsPage />} />
-              <Route path="privacy" element={<PrivacyPage />} />
-              <Route path="risk" element={<RiskPage />} />
-            </Route>
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
-        </main>
-        <CookieConsent />
-      </div>
+      <AppShell />
     </Providers>
   );
 }
