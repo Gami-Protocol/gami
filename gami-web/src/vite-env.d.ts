@@ -16,6 +16,8 @@ interface ImportMetaEnv {
   readonly VITE_USDT_SWAP_URL?: string;
   readonly VITE_RAMP_HOST_API_KEY?: string;
   readonly VITE_RAMP_ENVIRONMENT?: string;
+  readonly VITE_UNISWAP_API_KEY?: string;
+  readonly VITE_UNISWAP_API_BASE?: string;
   readonly VITE_BLOCKED_COUNTRIES?: string;
   readonly VITE_SUPABASE_FUNCTIONS_URL?: string;
   readonly VITE_PERSONA_TEMPLATE_ID?: string;
