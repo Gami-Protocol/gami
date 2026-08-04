@@ -1,8 +1,0 @@
-# Exclude non-web packages so Vercel does not analyze Deno/Next apps in this monorepo.
-gami-site
-gami-agentic-web
-gami-wallet
-supabase
-contracts
-functions
-.agents
