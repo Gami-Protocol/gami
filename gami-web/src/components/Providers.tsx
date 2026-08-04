@@ -7,6 +7,7 @@ import { useState, type ReactNode } from 'react';
 
 import { SyncPrivyWallet } from '@/components/SyncPrivyWallet';
 import { FirebaseAuthProvider } from '@/hooks/useFirebaseAuth';
+import { LinkedSolanaAddressProvider } from '@/hooks/useLinkedSolanaAddress';
 import { PrivySaleAccountProvider } from '@/hooks/useSaleAccount';
 import { env } from '@/lib/env';
 import { PRIVY_WALLET_CHAIN_TYPE, PRIVY_WALLET_LIST } from '@/lib/privy-wallets';
@@ -70,7 +71,9 @@ export function Providers({ children }: { children: ReactNode }) {
         <FirebaseAuthProvider>
           <PrivyWagmiProvider config={privyWagmiConfig}>
             <SyncPrivyWallet />
-            <PrivySaleAccountProvider>{children}</PrivySaleAccountProvider>
+            <LinkedSolanaAddressProvider>
+              <PrivySaleAccountProvider>{children}</PrivySaleAccountProvider>
+            </LinkedSolanaAddressProvider>
           </PrivyWagmiProvider>
         </FirebaseAuthProvider>
       </QueryClientProvider>

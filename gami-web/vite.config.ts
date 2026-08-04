@@ -38,6 +38,17 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: true,
+    // Source maps inflate the deploy artifact (~15MB for the main chunk alone)
+    // and are not required for preview CI. Enable locally when debugging bundles.
+    sourcemap: false,
+  },
+  // Ensure Privy Solana optional peers resolve when present (Vercel/Vite builds).
+  optimizeDeps: {
+    include: [
+      '@solana/kit',
+      '@solana-program/memo',
+      '@solana-program/system',
+      '@solana-program/token',
+    ],
   },
 });
