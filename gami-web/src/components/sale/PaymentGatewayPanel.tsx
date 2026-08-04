@@ -2,14 +2,17 @@ import { ConnectWallet } from '@/components/ConnectWallet';
 import { usePaymentGateway } from '@/hooks/usePaymentGateway';
 import {
   fiatGatewayAvailable,
+  openExternalUrl,
   paymentChainLabel,
   type PaymentMethod,
 } from '@/lib/payment-gateway';
+import { buildUniswapRaiseUsdcUrl } from '@/lib/token-markets';
 
 type PaymentGatewayPanelProps = {
   paymentMethod: PaymentMethod;
   onPaymentMethodChange: (method: PaymentMethod) => void;
   address?: `0x${string}`;
+  solanaAddress?: string;
   isConnected: boolean;
   amountUsd: string;
   onFunded?: () => void;
@@ -19,31 +22,28 @@ type PaymentGatewayPanelProps = {
 
 const METHODS: Array<[PaymentMethod, string]> = [
   ['usdc', 'USDC'],
-  ['usdt', 'USDT / Swap'],
-  ['fiat', 'Card / Fiat'],
+  ['crypto', 'Crypto'],
+  ['fiat', 'Card / Coinbase'],
 ];
 
 export function PaymentGatewayPanel({
   paymentMethod,
   onPaymentMethodChange,
   address,
+  solanaAddress,
   isConnected,
   amountUsd,
   onFunded,
   variant = 'light',
 }: PaymentGatewayPanelProps) {
-  const gateway = usePaymentGateway({ address, amountUsd, onFunded });
+  const gateway = usePaymentGateway({ address, solanaAddress, amountUsd, onFunded });
   const light = variant === 'light';
 
   const panelClass = light
     ? 'mt-3 border-2 border-black bg-[#f4f1f8] p-4'
     : 'mt-3 border border-white/15 bg-white/5 p-4';
-  const tabActive = light
-    ? 'bg-[#ffeb55]'
-    : 'bg-primary text-white';
-  const tabIdle = light
-    ? 'bg-white hover:bg-[#f4f1f8]'
-    : 'bg-surface hover:bg-white/10';
+  const tabActive = light ? 'bg-[#ffeb55]' : 'bg-primary text-white';
+  const tabIdle = light ? 'bg-white hover:bg-[#f4f1f8]' : 'bg-surface hover:bg-white/10';
   const tabBase = light
     ? 'border-2 border-black px-2 py-3 font-mono text-[10px] font-bold uppercase'
     : 'border border-white/20 px-2 py-3 font-mono text-[10px] font-bold uppercase';
@@ -57,6 +57,17 @@ export function PaymentGatewayPanel({
   const labelClass = light
     ? 'font-mono text-[11px] font-bold uppercase'
     : 'font-mono text-[11px] font-bold uppercase text-muted';
+
+  function openUniswapRaise() {
+    const href = buildUniswapRaiseUsdcUrl({
+      wallet: address,
+      amountUsdc: amountUsd,
+      fromNative: true,
+    });
+    if (!href) return;
+    openExternalUrl(href);
+    onFunded?.();
+  }
 
   return (
     <div>
@@ -76,15 +87,16 @@ export function PaymentGatewayPanel({
 
       {paymentMethod === 'usdc' && (
         <p className={`mt-3 ${textMuted}`}>
-          Contribute with USDC already in your wallet. Settlement is on {paymentChainLabel()}.
+          Contribute with USDC already in your wallet. Settlement is on {paymentChainLabel()}. This
+          funds your raise allocation directly.
         </p>
       )}
 
-      {paymentMethod === 'usdt' && (
+      {paymentMethod === 'crypto' && (
         <div className={panelClass}>
           <p className={textMuted}>
-            The sale contract settles in USDC. Swap USDT, ETH, or another crypto to USDC on Base, then
-            return here and select USDC to contribute.
+            Accept crypto for the raise: swap ETH, USDT, or any token to USDC on Uniswap (Base), then
+            select USDC to lock your allocation. Sale contract settles in USDC only.
           </p>
           {!isConnected ? (
             <div className="mt-3">
@@ -95,10 +107,10 @@ export function PaymentGatewayPanel({
               <button
                 type="button"
                 disabled={Boolean(gateway.busy)}
-                onClick={() => gateway.swapToUsdc('usdt')}
+                onClick={openUniswapRaise}
                 className={btnPrimary}
               >
-                {gateway.busy === 'usdt' ? 'Opening swap…' : 'Swap USDT → USDC'}
+                Uniswap · any crypto → USDC (raise)
               </button>
               <button
                 type="button"
@@ -106,7 +118,15 @@ export function PaymentGatewayPanel({
                 onClick={() => gateway.swapToUsdc('eth')}
                 className={btnSecondary}
               >
-                {gateway.busy === 'eth' ? 'Opening swap…' : 'Swap ETH → USDC'}
+                {gateway.busy === 'eth' ? 'Opening swap…' : 'ETH → USDC'}
+              </button>
+              <button
+                type="button"
+                disabled={Boolean(gateway.busy)}
+                onClick={() => gateway.swapToUsdc('usdt')}
+                className={btnSecondary}
+              >
+                {gateway.busy === 'usdt' ? 'Opening swap…' : 'USDT → USDC'}
               </button>
               <button
                 type="button"
@@ -114,12 +134,12 @@ export function PaymentGatewayPanel({
                 onClick={() => gateway.swapToUsdc('other')}
                 className={btnSecondary}
               >
-                {gateway.busy === 'other' ? 'Opening swap…' : 'Swap other crypto → USDC'}
+                {gateway.busy === 'other' ? 'Opening swap…' : 'Other crypto → USDC'}
               </button>
             </div>
           )}
           <p className={`mt-3 font-mono text-[10px] uppercase ${light ? 'text-[#77727e]' : 'text-muted'}`}>
-            Opens Uniswap / Aerodrome on Base. After the swap, select USDC to contribute.
+            Uniswap / Aerodrome on Base. After the swap, select USDC and confirm contribution.
           </p>
         </div>
       )}
@@ -127,8 +147,8 @@ export function PaymentGatewayPanel({
       {paymentMethod === 'fiat' && (
         <div className={panelClass}>
           <p className={textMuted}>
-            Buy USDC on Base with a debit/credit card or Coinbase, then return here and select USDC to
-            contribute. Funds land in your linked allocation wallet.
+            Buy USDC with a debit/credit card via Coinbase — for your Base (EVM) allocation wallet or a
+            linked Solana wallet. Then return here and select USDC to invest.
           </p>
           {!isConnected ? (
             <div className="mt-3">
@@ -143,7 +163,28 @@ export function PaymentGatewayPanel({
                   onClick={() => void gateway.buyWithCoinbase()}
                   className={btnPrimary}
                 >
-                  {gateway.busy === 'coinbase' ? 'Opening Coinbase…' : 'Pay with Coinbase / card'}
+                  {gateway.busy === 'coinbase'
+                    ? 'Opening Coinbase…'
+                    : 'Coinbase card → Base (EVM) USDC'}
+                </button>
+              )}
+              {gateway.coinbaseAvailable && (
+                <button
+                  type="button"
+                  disabled={Boolean(gateway.busy) || !gateway.hasSolanaWallet}
+                  onClick={() => void gateway.buyWithCoinbaseSolana()}
+                  className={btnSecondary}
+                  title={
+                    gateway.hasSolanaWallet
+                      ? 'Fund linked Solana wallet with Coinbase card'
+                      : 'Link Phantom, Solflare, or Coinbase Solana first'
+                  }
+                >
+                  {gateway.busy === 'coinbase-solana'
+                    ? 'Opening Coinbase…'
+                    : gateway.hasSolanaWallet
+                      ? 'Coinbase card → Solana USDC'
+                      : 'Link Solana wallet for Coinbase'}
                 </button>
               )}
               {gateway.rampAvailable && (
@@ -174,7 +215,8 @@ export function PaymentGatewayPanel({
             </p>
           )}
           <p className={`mt-3 font-mono text-[10px] uppercase ${light ? 'text-[#77727e]' : 'text-muted'}`}>
-            Never send funds to a sale address. Only buy USDC into your linked wallet.
+            Sale settles in Base USDC. Solana card buys fund Solana — bridge/swap to your Base wallet
+            before confirming. Never send funds to a sale address.
           </p>
         </div>
       )}

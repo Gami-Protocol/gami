@@ -57,7 +57,12 @@ export const SITE_FAQS: FaqItem[] = [
 export const KEY_PAGES = [
   { path: '/', title: 'Home', summary: 'Product overview and waitlist CTA' },
   { path: '/about', title: 'About', summary: 'Company and protocol stack' },
-  { path: '/wallet', title: 'Wallet', summary: 'Download and wallet product' },
+  { path: '/wallet', title: 'Wallet', summary: 'Download wallet and claim .gami name (GNS)' },
+  {
+    path: '/wallet/guide',
+    title: 'Wallet Guide',
+    summary: 'Connect wallets, card buy, £100–£10k allocate tokens',
+  },
   { path: '/agents', title: 'AI Agents', summary: 'Adaptive quests and reward agents' },
   { path: '/developers/docs', title: 'Developer Docs', summary: 'Integration guide' },
   { path: '/waitlist', title: 'ICO Waitlist', summary: 'Join the $GAMI launch waitlist' },

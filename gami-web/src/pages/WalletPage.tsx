@@ -1,4 +1,4 @@
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
 import { GamiLogo } from '@/components/gami/GamiLogo';
 import { env } from '@/lib/env';
@@ -27,7 +27,8 @@ export function WalletPage() {
         <span className="text-gami-accent">YOUR WALLET.</span>
       </h1>
       <p className="mx-auto mt-5 max-w-md text-sm leading-6 text-muted sm:text-base">
-        Stack XP, complete quests, and keep your digital world in one place.
+        Stack XP, complete quests, claim your <span className="text-white">.gami</span> name via Gami
+        Name Service (GNS), and keep your digital world in one place.
       </p>
 
       {ref && (
@@ -115,8 +116,20 @@ export function WalletPage() {
           className="gami-gradient sticker-shadow flex items-center justify-center gap-3 border-2 border-black py-4 font-display font-bold uppercase tracking-wide transition-transform hover:-translate-y-0.5"
         >
           <GamiLogo className="h-5 w-5" />
-          Open Gami Wallet
+          Open Gami Wallet / GNS
         </a>
+        <Link
+          to="/wallet/guide"
+          className="block border-2 border-primary/50 py-3 font-display font-bold uppercase text-gami-accent hover:border-primary"
+        >
+          Wallet guide · get tokens allocated
+        </Link>
+        <Link
+          to="/sale"
+          className="block border-2 border-white/20 py-3 font-display font-bold uppercase hover:border-primary"
+        >
+          Invest in the raise
+        </Link>
         <a
           href={TESTFLIGHT_URL}
           className="block border-2 border-white/20 py-3 font-display font-bold uppercase hover:border-primary"

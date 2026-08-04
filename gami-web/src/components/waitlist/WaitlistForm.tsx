@@ -176,13 +176,17 @@ export function WaitlistForm({ compact = false }: { compact?: boolean }) {
         {already ? (
           <>
             <h3 className="mb-3 font-display text-2xl font-bold uppercase">Already on the list</h3>
-            <p className="mb-6 text-gray-400">You&apos;re already on the waitlist.</p>
+            <p className="mb-6 text-gray-400">
+              You&apos;re already on the waitlist — we&apos;ll email you when the raise goes live.
+            </p>
           </>
         ) : (
           <>
             <h3 className="mb-3 font-display text-3xl font-bold uppercase">Welcome to Gami Protocol</h3>
             <p className="mb-2 text-gray-300">You&apos;re officially on the waitlist.</p>
-            <p className="mb-8 text-sm text-gray-500">We&apos;ll notify you before public launch.</p>
+            <p className="mb-8 text-sm text-gray-500">
+              We&apos;ll email you the moment the $GAMI raise goes live.
+            </p>
           </>
         )}
 

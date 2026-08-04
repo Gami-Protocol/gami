@@ -1,14 +1,22 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PrivyProvider } from '@privy-io/react-auth';
+import { toSolanaWalletConnectors } from '@privy-io/react-auth/solana';
 import { WagmiProvider as PrivyWagmiProvider } from '@privy-io/wagmi';
 import { WagmiProvider } from 'wagmi';
 import { useState, type ReactNode } from 'react';
 
 import { SyncPrivyWallet } from '@/components/SyncPrivyWallet';
 import { FirebaseAuthProvider } from '@/hooks/useFirebaseAuth';
+import { LinkedSolanaAddressProvider } from '@/hooks/useLinkedSolanaAddress';
 import { PrivySaleAccountProvider } from '@/hooks/useSaleAccount';
 import { env } from '@/lib/env';
+import { PRIVY_WALLET_CHAIN_TYPE, PRIVY_WALLET_LIST } from '@/lib/privy-wallets';
 import { defaultChain, legacyWagmiConfig, privyWagmiConfig, supportedChains } from '@/lib/wagmi';
+
+const solanaConnectors = toSolanaWalletConnectors({
+  // Avoid surprise extension popups on every page load.
+  shouldAutoConnect: false,
+});
 
 export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
@@ -32,29 +40,24 @@ export function Providers({ children }: { children: ReactNode }) {
         appearance: {
           theme: 'dark',
           accentColor: '#6E3CFB',
-          walletChainType: 'ethereum-only',
+          walletChainType: PRIVY_WALLET_CHAIN_TYPE,
           showWalletLoginFirst: false,
-          // External wallets + WalletConnect in login / link modals.
-          walletList: [
-            'detected_ethereum_wallets',
-            'metamask',
-            'coinbase_wallet',
-            'base_account',
-            'rainbow',
-            'wallet_connect',
-          ],
+          walletList: [...PRIVY_WALLET_LIST],
         },
-        // Enables WalletConnect QR for wallets that are not browser extensions.
         ...(env.walletConnectProjectId()
           ? { walletConnectCloudProjectId: env.walletConnectProjectId() }
           : {}),
         embeddedWallets: {
           ethereum: {
-            // Email (and other) logins get a Privy-generated allocation wallet.
             createOnLogin: 'all-users',
           },
         },
-        // Card / Coinbase funding for sale participants (USDC on Base).
+        externalWallets: {
+          solana: {
+            connectors: solanaConnectors,
+          },
+        },
+        // Card / Coinbase funding for sale participants (USDC on Base + Solana fund path).
         fundingMethodConfig: {
           moonpay: {
             useSandbox: env.chainId() !== 8453,
@@ -68,7 +71,9 @@ export function Providers({ children }: { children: ReactNode }) {
         <FirebaseAuthProvider>
           <PrivyWagmiProvider config={privyWagmiConfig}>
             <SyncPrivyWallet />
-            <PrivySaleAccountProvider>{children}</PrivySaleAccountProvider>
+            <LinkedSolanaAddressProvider>
+              <PrivySaleAccountProvider>{children}</PrivySaleAccountProvider>
+            </LinkedSolanaAddressProvider>
           </PrivyWagmiProvider>
         </FirebaseAuthProvider>
       </QueryClientProvider>

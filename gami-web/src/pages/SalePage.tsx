@@ -13,7 +13,9 @@ import { ConnectWallet } from '@/components/ConnectWallet';
 import { GamiFooter } from '@/components/gami/GamiFooter';
 import { GamiTokenLogo } from '@/components/gami/GamiTokenLogo';
 import { PaymentGatewayPanel } from '@/components/sale/PaymentGatewayPanel';
+import { RaiseDexMarkets } from '@/components/sale/RaiseDexMarkets';
 import { useGeoBlock } from '@/hooks/useGeoBlock';
+import { useLinkedSolanaAddress } from '@/hooks/useLinkedSolanaAddress';
 import { useSaleAccount } from '@/hooks/useSaleAccount';
 import {
   TOKEN_SALE_ABI,
@@ -34,11 +36,21 @@ import {
 } from '@/lib/sale';
 import { env } from '@/lib/env';
 import type { PaymentMethod } from '@/lib/payment-gateway';
+import {
+  MAX_CONTRIBUTION_GBP,
+  MIN_CONTRIBUTION_GBP,
+  formatGbp,
+  maxContributionUsdc,
+  minContributionUsdc,
+  usdcToGbp,
+} from '@/lib/sale-limits';
 
 const CONFIGURED_CAP = 2_160_000;
 const CONFIGURED_PRICE = 0.012;
-const MIN_CONTRIBUTION = 500;
 const USDC_DECIMALS = 6;
+const MIN_CONTRIBUTION = minContributionUsdc();
+const MAX_CONTRIBUTION = maxContributionUsdc();
+const MAX_CONTRIBUTION_RAW = BigInt(Math.round(MAX_CONTRIBUTION * 1e6));
 
 const BENEFITS = [
   '1.5x XP Multiplier at TGE',
@@ -68,11 +80,12 @@ export function SalePage() {
   const { blocked: geoBlocked, country, loading: geoLoading } = useGeoBlock();
   const [stats, setStats] = useState<SaleStats | null>(null);
   const [eligibility, setEligibility] = useState<SaleEligibility | null>(null);
-  const [amount, setAmount] = useState('500');
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('usdc');
+  const [amount, setAmount] = useState(String(MIN_CONTRIBUTION));
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('crypto');
   const [pendingAmount, setPendingAmount] = useState<bigint | null>(null);
   const [message, setMessage] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
+  const solanaAddress = useLinkedSolanaAddress();
   const saleAddress = getContractAddress('TOKEN_SALE');
   const usdcAddress = getContractAddress('USDC');
   const saleConfigured = isSaleConfigured();
@@ -263,12 +276,21 @@ export function SalePage() {
   const usdcBalance = (usdcBalanceRaw as bigint | undefined) ?? 0n;
   const usdcAllowance = (usdcAllowanceRaw as bigint | undefined) ?? 0n;
   const remainingWalletCap = perWalletCap > walletContributed ? perWalletCap - walletContributed : 0n;
+  const publicMaxRaw = MAX_CONTRIBUTION_RAW;
+  const walletRoom =
+    remainingWalletCap > 0n
+      ? remainingWalletCap < usdcBalance
+        ? remainingWalletCap
+        : usdcBalance
+      : usdcBalance;
   const maxContribution =
-    remainingWalletCap > 0n && usdcBalance > remainingWalletCap ? remainingWalletCap : usdcBalance;
-  const minContributionRaw = BigInt(MIN_CONTRIBUTION) * 10n ** BigInt(USDC_DECIMALS);
+    walletRoom > 0n && walletRoom < publicMaxRaw ? walletRoom : walletRoom > 0n ? publicMaxRaw : 0n;
+  const minContributionRaw = BigInt(Math.round(MIN_CONTRIBUTION * 1e6));
+  const amountGbp = usdcAmount ? usdcToGbp(Number(formatUnits(usdcAmount, USDC_DECIMALS))) : 0;
   const validAmount = Boolean(
     usdcAmount &&
       usdcAmount >= minContributionRaw &&
+      usdcAmount <= publicMaxRaw &&
       usdcAmount <= usdcBalance &&
       (perWalletCap === 0n || usdcAmount <= remainingWalletCap),
   );
@@ -316,7 +338,15 @@ export function SalePage() {
       return;
     }
     if (!usdcAmount || usdcAmount < minContributionRaw) {
-      setMessage(`Enter at least ${MIN_CONTRIBUTION} USDC with no more than 6 decimal places.`);
+      setMessage(
+        `Minimum investment is ${formatGbp(MIN_CONTRIBUTION_GBP)} (~${MIN_CONTRIBUTION} USDC).`,
+      );
+      return;
+    }
+    if (usdcAmount > publicMaxRaw) {
+      setMessage(
+        `Maximum investment is ${formatGbp(MAX_CONTRIBUTION_GBP)} (~${MAX_CONTRIBUTION} USDC).`,
+      );
       return;
     }
     if (usdcAmount > usdcBalance) {
@@ -488,7 +518,7 @@ export function SalePage() {
             <div className="mt-9 grid max-w-xl grid-cols-3 border-[3px] border-black bg-white shadow-[7px_7px_0_#131118]">
               {[
                 ['Price', `$${price.toFixed(3)}`],
-                ['Min Allocation', `${MIN_CONTRIBUTION} USDC`],
+                ['Invest band', `${formatGbp(MIN_CONTRIBUTION_GBP)}–${formatGbp(MAX_CONTRIBUTION_GBP)}`],
                 ['Distribution', '15% TGE + 1y'],
               ].map(([label, value], index) => (
                 <div key={label} className={`p-4 ${index < 2 ? 'border-r-2 border-black' : ''}`}>
@@ -547,8 +577,13 @@ export function SalePage() {
                   )}
                   {isConnected && (
                     <p className="mt-2 font-mono text-[10px] uppercase text-[#7047eb]">
-                      Open the wallet menu to switch, connect MetaMask / WalletConnect, or use your
-                      Privy email wallet
+                      Menu: Coinbase, MetaMask, Rainbow, WalletConnect, Phantom / Solflare, or Privy
+                      email wallet
+                    </p>
+                  )}
+                  {solanaAddress && (
+                    <p className="mt-1 font-mono text-[10px] text-[#77727e]">
+                      Solana · {solanaAddress.slice(0, 4)}…{solanaAddress.slice(-4)}
                     </p>
                   )}
                 </div>
@@ -567,23 +602,33 @@ export function SalePage() {
 
               {!saleLive && (
                 <p className="mb-6 border-2 border-black bg-[#ffeb55] p-3 font-mono text-[11px] font-bold uppercase">
-                  Raise is not live yet. Sign in now to reserve your allocation wallet.
+                  Raise is not live yet. Sign in now to reserve your allocation wallet, or{' '}
+                  <Link to="/waitlist" className="underline">
+                    join the waitlist
+                  </Link>{' '}
+                  for an email when we go live.
                 </p>
               )}
 
-              <div className="mb-6">
+              <div className="mb-6 space-y-4">
                 <PaymentGatewayPanel
                   paymentMethod={paymentMethod}
                   onPaymentMethodChange={setPaymentMethod}
                   address={address}
+                  solanaAddress={solanaAddress}
                   isConnected={isConnected}
                   amountUsd={amount}
                   onFunded={() => {
                     void refetchUsdcBalance();
                     setMessage(
-                      'Complete funding in the provider window. When USDC arrives, select USDC and confirm.',
+                      'Complete funding in the provider window. When USDC arrives on Base, select USDC and confirm.',
                     );
                   }}
+                  variant="light"
+                />
+                <RaiseDexMarkets
+                  wallet={address}
+                  amountUsd={amount}
                   variant="light"
                 />
               </div>
@@ -592,15 +637,19 @@ export function SalePage() {
                 className="block font-mono text-[11px] font-bold uppercase"
                 htmlFor="raise-amount"
               >
-                Contribute (USDC)
+                Invest ({formatGbp(MIN_CONTRIBUTION_GBP)}–{formatGbp(MAX_CONTRIBUTION_GBP)} · USDC)
               </label>
               <div className="mt-2 flex border-2 border-black bg-[#f4f1f8]">
                 <input
                   id="raise-amount"
                   type="number"
                   min={MIN_CONTRIBUTION}
-                  max={maxContribution > 0n ? formatUnits(maxContribution, USDC_DECIMALS) : undefined}
-                  step="0.000001"
+                  max={
+                    maxContribution > 0n
+                      ? formatUnits(maxContribution, USDC_DECIMALS)
+                      : String(MAX_CONTRIBUTION)
+                  }
+                  step="0.01"
                   value={amount}
                   onChange={(event) => setAmount(event.target.value)}
                   className="min-w-0 flex-1 bg-transparent px-4 py-4 font-mono text-2xl font-bold outline-none"
@@ -609,30 +658,37 @@ export function SalePage() {
                   USDC
                 </span>
               </div>
-              {isConnected && (
-                <div className="mt-2 flex flex-wrap items-center justify-between gap-2 font-mono text-[10px] uppercase text-[#77727e]">
+              <div className="mt-2 flex flex-wrap items-center justify-between gap-2 font-mono text-[10px] uppercase text-[#77727e]">
+                <span>
+                  ≈ {amountGbp > 0 ? formatGbp(amountGbp) : formatGbp(MIN_CONTRIBUTION_GBP)} · band{' '}
+                  {formatGbp(MIN_CONTRIBUTION_GBP)}–{formatGbp(MAX_CONTRIBUTION_GBP)}
+                </span>
+                {isConnected ? (
                   <span>
-                    Balance: {Number(formatUnits(usdcBalance, USDC_DECIMALS)).toLocaleString(undefined, {
+                    Balance:{' '}
+                    {Number(formatUnits(usdcBalance, USDC_DECIMALS)).toLocaleString(undefined, {
                       maximumFractionDigits: 2,
                     })}{' '}
                     USDC
+                    <button
+                      type="button"
+                      onClick={setMaximumContribution}
+                      disabled={maxContribution <= 0n}
+                      className="ml-3 font-bold text-[#7047eb] underline disabled:text-[#77727e]"
+                    >
+                      Use max
+                    </button>
                   </span>
-                  <button
-                    type="button"
-                    onClick={setMaximumContribution}
-                    disabled={maxContribution <= 0n}
-                    className="font-bold text-[#7047eb] underline disabled:text-[#77727e]"
-                  >
-                    Use max
-                  </button>
-                </div>
-              )}
+                ) : null}
+              </div>
 
               <div className="my-4 flex justify-center font-mono text-xl">↓</div>
 
               <div className="flex items-center justify-between border-2 border-black bg-[#ebe4ff] px-4 py-4">
                 <div>
-                  <p className="font-mono text-[10px] uppercase text-[#77727e]">You receive</p>
+                  <p className="font-mono text-[10px] uppercase text-[#77727e]">
+                    Token allocation
+                  </p>
                   <p className="mt-1 font-mono text-xl font-bold">
                     {tokenAmount.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                   </p>
@@ -720,13 +776,21 @@ export function SalePage() {
                   Join the whitelist while you wait →
                 </Link>
               )}
+              <div className="mt-5 grid gap-2 border-t-2 border-black/10 pt-5 font-mono text-[10px] font-bold uppercase">
+                <Link to="/wallet/guide" className="text-[#7047eb] underline">
+                  Wallet guide · get tokens allocated →
+                </Link>
+                <Link to="/wallet" className="text-[#7047eb] underline">
+                  Open Gami Wallet · claim .gami name (GNS) →
+                </Link>
+              </div>
               {message && (
                 <p className="mt-4 border-l-4 border-[#7047eb] bg-[#f4f1f8] p-3 font-mono text-xs">
                   {message}
                 </p>
               )}
               <p className="mt-5 text-center font-mono text-[9px] uppercase text-[#77727e]">
-                Transactions settle on Base · Never share your seed phrase
+                Card via Coinbase · EVM + Solana · Base settlement · Never share your seed phrase
               </p>
             </div>
           </section>

@@ -12,7 +12,9 @@ import { GamiFooter } from '@/components/gami/GamiFooter';
 import { GamiTokenLogo } from '@/components/gami/GamiTokenLogo';
 import { KycVerificationPanel } from '@/components/sale/KycVerificationPanel';
 import { PaymentGatewayPanel } from '@/components/sale/PaymentGatewayPanel';
+import { RaiseDexMarkets } from '@/components/sale/RaiseDexMarkets';
 import { GeoBlockBanner } from '@/hooks/useGeoBlock';
+import { useLinkedSolanaAddress } from '@/hooks/useLinkedSolanaAddress';
 import { useSaleAccount } from '@/hooks/useSaleAccount';
 import {
   TOKEN_SALE_ABI,
@@ -29,6 +31,13 @@ import {
 } from '@/lib/sale';
 import { env } from '@/lib/env';
 import type { PaymentMethod } from '@/lib/payment-gateway';
+import {
+  MAX_CONTRIBUTION_GBP,
+  MIN_CONTRIBUTION_GBP,
+  formatGbp,
+  maxContributionUsdc,
+  minContributionUsdc,
+} from '@/lib/sale-limits';
 
 type Step = 'waitlist' | 'kyc' | 'eligibility' | 'contribute' | 'confirm';
 
@@ -40,10 +49,11 @@ export function ContributePage() {
   const walletParam = searchParams.get('wallet') ?? undefined;
 
   const { address, isConnected } = useSaleAccount();
+  const solanaAddress = useLinkedSolanaAddress();
   const [step, setStep] = useState<Step>('waitlist');
   const [email, setEmail] = useState('');
-  const [amount, setAmount] = useState('100');
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('usdc');
+  const [amount, setAmount] = useState(String(minContributionUsdc()));
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('crypto');
   const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
   const [message, setMessage] = useState('');
   const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
@@ -170,6 +180,18 @@ export function ContributePage() {
       return;
     }
     if (!saleAddress || !usdcAddress || !address) return;
+    const amountNumber = Number(amount);
+    if (
+      !Number.isFinite(amountNumber) ||
+      amountNumber < minContributionUsdc() ||
+      amountNumber > maxContributionUsdc()
+    ) {
+      setStatus('error');
+      setMessage(
+        `Invest between ${formatGbp(MIN_CONTRIBUTION_GBP)} and ${formatGbp(MAX_CONTRIBUTION_GBP)} (~${minContributionUsdc()}–${maxContributionUsdc()} USDC).`,
+      );
+      return;
+    }
     setStatus('loading');
     setMessage('');
 
@@ -244,14 +266,16 @@ export function ContributePage() {
             />
           </div>
           <div>
-            <label className="font-mono text-xs text-muted">AMOUNT USD (intent)</label>
+            <label className="font-mono text-xs text-muted">
+              AMOUNT USDC (intent · {formatGbp(MIN_CONTRIBUTION_GBP)}–{formatGbp(MAX_CONTRIBUTION_GBP)})
+            </label>
             <input
               type="number"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               className="mt-1 w-full border-2 border-white/10 bg-surface p-3 font-mono text-sm focus:border-primary outline-none"
-              min="10"
-              max="2500"
+              min={minContributionUsdc()}
+              max={maxContributionUsdc()}
             />
           </div>
           <button
@@ -329,29 +353,41 @@ export function ContributePage() {
             paymentMethod={paymentMethod}
             onPaymentMethodChange={setPaymentMethod}
             address={address}
+            solanaAddress={solanaAddress}
             isConnected={isConnected}
             amountUsd={amount}
             onFunded={() =>
               setMessage(
-                'Complete funding in the provider window. When USDC arrives, select USDC and contribute.',
+                'Complete funding in the provider window. When USDC arrives on Base, select USDC and contribute.',
               )
             }
             variant="dark"
           />
+          <RaiseDexMarkets wallet={address} amountUsd={amount} variant="dark" />
           <div>
-            <label className="font-mono text-xs text-muted">USDC AMOUNT</label>
+            <label className="font-mono text-xs text-muted">
+              USDC AMOUNT ({formatGbp(MIN_CONTRIBUTION_GBP)}–{formatGbp(MAX_CONTRIBUTION_GBP)})
+            </label>
             <input
               type="number"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               className="mt-1 w-full border-2 border-white/10 bg-surface p-3 font-mono text-sm focus:border-primary outline-none"
-              min="10"
-              max="2500"
+              min={minContributionUsdc()}
+              max={maxContributionUsdc()}
             />
           </div>
           <p className="font-mono text-sm text-primary">
-            ≈ {(Number(gamiPreview) / 1e18).toLocaleString()} GAMI
+            Token allocation ≈ {(Number(gamiPreview) / 1e18).toLocaleString()} GAMI
           </p>
+          <div className="flex flex-col gap-2 font-mono text-xs">
+            <Link to="/wallet/guide" className="text-gami-accent underline">
+              Wallet guide · get tokens allocated →
+            </Link>
+            <Link to="/wallet" className="text-gami-accent underline">
+              Gami Wallet · .gami name (GNS) →
+            </Link>
+          </div>
           <button
             type="button"
             onClick={handleContribute}

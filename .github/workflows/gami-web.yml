@@ -1,0 +1,32 @@
+name: gami-web
+
+on:
+  pull_request:
+    paths:
+      - 'gami-web/**'
+      - 'vercel.json'
+      - '.github/workflows/gami-web.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'gami-web/**'
+      - 'vercel.json'
+      - '.github/workflows/gami-web.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: gami-web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: gami-web/package-lock.json
+      - name: Install
+        run: npm ci --include=dev
+      - name: Typecheck and build
+        run: npm run build

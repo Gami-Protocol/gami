@@ -89,7 +89,8 @@ Ops email alerts: subscribe on the live page → `waitlist_alert_subscribers` vi
 | `waitlist-join` | `publishable` |
 | `waitlist-welcome` | `publishable` \| `secret` |
 | `waitlist-admin` | `publishable` + `WAITLIST_ADMIN_SECRET` |
-| `waitlist-notify` | Resend notifier |
+| `waitlist-notify` | Resend notifier (ops join/digest alerts) |
+| `waitlist-raise-live` | Admin blast: email waitlist when raise goes live |
 
 ```bash
 supabase secrets set SUPABASE_SECRET_KEY=sb_secret_...
@@ -100,15 +101,27 @@ supabase functions deploy waitlist-join
 supabase functions deploy waitlist-welcome
 supabase functions deploy waitlist-admin
 supabase functions deploy waitlist-notify
+supabase functions deploy waitlist-raise-live
 ```
+
+### Raise-live email blast
+
+When the raise opens, notify waitlist members from `/admin`:
+
+1. Apply `raise_live_notified_at` (migration `20260804160000_waitlist_raise_live_notified.sql` or re-run bootstrap)
+2. Deploy `waitlist-raise-live`
+3. Open `/admin` → **Dry run** → **Send raise-live emails**
+
+API body: `{ "confirm": "raise is live", "dry_run": false }`. Skips rows with `raise_live_notified_at` set unless `"force": true`.
 
 ## App routes
 
 | Route | Purpose |
 |-------|---------|
+| `/` | Landing page with waitlist email CTA |
 | `/waitlist` | Signup form + referral success |
 | `/?ref=CODE` | Captures `referred_by` |
-| `/admin` | Protected dashboard (admin secret) |
+| `/admin` | Protected dashboard + raise-live blast |
 | `/waitlist/live` | Live counter + email alerts (Supabase) |
 
 ## Join priority (`joinWaitlist`)

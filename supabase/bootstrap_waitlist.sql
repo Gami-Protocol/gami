@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS public.waitlist (
   eligible_for_tge BOOLEAN NOT NULL DEFAULT false,
   distributed_at TIMESTAMPTZ,
   distribution_tx TEXT,
+  raise_live_notified_at TIMESTAMPTZ,
   notes TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -50,6 +51,7 @@ ALTER TABLE public.waitlist ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'pendin
 ALTER TABLE public.waitlist ADD COLUMN IF NOT EXISTS eligible_for_tge BOOLEAN NOT NULL DEFAULT false;
 ALTER TABLE public.waitlist ADD COLUMN IF NOT EXISTS distributed_at TIMESTAMPTZ;
 ALTER TABLE public.waitlist ADD COLUMN IF NOT EXISTS distribution_tx TEXT;
+ALTER TABLE public.waitlist ADD COLUMN IF NOT EXISTS raise_live_notified_at TIMESTAMPTZ;
 ALTER TABLE public.waitlist ADD COLUMN IF NOT EXISTS notes TEXT;
 ALTER TABLE public.waitlist ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT now();
 ALTER TABLE public.waitlist ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT now();
@@ -98,6 +100,10 @@ CREATE INDEX IF NOT EXISTS idx_waitlist_email ON public.waitlist (email);
 CREATE INDEX IF NOT EXISTS idx_waitlist_eligible_tge
   ON public.waitlist (eligible_for_tge)
   WHERE eligible_for_tge = true;
+
+CREATE INDEX IF NOT EXISTS idx_waitlist_raise_live_notified
+  ON public.waitlist (raise_live_notified_at)
+  WHERE raise_live_notified_at IS NULL;
 
 -- ---------------------------------------------------------------------------
 -- 2) Live counter row (Realtime + /waitlist/live)

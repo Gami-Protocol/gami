@@ -27,6 +27,7 @@ import { StatusPage } from '@/pages/StatusPage';
 import { TokenomicsPage } from '@/pages/TokenomicsPage';
 import { WaitlistLivePage } from '@/pages/WaitlistLivePage';
 import { WaitlistPage } from '@/pages/WaitlistPage';
+import { WalletGuidePage } from '@/pages/WalletGuidePage';
 import { WalletPage } from '@/pages/WalletPage';
 import { WhitepaperPage } from '@/pages/WhitepaperPage';
 
@@ -70,6 +71,7 @@ function AppShell() {
           <Route path="/sale/kyc" element={<KycPage />} />
           <Route path="/claim" element={<ClaimPage />} />
           <Route path="/wallet" element={<WalletPage />} />
+          <Route path="/wallet/guide" element={<WalletGuidePage />} />
           <Route path="/tokenomics" element={<TokenomicsPage />} />
           <Route path="/whitepaper" element={<WhitepaperPage />} />
           <Route path="/legal" element={<LegalLayout />}>

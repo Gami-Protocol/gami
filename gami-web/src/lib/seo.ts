@@ -39,12 +39,20 @@ const ROUTES: SeoEntry[] = [
   {
     path: '/wallet',
     title: 'Wallet — Gami Protocol',
-    description: 'Download the Gami wallet and earn XP, rewards, and tokens across the ecosystem.',
+    description:
+      'Download the Gami wallet, claim your .gami name via GNS, and earn XP, rewards, and tokens.',
+  },
+  {
+    path: '/wallet/guide',
+    title: 'Wallet Guide — Get $GAMI Allocated',
+    description:
+      'Connect Coinbase, EVM, or Solana wallets, invest £100–£10,000 with card, and claim your .gami name.',
   },
   {
     path: '/app',
     title: 'Wallet — Gami Protocol',
-    description: 'Download the Gami wallet and earn XP, rewards, and tokens across the ecosystem.',
+    description:
+      'Download the Gami wallet, claim your .gami name via GNS, and earn XP, rewards, and tokens.',
   },
   {
     path: '/developers/docs',
@@ -80,7 +88,8 @@ const ROUTES: SeoEntry[] = [
   {
     path: '/sale',
     title: 'Token Sale — Gami Protocol',
-    description: 'Contribute to the $GAMI token sale on Base with USDC and track your allocation.',
+    description:
+      'Invest £100–£10,000 in the $GAMI raise with Coinbase card, EVM or Solana wallets, and track your allocation.',
   },
   {
     path: '/sale/contribute',

@@ -4,6 +4,7 @@ import { useSetActiveWallet } from '@privy-io/wagmi';
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
 
 import { env } from '@/lib/env';
+import { PRIVY_WALLET_CHAIN_TYPE, PRIVY_WALLET_LIST } from '@/lib/privy-wallets';
 import {
   isPrivyEmbeddedWallet,
   shortenAddress,
@@ -15,15 +16,6 @@ type ConnectWalletProps = {
   light?: boolean;
   className?: string;
 };
-
-const EXTERNAL_WALLET_LIST = [
-  'detected_ethereum_wallets',
-  'metamask',
-  'coinbase_wallet',
-  'base_account',
-  'rainbow',
-  'wallet_connect',
-] as const;
 
 function buttonClass(light: boolean, className: string): string {
   return `${className} px-3 py-2 font-mono text-[10px] font-bold uppercase disabled:cursor-wait disabled:opacity-50 ${
@@ -198,13 +190,13 @@ function PrivyConnectWallet({ light = false, className = '' }: ConnectWalletProp
               onClick={() => {
                 setOpen(false);
                 linkWallet({
-                  walletChainType: 'ethereum-only',
-                  walletList: [...EXTERNAL_WALLET_LIST],
+                  walletChainType: PRIVY_WALLET_CHAIN_TYPE,
+                  walletList: [...PRIVY_WALLET_LIST],
                 });
               }}
               className={`mt-1 w-full px-3 py-2 text-left font-mono text-[10px] font-bold uppercase ${rowIdle}`}
             >
-              Connect another wallet
+              Connect Coinbase / other wallet
             </button>
 
             <button
@@ -233,12 +225,12 @@ function PrivyConnectWallet({ light = false, className = '' }: ConnectWalletProp
       onClick={() =>
         login({
           loginMethods: ['email', 'wallet'],
-          walletChainType: 'ethereum-only',
+          walletChainType: PRIVY_WALLET_CHAIN_TYPE,
         })
       }
       className={buttonClass(light, className)}
     >
-      {ready ? 'Sign in / Connect wallet' : 'Loading Privy…'}
+      {ready ? 'Sign in / Add wallet' : 'Loading Privy…'}
     </button>
   );
 }

@@ -54,8 +54,16 @@ export function AdminPage() {
   const [kycRows, setKycRows] = useState<KycAdminRow[]>([]);
   const [kycPending, setKycPending] = useState(0);
   const [kycBusyId, setKycBusyId] = useState<string | null>(null);
+  const [raiseBusy, setRaiseBusy] = useState(false);
+  const [raiseMessage, setRaiseMessage] = useState('');
 
   const endpoint = useMemo(() => adminUrl(), []);
+
+  function raiseLiveUrl(): string | null {
+    const base = env.supabaseUrl()?.replace(/\/$/, '');
+    if (!base) return null;
+    return `${base}/functions/v1/waitlist-raise-live`;
+  }
 
   const load = useCallback(
     async (adminSecret: string) => {
@@ -130,6 +138,66 @@ export function AdminPage() {
     const value = secret.trim();
     void load(value);
     void loadKyc(value);
+  }
+
+  async function notifyRaiseLive(dryRun: boolean) {
+    const url = raiseLiveUrl();
+    if (!url) {
+      setRaiseMessage('Set VITE_SUPABASE_URL to enable raise-live alerts.');
+      return;
+    }
+    if (
+      !dryRun &&
+      !window.confirm(
+        'Email every waitlist member that the raise is live? This cannot be undone for recipients who have not been notified yet.',
+      )
+    ) {
+      return;
+    }
+
+    setRaiseBusy(true);
+    setRaiseMessage('');
+    try {
+      const anon = env.supabaseAnonKey() ?? '';
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${anon}`,
+          apikey: anon,
+          'x-admin-secret': secret,
+        },
+        body: JSON.stringify({
+          confirm: 'raise is live',
+          dry_run: dryRun,
+        }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        error?: string;
+        dry_run?: boolean;
+        would_send?: number;
+        sent?: number;
+        failed?: number;
+        total?: number;
+      };
+      if (!res.ok || data.ok === false) {
+        setRaiseMessage(data.error || 'Raise-live notify failed');
+        return;
+      }
+      if (data.dry_run) {
+        setRaiseMessage(`Dry run: would email ${data.would_send ?? 0} waitlist members.`);
+        return;
+      }
+      setRaiseMessage(
+        `Raise-live emails sent: ${data.sent ?? 0}/${data.total ?? 0}` +
+          (data.failed ? ` (${data.failed} failed)` : ''),
+      );
+    } catch {
+      setRaiseMessage('Could not reach waitlist-raise-live function');
+    } finally {
+      setRaiseBusy(false);
+    }
   }
 
   async function decideKyc(id: string, decision: 'approved' | 'rejected') {
@@ -312,6 +380,36 @@ export function AdminPage() {
               <StatCard label="Today" value={stats?.today ?? 0} />
               <StatCard label="Sources" value={stats?.sources?.length ?? 0} />
               <StatCard label="Countries" value={stats?.countries?.length ?? 0} />
+            </div>
+
+            <div className="border-2 border-gami-accent/40 bg-black/40 p-6 neo-border">
+              <h2 className="mb-2 font-display text-xl font-bold uppercase">Raise is live alert</h2>
+              <p className="mb-4 max-w-2xl text-sm text-gray-400">
+                Email everyone on the waitlist that the $GAMI raise is open. Requires{' '}
+                <code className="text-gami-accent">waitlist-raise-live</code> deployed with Resend +
+                admin secret. Skips people already notified unless you force from the API.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  disabled={raiseBusy}
+                  onClick={() => void notifyRaiseLive(true)}
+                  className="border-2 border-white/30 px-5 py-3 font-display text-xs font-bold uppercase tracking-widest hover:border-white disabled:opacity-60"
+                >
+                  {raiseBusy ? 'Working…' : 'Dry run'}
+                </button>
+                <button
+                  type="button"
+                  disabled={raiseBusy}
+                  onClick={() => void notifyRaiseLive(false)}
+                  className="gami-gradient px-5 py-3 font-display text-xs font-bold uppercase tracking-widest neo-border disabled:opacity-60"
+                >
+                  {raiseBusy ? 'Sending…' : 'Send raise-live emails'}
+                </button>
+              </div>
+              {raiseMessage ? (
+                <p className="mt-4 font-mono text-xs text-gami-accent">{raiseMessage}</p>
+              ) : null}
             </div>
 
             <div className="grid gap-6 lg:grid-cols-2">

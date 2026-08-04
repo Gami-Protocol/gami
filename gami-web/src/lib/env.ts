@@ -47,6 +47,8 @@ export const env = {
   vestingAddress: () => read('VITE_VESTING_ADDRESS'),
   tokenSaleAddress: () => read('VITE_TOKEN_SALE_ADDRESS'),
   gamiTokenAddress: () => read('VITE_GAMI_TOKEN_ADDRESS'),
+  /** Solana $GAMI mint from gami-protocol-chain (Raydium / Jupiter). */
+  gamiSolanaMint: () => read('VITE_GAMI_SOLANA_MINT'),
   usdcAddress: () => read('VITE_USDC_ADDRESS'),
   fiatOnrampUrl: () => read('VITE_FIAT_ONRAMP_URL'),
   usdtSwapUrl: () => read('VITE_USDT_SWAP_URL'),
@@ -75,4 +77,9 @@ export const env = {
   appStoreUrl: () => read('VITE_APP_STORE_URL'),
   playStoreUrl: () => read('VITE_PLAY_STORE_URL'),
   testflightUrl: () => read('VITE_TESTFLIGHT_URL'),
+  /** GBP→USD rate for displaying £100–£10k raise bounds in USDC. */
+  gbpUsdRate: () => {
+    const value = Number(read('VITE_GBP_USD_RATE') ?? '');
+    return Number.isFinite(value) && value > 0 ? value : undefined;
+  },
 };
