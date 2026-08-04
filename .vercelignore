@@ -1,0 +1,14 @@
+# Keep the Vite app deploy lean — exclude other monorepo packages from upload/analysis.
+apps
+contracts
+docs
+functions
+gami-agentic-web
+gami-site
+gami-wallet
+scripts
+supabase
+.agents
+.cursor
+*.md
+!gami-web/**/*.md

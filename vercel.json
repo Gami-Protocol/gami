@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "npm ci --prefix gami-web",
+  "installCommand": "npm ci --prefix gami-web --include=dev --userconfig gami-web/.npmrc",
   "buildCommand": "npm run build --prefix gami-web",
   "outputDirectory": "gami-web/dist",
   "headers": [
