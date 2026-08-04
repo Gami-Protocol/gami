@@ -1,14 +1,8 @@
-# Keep the Vite app deploy lean — exclude other monorepo packages from upload/analysis.
-apps
-contracts
-docs
-functions
-gami-agentic-web
+# Exclude non-web packages so Vercel does not analyze Deno/Next apps in this monorepo.
 gami-site
+gami-agentic-web
 gami-wallet
-scripts
 supabase
+contracts
+functions
 .agents
-.cursor
-*.md
-!gami-web/**/*.md
