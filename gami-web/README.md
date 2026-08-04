@@ -65,8 +65,11 @@ See `docs/FIREBASE.md` for Auth provider enablement and Firestore deploy.
 
 Set `VITE_PRIVY_APP_ID` to enable Privy email/wallet sign-in on the sale flow. Users who sign in with email
 receive a Privy embedded Ethereum wallet. The wallet menu lets them switch to that Privy wallet or connect
-external wallets (MetaMask, Coinbase, Rainbow, WalletConnect). Set `VITE_WALLETCONNECT_PROJECT_ID` for
-WalletConnect QR support.
+external wallets (Coinbase, MetaMask, Rainbow, WalletConnect, Phantom, Solflare). Set
+`VITE_WALLETCONNECT_PROJECT_ID` for WalletConnect QR support.
+
+Public invest band: **£100–£10,000** (converted to USDC via `VITE_GBP_USD_RATE`, default `1.27`).
+Wallet + allocation guide: `/wallet/guide`. Gami Name Service (`.gami`): open `/wallet`.
 
 ### Payment gateway
 
@@ -74,7 +77,8 @@ The sale contract accepts **USDC only**. Card/fiat and other cryptos fund the li
 
 | Route | Provider | Notes |
 |-------|----------|-------|
-| Card / Fiat | Coinbase via Privy `fundWallet` | Enable Coinbase/Moonpay funding in the Privy dashboard |
+| Card / Coinbase (EVM) | Privy `fundWallet` → Base USDC | Preferred card path for allocation wallet |
+| Card / Coinbase (Solana) | Privy Solana `fundWallet` | Link Phantom/Solflare/Coinbase Solana first |
 | Card / Fiat | Ramp Instant | Set `VITE_RAMP_HOST_API_KEY` (`demo` or production) |
 | USDT / ETH / other | Uniswap + Aerodrome deep-links | Swap to USDC on Base, then contribute |
 | Optional overrides | `VITE_FIAT_ONRAMP_URL`, `VITE_USDT_SWAP_URL` | Support `{wallet}`, `{amount}`, `{usdc}` |

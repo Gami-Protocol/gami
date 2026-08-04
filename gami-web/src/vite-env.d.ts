@@ -28,6 +28,7 @@ interface ImportMetaEnv {
   readonly VITE_APP_STORE_URL?: string;
   readonly VITE_PLAY_STORE_URL?: string;
   readonly VITE_TESTFLIGHT_URL?: string;
+  readonly VITE_GBP_USD_RATE?: string;
 }
 
 interface ImportMeta {

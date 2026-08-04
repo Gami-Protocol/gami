@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useFundWallet } from '@privy-io/react-auth';
+import { useFundWallet as useFundSolanaWallet } from '@privy-io/react-auth/solana';
 import { base, baseSepolia } from 'viem/chains';
 
 import { getChainId, getContractAddress } from '@/lib/contracts';
@@ -17,26 +18,43 @@ import {
   type SwapAsset,
 } from '@/lib/payment-gateway';
 
-export type FundingProvider = 'ramp' | 'coinbase' | 'external';
+export type FundingProvider =
+  | 'ramp'
+  | 'coinbase'
+  | 'coinbase-solana'
+  | 'external'
+  | SwapAsset;
 
 type UsePaymentGatewayOptions = {
   address?: `0x${string}`;
+  /** Optional linked Solana address for Coinbase Solana card funding. */
+  solanaAddress?: string;
   amountUsd?: string;
   onFunded?: () => void;
 };
 
-export function usePaymentGateway({ address, amountUsd, onFunded }: UsePaymentGatewayOptions) {
+export function usePaymentGateway({
+  address,
+  solanaAddress,
+  amountUsd,
+  onFunded,
+}: UsePaymentGatewayOptions) {
   const { fundWallet } = useFundWallet({
     onUserExited: () => {
       onFunded?.();
     },
   });
-  const [busy, setBusy] = useState<FundingProvider | SwapAsset | null>(null);
+  const { fundWallet: fundSolanaWallet } = useFundSolanaWallet({
+    onUserExited: () => {
+      onFunded?.();
+    },
+  });
+  const [busy, setBusy] = useState<FundingProvider | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const requireWallet = useCallback(() => {
     if (!address) {
-      throw new Error('Sign in with Privy to link your allocation wallet first.');
+      throw new Error('Sign in and add your allocation wallet first.');
     }
     return address;
   }, [address]);
@@ -94,6 +112,40 @@ export function usePaymentGateway({ address, amountUsd, onFunded }: UsePaymentGa
     }
   }, [amountUsd, fundWallet, onFunded, requireWallet]);
 
+  const buyWithCoinbaseSolana = useCallback(async () => {
+    setError(null);
+    setBusy('coinbase-solana');
+    try {
+      if (!coinbaseOnrampAvailable()) {
+        throw new Error('Coinbase on-ramp requires Privy (VITE_PRIVY_APP_ID).');
+      }
+      if (!solanaAddress) {
+        throw new Error(
+          'Link a Solana wallet (Phantom, Solflare, or Coinbase) first, then fund with card.',
+        );
+      }
+
+      await fundSolanaWallet({
+        address: solanaAddress,
+        options: {
+          chain: 'solana:mainnet',
+          amount: amountUsd && Number(amountUsd) > 0 ? amountUsd : undefined,
+          asset: 'USDC',
+          defaultFundingMethod: 'card',
+          card: { preferredProvider: 'coinbase' },
+        },
+      });
+      onFunded?.();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Coinbase Solana funding was cancelled.';
+      if (!/exited|cancel|closed/i.test(message)) {
+        setError(message);
+      }
+    } finally {
+      setBusy(null);
+    }
+  }, [amountUsd, fundSolanaWallet, onFunded, solanaAddress]);
+
   const buyWithExternalFiat = useCallback(() => {
     setError(null);
     const template = env.fiatOnrampUrl();
@@ -141,9 +193,12 @@ export function usePaymentGateway({ address, amountUsd, onFunded }: UsePaymentGa
     swapAvailable: swapGatewayAvailable(),
     rampAvailable: rampConfigured(),
     coinbaseAvailable: coinbaseOnrampAvailable(),
+    coinbaseSolanaAvailable: coinbaseOnrampAvailable() && Boolean(solanaAddress),
+    hasSolanaWallet: Boolean(solanaAddress),
     externalFiatAvailable: Boolean(env.fiatOnrampUrl()),
     buyWithRamp,
     buyWithCoinbase,
+    buyWithCoinbaseSolana,
     buyWithExternalFiat,
     swapToUsdc,
   };
