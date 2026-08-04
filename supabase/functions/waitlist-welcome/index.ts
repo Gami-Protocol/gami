@@ -44,7 +44,7 @@ Deno.serve(
         <div style="font-family:ui-sans-serif,system-ui,sans-serif;max-width:560px;margin:0 auto;padding:28px;background:#09090b;color:#fff">
           <p style="text-transform:uppercase;letter-spacing:.2em;font-size:11px;color:#a78bfa;font-weight:700">Gami Protocol</p>
           <h1 style="font-size:28px;margin:12px 0 8px">Welcome to Gami Protocol</h1>
-          <p style="color:#a1a1aa;line-height:1.6">Hey ${name}, you're officially on the waitlist. We'll notify you before public launch.</p>
+          <p style="color:#a1a1aa;line-height:1.6">Hey ${name}, you're officially on the waitlist. We'll email you the moment the $GAMI raise goes live.</p>
           <p style="margin:24px 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.15em;color:#71717a">Your invite link</p>
           <p style="font-size:20px;font-weight:700;color:#22d3ee">${referralCode || '—'}</p>
           <p><a href="${referralLink}" style="color:#a78bfa">${referralLink}</a></p>

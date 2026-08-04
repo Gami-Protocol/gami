@@ -53,12 +53,12 @@ export function FoundationPage() {
             Gami Foundation stewards the open layers that keep Gami clear, composable, and built for the long game.
           </p>
           <div className="foundation-cta">
-            <a className="foundation-btn foundation-btn-primary" href="#mission">
+            <Link className="foundation-btn foundation-btn-primary" to="/waitlist">
+              Join waitlist
+            </Link>
+            <a className="foundation-btn foundation-btn-ghost" href="#mission">
               Our mission
             </a>
-            <Link className="foundation-btn foundation-btn-ghost" to="/sale">
-              Join the sale
-            </Link>
           </div>
         </section>
 
@@ -94,14 +94,15 @@ export function FoundationPage() {
           <p className="foundation-kicker">Participate</p>
           <h2 className="foundation-section-title">Build with the foundation</h2>
           <p className="foundation-section-body">
-            Explore the protocol, join the sale, or follow along as we keep the structure open and luminous.
+            Join the waitlist for a raise-live email alert, or explore the protocol as we keep the structure open
+            and luminous.
           </p>
           <div className="foundation-cta" style={{ marginTop: "1.25rem" }}>
-            <Link className="foundation-btn foundation-btn-primary" to="/sale">
-              Enter the sale
+            <Link className="foundation-btn foundation-btn-primary" to="/waitlist">
+              Join waitlist
             </Link>
-            <Link className="foundation-btn foundation-btn-ghost" to="/">
-              Explore Gami
+            <Link className="foundation-btn foundation-btn-ghost" to="/sale">
+              Enter the sale
             </Link>
           </div>
         </section>

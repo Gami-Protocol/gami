@@ -11,6 +11,7 @@
 | `waitlist-welcome` | Confirmation email (Resend) |
 | `waitlist-admin` | Protected admin stats / search / export |
 | `waitlist-notify` | Ops live-count emails → `waitlist@gamiprotocol.io` |
+| `waitlist-raise-live` | Admin blast when the raise goes live (Resend) |
 
 See `docs/WAITLIST_SUPABASE.md` for the full client + RLS setup.
 
@@ -20,6 +21,7 @@ supabase functions deploy waitlist-join
 supabase functions deploy waitlist-welcome
 supabase functions deploy waitlist-admin
 supabase functions deploy waitlist-notify
+supabase functions deploy waitlist-raise-live
 supabase functions deploy sale-eligibility
 supabase functions deploy sale-stats
 ```

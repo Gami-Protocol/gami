@@ -567,7 +567,11 @@ export function SalePage() {
 
               {!saleLive && (
                 <p className="mb-6 border-2 border-black bg-[#ffeb55] p-3 font-mono text-[11px] font-bold uppercase">
-                  Raise is not live yet. Sign in now to reserve your allocation wallet.
+                  Raise is not live yet. Sign in now to reserve your allocation wallet, or{' '}
+                  <Link to="/waitlist" className="underline">
+                    join the waitlist
+                  </Link>{' '}
+                  for an email when we go live.
                 </p>
               )}
 

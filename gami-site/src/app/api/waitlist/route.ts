@@ -47,6 +47,34 @@ async function sendAlertEmail(count: number, joinerEmail: string) {
   });
 }
 
+async function sendWelcomeEmail(email: string, fullName: string) {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return;
+
+  const resend = new Resend(apiKey);
+  const name = fullName.trim() || 'Pilot';
+  await resend.emails.send({
+    from: process.env.WAITLIST_ALERT_FROM || 'Gami Protocol <onboarding@resend.dev>',
+    to: email,
+    subject: 'Welcome to Gami Protocol',
+    html: `
+      <div style="font-family:ui-sans-serif,system-ui,sans-serif;max-width:560px;margin:0 auto;padding:28px;background:#09090b;color:#fff">
+        <p style="text-transform:uppercase;letter-spacing:.2em;font-size:11px;color:#a78bfa;font-weight:700">Gami Protocol</p>
+        <h1 style="font-size:28px;margin:12px 0 8px">Welcome to Gami Protocol</h1>
+        <p style="color:#a1a1aa;line-height:1.6">
+          Hey ${name}, you're officially on the waitlist. We'll email you the moment the $GAMI raise goes live.
+        </p>
+        <p style="margin:24px 0">
+          <a href="https://gamiprotocol.io/waitlist"
+             style="display:inline-block;background:#6C3BFF;color:#fff;text-decoration:none;padding:12px 20px;font-weight:700;border-radius:999px">
+            Complete your profile →
+          </a>
+        </p>
+      </div>
+    `,
+  });
+}
+
 export async function POST(req: Request) {
   try {
     const json = await req.json();
@@ -123,6 +151,7 @@ export async function POST(req: Request) {
       .select('id', { count: 'exact', head: true });
 
     void sendAlertEmail(count ?? 0, email).catch(() => undefined);
+    void sendWelcomeEmail(email, data.fullName).catch(() => undefined);
 
     return NextResponse.json({
       ok: true,

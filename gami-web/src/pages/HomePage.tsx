@@ -1,10 +1,11 @@
 import { FormEvent, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
 import { DiscoveryFaq } from '@/components/gami/DiscoveryFaq';
 import { GamiFooter } from '@/components/gami/GamiFooter';
 import { GamiLogo } from '@/components/gami/GamiLogo';
 import { QuestNotification } from '@/components/gami/QuestNotification';
+import { joinWaitlist } from '@/lib/sale';
 
 const ECOSYSTEM_CARDS = [
   {
@@ -68,30 +69,46 @@ function CardIcon({ type }: { type: string }) {
 }
 
 export function HomePage() {
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [homeEmail, setHomeEmail] = useState('');
-  const [homeStatus, setHomeStatus] = useState<'idle' | 'loading' | 'error'>('idle');
+  const [homeStatus, setHomeStatus] = useState<'idle' | 'loading' | 'success' | 'error'>(
+    'idle',
+  );
   const [homeMessage, setHomeMessage] = useState('');
 
-  function handleHomeWaitlist(e: FormEvent) {
+  async function handleHomeWaitlist(e: FormEvent) {
     e.preventDefault();
     setHomeStatus('loading');
     setHomeMessage('');
 
     const normalized = homeEmail.trim().toLowerCase();
-    if (!normalized.includes('@')) {
+    if (!normalized.includes('@') || !normalized.includes('.')) {
       setHomeStatus('error');
       setHomeMessage('Enter a valid email');
       return;
     }
 
-    // Collect remaining fields on /waitlist (name, role, wallet, company).
-    const params = new URLSearchParams();
-    params.set('email', normalized);
-    const ref = searchParams.get('ref');
-    if (ref) params.set('ref', ref);
-    navigate(`/waitlist?${params.toString()}`);
+    const result = await joinWaitlist({
+      email: normalized,
+      name: normalized.split('@')[0] || 'Pilot',
+      role: 'community',
+      referred_by: searchParams.get('ref')?.trim() || undefined,
+      source: 'landing-home',
+    });
+
+    if (!result.ok) {
+      setHomeStatus('error');
+      setHomeMessage(result.error ?? 'Could not join waitlist');
+      return;
+    }
+
+    setHomeStatus('success');
+    setHomeMessage(
+      result.alreadyOnWaitlist
+        ? "You're already on the waitlist — we'll email you when the raise goes live."
+        : "You're on the waitlist. Check your inbox — we'll alert you when the raise goes live.",
+    );
+    setHomeEmail('');
   }
 
   return (
@@ -114,17 +131,17 @@ export function HomePage() {
               agents and blockchain infrastructure.
             </p>
             <div className="flex flex-wrap gap-6">
-              <Link
-                to="/app"
+              <a
+                href="#waitlist"
                 className="gami-gradient neo-border px-8 py-4 font-display text-lg font-bold uppercase tracking-wider shadow-brutal transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none"
               >
-                Launch App
-              </Link>
+                Join Waitlist
+              </a>
               <Link
-                to="/agents"
+                to="/app"
                 className="border-2 border-white px-8 py-4 font-display text-lg font-bold uppercase tracking-wider transition-all hover:bg-white hover:text-black"
               >
-                Explore AI Agents
+                Launch App
               </Link>
             </div>
 
@@ -302,7 +319,7 @@ export function HomePage() {
       <DiscoveryFaq />
 
       {/* Waitlist CTA */}
-      <section className="relative overflow-hidden bg-gami-purple py-32">
+      <section id="waitlist" className="relative scroll-mt-28 overflow-hidden bg-gami-purple py-32">
         <div className="absolute right-0 top-0 p-20 opacity-10">
           <svg viewBox="0 0 100 100" className="h-96 w-96 fill-white">
             <path d="M50 0 L93.3 25 L93.3 75 L50 100 L6.7 75 L6.7 25 Z" />
@@ -314,12 +331,12 @@ export function HomePage() {
             Power the Future of Engagement
           </h2>
           <p className="mx-auto mb-12 max-w-2xl text-xl font-medium text-black/80">
-            Join the Gami token launch and help build the universal rewards economy. Early waitlist members get
-            exclusive $GAMI multipliers.
+            Join the waitlist and we&apos;ll email you the moment the $GAMI raise goes live. Early members get
+            exclusive launch multipliers.
           </p>
 
           <form
-            onSubmit={handleHomeWaitlist}
+            onSubmit={(e) => void handleHomeWaitlist(e)}
             className="neo-border flex flex-col gap-2 bg-black p-2 shadow-brutal md:flex-row"
           >
             <input
@@ -331,22 +348,32 @@ export function HomePage() {
               placeholder="Enter your email"
               className="flex-1 bg-transparent p-4 font-bold text-white outline-none placeholder:text-gray-600"
               autoComplete="email"
+              disabled={homeStatus === 'loading'}
             />
             <button
               type="submit"
               disabled={homeStatus === 'loading'}
               className="bg-white px-10 py-4 font-display font-bold uppercase text-black transition-all hover:bg-gami-accent hover:text-white disabled:opacity-60"
             >
-              {homeStatus === 'loading' ? 'Saving…' : 'Join Waitlist'}
+              {homeStatus === 'loading' ? 'Joining…' : 'Join Waitlist'}
             </button>
           </form>
           {homeMessage ? (
             <p
               className={`mt-4 font-mono text-sm ${
-                homeStatus === 'error' ? 'text-red-900' : 'text-black/80'
+                homeStatus === 'error'
+                  ? 'text-red-900'
+                  : homeStatus === 'success'
+                    ? 'text-black'
+                    : 'text-black/80'
               }`}
             >
-              {homeMessage}
+              {homeMessage}{' '}
+              {homeStatus === 'success' ? (
+                <Link to="/waitlist" className="underline">
+                  Add wallet for priority →
+                </Link>
+              ) : null}
             </p>
           ) : null}
 
