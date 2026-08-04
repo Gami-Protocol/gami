@@ -2,9 +2,11 @@ import { ConnectWallet } from '@/components/ConnectWallet';
 import { usePaymentGateway } from '@/hooks/usePaymentGateway';
 import {
   fiatGatewayAvailable,
+  openExternalUrl,
   paymentChainLabel,
   type PaymentMethod,
 } from '@/lib/payment-gateway';
+import { buildUniswapRaiseUsdcUrl } from '@/lib/token-markets';
 
 type PaymentGatewayPanelProps = {
   paymentMethod: PaymentMethod;
@@ -20,7 +22,7 @@ type PaymentGatewayPanelProps = {
 
 const METHODS: Array<[PaymentMethod, string]> = [
   ['usdc', 'USDC'],
-  ['usdt', 'USDT / Swap'],
+  ['crypto', 'Crypto'],
   ['fiat', 'Card / Coinbase'],
 ];
 
@@ -56,6 +58,17 @@ export function PaymentGatewayPanel({
     ? 'font-mono text-[11px] font-bold uppercase'
     : 'font-mono text-[11px] font-bold uppercase text-muted';
 
+  function openUniswapRaise() {
+    const href = buildUniswapRaiseUsdcUrl({
+      wallet: address,
+      amountUsdc: amountUsd,
+      fromNative: true,
+    });
+    if (!href) return;
+    openExternalUrl(href);
+    onFunded?.();
+  }
+
   return (
     <div>
       <p className={labelClass}>Payment route</p>
@@ -74,15 +87,16 @@ export function PaymentGatewayPanel({
 
       {paymentMethod === 'usdc' && (
         <p className={`mt-3 ${textMuted}`}>
-          Contribute with USDC already in your wallet. Settlement is on {paymentChainLabel()}.
+          Contribute with USDC already in your wallet. Settlement is on {paymentChainLabel()}. This
+          funds your raise allocation directly.
         </p>
       )}
 
-      {paymentMethod === 'usdt' && (
+      {paymentMethod === 'crypto' && (
         <div className={panelClass}>
           <p className={textMuted}>
-            The sale contract settles in USDC. Swap USDT, ETH, or another crypto to USDC on Base, then
-            return here and select USDC to contribute.
+            Accept crypto for the raise: swap ETH, USDT, or any token to USDC on Uniswap (Base), then
+            select USDC to lock your allocation. Sale contract settles in USDC only.
           </p>
           {!isConnected ? (
             <div className="mt-3">
@@ -93,10 +107,10 @@ export function PaymentGatewayPanel({
               <button
                 type="button"
                 disabled={Boolean(gateway.busy)}
-                onClick={() => gateway.swapToUsdc('usdt')}
+                onClick={openUniswapRaise}
                 className={btnPrimary}
               >
-                {gateway.busy === 'usdt' ? 'Opening swap…' : 'Swap USDT → USDC'}
+                Uniswap · any crypto → USDC (raise)
               </button>
               <button
                 type="button"
@@ -104,7 +118,15 @@ export function PaymentGatewayPanel({
                 onClick={() => gateway.swapToUsdc('eth')}
                 className={btnSecondary}
               >
-                {gateway.busy === 'eth' ? 'Opening swap…' : 'Swap ETH → USDC'}
+                {gateway.busy === 'eth' ? 'Opening swap…' : 'ETH → USDC'}
+              </button>
+              <button
+                type="button"
+                disabled={Boolean(gateway.busy)}
+                onClick={() => gateway.swapToUsdc('usdt')}
+                className={btnSecondary}
+              >
+                {gateway.busy === 'usdt' ? 'Opening swap…' : 'USDT → USDC'}
               </button>
               <button
                 type="button"
@@ -112,12 +134,12 @@ export function PaymentGatewayPanel({
                 onClick={() => gateway.swapToUsdc('other')}
                 className={btnSecondary}
               >
-                {gateway.busy === 'other' ? 'Opening swap…' : 'Swap other crypto → USDC'}
+                {gateway.busy === 'other' ? 'Opening swap…' : 'Other crypto → USDC'}
               </button>
             </div>
           )}
           <p className={`mt-3 font-mono text-[10px] uppercase ${light ? 'text-[#77727e]' : 'text-muted'}`}>
-            Opens Uniswap / Aerodrome on Base. After the swap, select USDC to contribute.
+            Uniswap / Aerodrome on Base. After the swap, select USDC and confirm contribution.
           </p>
         </div>
       )}

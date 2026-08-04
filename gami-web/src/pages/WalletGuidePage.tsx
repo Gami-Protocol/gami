@@ -15,8 +15,8 @@ const STEPS = [
     body: 'Sign in on the raise page with email, Coinbase Wallet, MetaMask, Rainbow, WalletConnect, Phantom, or Solflare. Privy creates a Base allocation wallet when you use email.',
   },
   {
-    title: 'Fund with card or Coinbase',
-    body: 'Use Card / Coinbase to buy USDC with a debit/credit card. Choose Base (EVM) for direct sale settlement, or Solana if you prefer Phantom / Solflare funding first.',
+    title: 'Fund with crypto or card',
+    body: 'Pay with ETH, USDT, or other crypto via Uniswap → USDC for raise allocation, or use Coinbase / card. Get $GAMI on Uniswap (EVM first), then Raydium and Jupiter on Solana — addresses from gami-protocol-chain.',
   },
   {
     title: 'Invest within limits',

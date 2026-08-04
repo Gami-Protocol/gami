@@ -10,6 +10,7 @@ interface ImportMetaEnv {
   readonly VITE_VESTING_ADDRESS?: string;
   readonly VITE_TOKEN_SALE_ADDRESS?: string;
   readonly VITE_GAMI_TOKEN_ADDRESS?: string;
+  readonly VITE_GAMI_SOLANA_MINT?: string;
   readonly VITE_USDC_ADDRESS?: string;
   readonly VITE_WALLETCONNECT_PROJECT_ID?: string;
   readonly VITE_FIAT_ONRAMP_URL?: string;

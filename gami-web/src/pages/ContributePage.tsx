@@ -12,6 +12,7 @@ import { GamiFooter } from '@/components/gami/GamiFooter';
 import { GamiTokenLogo } from '@/components/gami/GamiTokenLogo';
 import { KycVerificationPanel } from '@/components/sale/KycVerificationPanel';
 import { PaymentGatewayPanel } from '@/components/sale/PaymentGatewayPanel';
+import { RaiseDexMarkets } from '@/components/sale/RaiseDexMarkets';
 import { GeoBlockBanner } from '@/hooks/useGeoBlock';
 import { useLinkedSolanaAddress } from '@/hooks/useLinkedSolanaAddress';
 import { useSaleAccount } from '@/hooks/useSaleAccount';
@@ -52,7 +53,7 @@ export function ContributePage() {
   const [step, setStep] = useState<Step>('waitlist');
   const [email, setEmail] = useState('');
   const [amount, setAmount] = useState(String(minContributionUsdc()));
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('fiat');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('crypto');
   const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
   const [message, setMessage] = useState('');
   const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
@@ -362,6 +363,7 @@ export function ContributePage() {
             }
             variant="dark"
           />
+          <RaiseDexMarkets wallet={address} amountUsd={amount} variant="dark" />
           <div>
             <label className="font-mono text-xs text-muted">
               USDC AMOUNT ({formatGbp(MIN_CONTRIBUTION_GBP)}–{formatGbp(MAX_CONTRIBUTION_GBP)})

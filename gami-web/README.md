@@ -77,10 +77,12 @@ The sale contract accepts **USDC only**. Card/fiat and other cryptos fund the li
 
 | Route | Provider | Notes |
 |-------|----------|-------|
+| Crypto → raise | Uniswap / Aerodrome → Base USDC | ETH, USDT, or any token → USDC, then contribute |
 | Card / Coinbase (EVM) | Privy `fundWallet` → Base USDC | Preferred card path for allocation wallet |
 | Card / Coinbase (Solana) | Privy Solana `fundWallet` | Link Phantom/Solflare/Coinbase Solana first |
 | Card / Fiat | Ramp Instant | Set `VITE_RAMP_HOST_API_KEY` (`demo` or production) |
-| USDT / ETH / other | Uniswap + Aerodrome deep-links | Swap to USDC on Base, then contribute |
+| Get $GAMI (EVM) | Uniswap | `VITE_GAMI_TOKEN_ADDRESS` from [gami-protocol-chain](https://github.com/Gami-Protocol/gami-protocol-chain) |
+| Get $GAMI (Solana) | Raydium + Jupiter | Set `VITE_GAMI_SOLANA_MINT` from gami-protocol-chain |
 | Optional overrides | `VITE_FIAT_ONRAMP_URL`, `VITE_USDT_SWAP_URL` | Support `{wallet}`, `{amount}`, `{usdc}` |
 
 Deploy contracts first (`cd gami-contracts && npm run deploy:sepolia`), then copy addresses from `deployments/84532.json`.

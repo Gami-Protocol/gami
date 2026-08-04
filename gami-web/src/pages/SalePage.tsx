@@ -13,6 +13,7 @@ import { ConnectWallet } from '@/components/ConnectWallet';
 import { GamiFooter } from '@/components/gami/GamiFooter';
 import { GamiTokenLogo } from '@/components/gami/GamiTokenLogo';
 import { PaymentGatewayPanel } from '@/components/sale/PaymentGatewayPanel';
+import { RaiseDexMarkets } from '@/components/sale/RaiseDexMarkets';
 import { useGeoBlock } from '@/hooks/useGeoBlock';
 import { useLinkedSolanaAddress } from '@/hooks/useLinkedSolanaAddress';
 import { useSaleAccount } from '@/hooks/useSaleAccount';
@@ -80,7 +81,7 @@ export function SalePage() {
   const [stats, setStats] = useState<SaleStats | null>(null);
   const [eligibility, setEligibility] = useState<SaleEligibility | null>(null);
   const [amount, setAmount] = useState(String(MIN_CONTRIBUTION));
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('fiat');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('crypto');
   const [pendingAmount, setPendingAmount] = useState<bigint | null>(null);
   const [message, setMessage] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
@@ -609,7 +610,7 @@ export function SalePage() {
                 </p>
               )}
 
-              <div className="mb-6">
+              <div className="mb-6 space-y-4">
                 <PaymentGatewayPanel
                   paymentMethod={paymentMethod}
                   onPaymentMethodChange={setPaymentMethod}
@@ -623,6 +624,11 @@ export function SalePage() {
                       'Complete funding in the provider window. When USDC arrives on Base, select USDC and confirm.',
                     );
                   }}
+                  variant="light"
+                />
+                <RaiseDexMarkets
+                  wallet={address}
+                  amountUsd={amount}
                   variant="light"
                 />
               </div>

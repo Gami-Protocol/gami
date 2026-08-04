@@ -47,6 +47,8 @@ export const env = {
   vestingAddress: () => read('VITE_VESTING_ADDRESS'),
   tokenSaleAddress: () => read('VITE_TOKEN_SALE_ADDRESS'),
   gamiTokenAddress: () => read('VITE_GAMI_TOKEN_ADDRESS'),
+  /** Solana $GAMI mint from gami-protocol-chain (Raydium / Jupiter). */
+  gamiSolanaMint: () => read('VITE_GAMI_SOLANA_MINT'),
   usdcAddress: () => read('VITE_USDC_ADDRESS'),
   fiatOnrampUrl: () => read('VITE_FIAT_ONRAMP_URL'),
   usdtSwapUrl: () => read('VITE_USDT_SWAP_URL'),
