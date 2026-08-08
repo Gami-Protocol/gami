@@ -74,20 +74,30 @@ export function Seo() {
       content: entry.noindex ? 'noindex, nofollow' : 'index, follow, max-image-preview:large',
     });
 
-    // Help ChatGPT / AI browsers discover the citation brief.
-    let llms = document.head.querySelector(
+    upsertLink('canonical', url);
+
+    // Help ChatGPT / AI browsers discover citation + crawl maps.
+    let llmsLink = document.head.querySelector(
       'link[rel="alternate"][title="llms.txt"]',
     ) as HTMLLinkElement | null;
-    if (!llms) {
-      llms = document.createElement('link');
-      llms.rel = 'alternate';
-      llms.title = 'llms.txt';
-      llms.type = 'text/plain';
-      document.head.appendChild(llms);
+    if (!llmsLink) {
+      llmsLink = document.createElement('link');
+      llmsLink.rel = 'alternate';
+      llmsLink.title = 'llms.txt';
+      llmsLink.type = 'text/plain';
+      document.head.appendChild(llmsLink);
     }
-    llms.href = '/llms.txt';
+    llmsLink.href = 'https://gamiprotocol.io/llms.txt';
 
-    upsertLink('canonical', url);
+    let sitemapLink = document.head.querySelector('link[rel="sitemap"]') as HTMLLinkElement | null;
+    if (!sitemapLink) {
+      sitemapLink = document.createElement('link');
+      sitemapLink.rel = 'sitemap';
+      sitemapLink.type = 'application/xml';
+      sitemapLink.title = 'Sitemap';
+      document.head.appendChild(sitemapLink);
+    }
+    sitemapLink.href = 'https://gamiprotocol.io/sitemap.xml';
 
     upsertMeta('meta[property="og:type"]', { property: 'og:type', content: 'website' });
     upsertMeta('meta[property="og:site_name"]', { property: 'og:site_name', content: SITE_NAME });
@@ -119,11 +129,13 @@ export function Seo() {
       content: DEFAULT_OG_IMAGE,
     });
 
-    const googleVerification = import.meta.env.VITE_GOOGLE_SITE_VERIFICATION as string | undefined;
-    if (googleVerification?.trim()) {
+    const googleVerification = (import.meta.env.VITE_GOOGLE_SITE_VERIFICATION as string | undefined)
+      ?.trim()
+      .replace(/[^a-zA-Z0-9_-]/g, '');
+    if (googleVerification && googleVerification.length >= 8 && googleVerification.length <= 100) {
       upsertMeta('meta[name="google-site-verification"]', {
         name: 'google-site-verification',
-        content: googleVerification.trim(),
+        content: googleVerification,
       });
     }
 
