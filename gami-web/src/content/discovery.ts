@@ -172,7 +172,7 @@ export function buildHomeJsonLd() {
       url: 'https://gamiprotocol.io/',
       name: 'Gami Protocol: Universal Gamification Infrastructure',
       description:
-        "Boost engagement with Gami Protocol's AI-powered gamification. Earn XP, rewards, and tokens across apps and games. Join the waitlist at gamiprotocol.io.",
+        "Boost engagement with Gami Protocol's AI-powered gamification engine. Earn XP, rewards, and tokens across apps and games. Join the waitlist for early access.",
       isPartOf: {
         '@type': 'WebSite',
         '@id': 'https://gamiprotocol.io/#website',

@@ -1,9 +1,9 @@
 export const SITE_URL = 'https://gamiprotocol.io';
 export const SITE_NAME = 'Gami Protocol';
 export const DEFAULT_TITLE = 'Gami Protocol: Universal Gamification Infrastructure';
-/** Keep homepage description in the ~150–160 character SEO range. */
+/** Keep homepage description in the ~150–160 character SEO range (157 chars). */
 export const DEFAULT_DESCRIPTION =
-  "Boost engagement with Gami Protocol's AI-powered gamification. Earn XP, rewards, and tokens across apps and games. Join the waitlist at gamiprotocol.io.";
+  "Boost engagement with Gami Protocol's AI-powered gamification engine. Earn XP, rewards, and tokens across apps and games. Join the waitlist for early access.";
 export const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.png`;
 
 export type SeoEntry = {
