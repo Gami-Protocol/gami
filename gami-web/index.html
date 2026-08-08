@@ -39,120 +39,98 @@
     <meta name="twitter:image" content="https://gamiprotocol.io/og-image.png" />
     <meta name="twitter:site" content="@gamiprotocol" />
 
-    <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@graph": [
-          {
-            "@type": "Organization",
-            "@id": "https://gamiprotocol.io/#organization",
-            "name": "Gami Protocol",
-            "url": "https://gamiprotocol.io/",
-            "logo": "https://gamiprotocol.io/brand/gami-logo-universal.png",
-            "description": "Gami Protocol delivers universal gamification infrastructure with an AI-powered engine to recognize and reward user engagement across apps and games.",
-            "sameAs": [
-              "https://x.com/gamiprotocol",
-              "https://t.me/gamiprotocol",
-              "https://discord.gg/9Y8vpDAhbD"
-            ],
-            "email": "hello@gamiprotocol.io",
-            "knowsAbout": [
-              "gamification",
-              "crypto rewards",
-              "XP systems",
-              "Base L2",
-              "AI agents",
-              "Model Context Protocol"
-            ]
-          },
-          {
-            "@type": "WebSite",
-            "@id": "https://gamiprotocol.io/#website",
-            "url": "https://gamiprotocol.io/",
-            "name": "Gami Protocol",
-            "description": "Gami Protocol provides universal gamification infrastructure with an AI-powered engine to reward users across apps and games.",
-            "publisher": { "@id": "https://gamiprotocol.io/#organization" },
-            "inLanguage": "en",
-            "potentialAction": {
-              "@type": "ReadAction",
-              "target": "https://gamiprotocol.io/llms.txt"
-            }
-          },
-          {
-            "@type": "WebPage",
-            "@id": "https://gamiprotocol.io/#webpage",
-            "url": "https://gamiprotocol.io/",
-            "name": "Gami Protocol: Universal Gamification Infrastructure",
-            "description": "Boost engagement with Gami Protocol's AI-powered gamification. Earn XP, rewards, and tokens across apps and games. Join the waitlist at gamiprotocol.io.",
-            "isPartOf": { "@id": "https://gamiprotocol.io/#website" },
-            "about": { "@id": "https://gamiprotocol.io/#organization" },
-            "inLanguage": "en",
-            "primaryImageOfPage": "https://gamiprotocol.io/og-image.png",
-            "potentialAction": {
-              "@type": "ViewAction",
-              "target": "https://gamiprotocol.io/"
-            }
-          },
-          {
-            "@type": "SoftwareApplication",
-            "@id": "https://gamiprotocol.io/#software",
-            "name": "Gami Protocol",
-            "applicationCategory": "WebApplication",
-            "operatingSystem": "All",
-            "url": "https://gamiprotocol.io/",
-            "description": "AI-powered gamification engine for cross-app XP, rewards, and tokens across apps and games.",
-            "publisher": { "@id": "https://gamiprotocol.io/#organization" },
-            "offers": {
-              "@type": "Offer",
-              "price": "0",
-              "priceCurrency": "USD"
-            }
-          },
-          {
-            "@type": "SoftwareApplication",
-            "name": "Gami Wallet",
-            "applicationCategory": "FinanceApplication",
-            "operatingSystem": "iOS, Android, Web",
-            "url": "https://gamiprotocol.io/wallet",
-            "description": "Wallet-first engagement network for XP, rewards, and tokens across apps and games.",
-            "publisher": { "@id": "https://gamiprotocol.io/#organization" },
-            "offers": {
-              "@type": "Offer",
-              "price": "0",
-              "priceCurrency": "USD"
-            }
-          },
-          {
-            "@type": "FAQPage",
-            "mainEntity": [
-              {
-                "@type": "Question",
-                "name": "What is Gami Protocol?",
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": "Gami Protocol is universal gamification infrastructure for Web2 and Web3. It lets apps, games, and communities plug into shared XP, quests, AI agents, and on-chain rewards without rebuilding loyalty systems from scratch."
-                }
-              },
-              {
-                "@type": "Question",
-                "name": "How do I join the Gami waitlist?",
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": "Join at https://gamiprotocol.io/waitlist with your email (and optional wallet) for priority access to the $GAMI launch, multipliers, and updates."
-                }
-              },
-              {
-                "@type": "Question",
-                "name": "What is the Gami Wallet?",
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": "The Gami Wallet is the user app for XP, quests, badges, staking, and cross-app rewards. It is the wallet-first entry point to the Gami engagement network."
-                }
-              }
-            ]
-          }
-        ]
+    <!-- Primary homepage JSON-LD: top-level array (WebSite, WebPage, Organization, SoftwareApplication) -->
+    <script id="gami-home-jsonld" type="application/ld+json">
+[
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "@id": "https://gamiprotocol.io/#website",
+    "url": "https://gamiprotocol.io/",
+    "name": "Gami Protocol",
+    "description": "Gami Protocol provides universal gamification infrastructure with an AI-powered engine to reward users across apps and games.",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://gamiprotocol.io/search?q={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": "https://gamiprotocol.io/#webpage",
+    "url": "https://gamiprotocol.io/",
+    "name": "Gami Protocol: Universal Gamification Infrastructure",
+    "description": "Boost engagement with Gami Protocol's AI-powered gamification. Earn XP, rewards, and tokens across apps and games. Join the waitlist at gamiprotocol.io.",
+    "isPartOf": {
+      "@type": "Organization",
+      "url": "https://gamiprotocol.io/",
+      "name": "Gami Protocol"
+    },
+    "inLanguage": "en",
+    "potentialAction": {
+      "@type": "ViewAction",
+      "target": "https://gamiprotocol.io/"
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "@id": "https://gamiprotocol.io/#organization",
+    "url": "https://gamiprotocol.io/",
+    "name": "Gami Protocol",
+    "logo": "https://gamiprotocol.io/brand/gami-logo-universal.png",
+    "description": "Gami Protocol delivers universal gamification infrastructure with an AI-powered engine to recognize and reward user engagement across apps and games.",
+    "sameAs": [
+      "https://x.com/gamiprotocol",
+      "https://t.me/gamiprotocol",
+      "https://discord.gg/9Y8vpDAhbD"
+    ],
+    "email": "hello@gamiprotocol.io"
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "@id": "https://gamiprotocol.io/#software",
+    "url": "https://gamiprotocol.io/",
+    "name": "Gami Protocol",
+    "description": "AI-powered gamification engine for cross-app XP, rewards, and tokens across apps and games.",
+    "operatingSystem": "All",
+    "applicationCategory": "Web API"
+  }
+]
+    </script>
+    <script id="gami-faq-jsonld" type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is Gami Protocol?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Gami Protocol is universal gamification infrastructure for Web2 and Web3. It lets apps, games, and communities plug into shared XP, quests, AI agents, and on-chain rewards without rebuilding loyalty systems from scratch."
       }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I join the Gami waitlist?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Join at https://gamiprotocol.io/waitlist with your email (and optional wallet) for priority access to the $GAMI launch, multipliers, and updates."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the Gami Wallet?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The Gami Wallet is the user app for XP, quests, badges, staking, and cross-app rewards. It is the wallet-first entry point to the Gami engagement network."
+      }
+    }
+  ]
+}
     </script>
   </head>
   <body>

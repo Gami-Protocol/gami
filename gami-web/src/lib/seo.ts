@@ -20,6 +20,12 @@ const ROUTES: SeoEntry[] = [
     description: DEFAULT_DESCRIPTION,
   },
   {
+    path: '/search',
+    title: 'Search — Gami Protocol',
+    description:
+      'Search Gami Protocol pages for wallet, docs, tokenomics, waitlist, agents, and developer guides.',
+  },
+  {
     path: '/about',
     title: 'About — Gami Protocol',
     description:

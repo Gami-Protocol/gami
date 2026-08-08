@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom';
 import {
   buildBreadcrumbJsonLd,
   buildFaqJsonLd,
+  buildHomeJsonLd,
   buildOrganizationJsonLd,
 } from '@/content/discovery';
 import {
@@ -16,6 +17,7 @@ import {
 const FAQ_SCRIPT_ID = 'gami-faq-jsonld';
 const BREADCRUMB_SCRIPT_ID = 'gami-breadcrumb-jsonld';
 const ORG_SCRIPT_ID = 'gami-org-jsonld';
+const HOME_SCRIPT_ID = 'gami-home-jsonld';
 
 function upsertMeta(selector: string, attrs: Record<string, string>) {
   let el = document.head.querySelector(selector) as HTMLMetaElement | null;
@@ -38,7 +40,10 @@ function upsertLink(rel: string, href: string) {
   el.setAttribute('href', href);
 }
 
-function upsertJsonLd(id: string, data: Record<string, unknown> | null) {
+function upsertJsonLd(
+  id: string,
+  data: Record<string, unknown> | Array<Record<string, unknown>> | null,
+) {
   const existing = document.getElementById(id);
   if (!data) {
     existing?.remove();
@@ -139,12 +144,14 @@ export function Seo() {
       });
     }
 
-    upsertJsonLd(ORG_SCRIPT_ID, buildOrganizationJsonLd());
+    const isHome = pathname === '/';
+    upsertJsonLd(HOME_SCRIPT_ID, isHome ? buildHomeJsonLd() : null);
+    upsertJsonLd(ORG_SCRIPT_ID, isHome ? null : buildOrganizationJsonLd());
     upsertJsonLd(
       BREADCRUMB_SCRIPT_ID,
       entry.noindex ? null : buildBreadcrumbJsonLd(entry.path, entry.title),
     );
-    upsertJsonLd(FAQ_SCRIPT_ID, pathname === '/' ? buildFaqJsonLd() : null);
+    upsertJsonLd(FAQ_SCRIPT_ID, isHome ? buildFaqJsonLd() : null);
   }, [pathname]);
 
   return null;

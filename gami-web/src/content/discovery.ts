@@ -57,6 +57,7 @@ export const SITE_FAQS: FaqItem[] = [
 export const KEY_PAGES = [
   { path: '/', title: 'Home', summary: 'Product overview and waitlist CTA' },
   { path: '/about', title: 'About', summary: 'Company and protocol stack' },
+  { path: '/foundation', title: 'Foundation', summary: 'Light-based protocol stewardship' },
   { path: '/wallet', title: 'Wallet', summary: 'Download wallet and claim .gami name (GNS)' },
   {
     path: '/wallet/guide',
@@ -69,6 +70,7 @@ export const KEY_PAGES = [
   { path: '/tokenomics', title: 'Tokenomics', summary: 'Supply, allocation, burn engine' },
   { path: '/whitepaper', title: 'Whitepaper', summary: 'Full protocol documentation' },
   { path: '/sale', title: 'Token Sale', summary: 'Sale dashboard and contribution' },
+  { path: '/search', title: 'Search', summary: 'Find public Gami Protocol pages' },
 ] as const;
 
 export function buildFaqJsonLd(faqs: FaqItem[] = SITE_FAQS) {
@@ -139,4 +141,83 @@ export function buildOrganizationJsonLd() {
       'Web3 wallets',
     ],
   };
+}
+
+/**
+ * Homepage JSON-LD as a top-level array (many SEO/GEO auditors expect this
+ * shape rather than a single @graph object).
+ */
+export function buildHomeJsonLd() {
+  return [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      '@id': 'https://gamiprotocol.io/#website',
+      url: 'https://gamiprotocol.io/',
+      name: 'Gami Protocol',
+      description:
+        'Gami Protocol provides universal gamification infrastructure with an AI-powered engine to reward users across apps and games.',
+      publisher: { '@id': 'https://gamiprotocol.io/#organization' },
+      inLanguage: 'en',
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: 'https://gamiprotocol.io/search?q={search_term_string}',
+        'query-input': 'required name=search_term_string',
+      },
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'WebPage',
+      '@id': 'https://gamiprotocol.io/#webpage',
+      url: 'https://gamiprotocol.io/',
+      name: 'Gami Protocol: Universal Gamification Infrastructure',
+      description:
+        "Boost engagement with Gami Protocol's AI-powered gamification. Earn XP, rewards, and tokens across apps and games. Join the waitlist at gamiprotocol.io.",
+      isPartOf: {
+        '@type': 'WebSite',
+        '@id': 'https://gamiprotocol.io/#website',
+        url: 'https://gamiprotocol.io/',
+        name: 'Gami Protocol',
+      },
+      about: {
+        '@type': 'Organization',
+        '@id': 'https://gamiprotocol.io/#organization',
+        url: 'https://gamiprotocol.io/',
+        name: 'Gami Protocol',
+      },
+      inLanguage: 'en',
+      potentialAction: {
+        '@type': 'ViewAction',
+        target: 'https://gamiprotocol.io/',
+      },
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'Organization',
+      '@id': 'https://gamiprotocol.io/#organization',
+      url: 'https://gamiprotocol.io/',
+      name: 'Gami Protocol',
+      logo: 'https://gamiprotocol.io/brand/gami-logo-universal.png',
+      description:
+        'Gami Protocol delivers universal gamification infrastructure with an AI-powered engine to recognize and reward user engagement across apps and games.',
+      sameAs: [...BRAND.sameAs],
+      email: BRAND.email,
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'SoftwareApplication',
+      '@id': 'https://gamiprotocol.io/#software',
+      url: 'https://gamiprotocol.io/',
+      name: 'Gami Protocol',
+      description:
+        'AI-powered gamification engine for cross-app XP, rewards, and tokens across apps and games.',
+      operatingSystem: 'All',
+      applicationCategory: 'Web API',
+      offers: {
+        '@type': 'Offer',
+        price: '0',
+        priceCurrency: 'USD',
+      },
+    },
+  ];
 }
