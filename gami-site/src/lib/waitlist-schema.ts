@@ -14,6 +14,17 @@ export const waitlistSchema = z.object({
   role: z.enum(['developer', 'partner', 'investor', 'community']).optional(),
   interests: z.array(z.string()).optional(),
   referralCode: z.string().trim().max(64).optional().or(z.literal('')),
+  /** Optional `<handle>.gami` name reserved at signup and bound to the wallet. */
+  gamiHandle: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .optional()
+    .or(z.literal(''))
+    .refine(
+      (v) => !v || /^[a-z0-9_]{3,15}$/.test(v.replace(/\.gami$/, '')),
+      'Handle must be 3-15 lowercase letters, numbers, or underscore',
+    ),
   turnstileToken: z.string().optional(),
 });
 

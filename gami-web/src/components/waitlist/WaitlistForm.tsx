@@ -5,11 +5,14 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
 
 import { joinWaitlist } from '@/lib/sale';
+import { fetchWaitlistPublicCount, REFERRAL_REWARD_TIERS, referralLinkFor } from '@/lib/waitlist';
 import {
-  fetchWaitlistPublicCount,
-  REFERRAL_REWARD_TIERS,
-  referralLinkFor,
-} from '@/lib/waitlist';
+  checkHandleAvailability,
+  HANDLE_RE,
+  toGamiDnsName,
+  walletReceiveLink,
+  type HandleState,
+} from '@/lib/gami-dns';
 
 const ROLES = [
   'Community',
@@ -68,6 +71,9 @@ export function WaitlistForm({ compact = false }: { compact?: boolean }) {
   const [copied, setCopied] = useState(false);
   const [count, setCount] = useState<number | null>(null);
   const [turnstileToken, setTurnstileToken] = useState<string | undefined>();
+  const [gamiHandle, setGamiHandle] = useState('');
+  const [handleState, setHandleState] = useState<HandleState>('idle');
+  const [gamiDnsName, setGamiDnsName] = useState<string | null>(null);
 
   const siteKey =
     (typeof import.meta.env.VITE_TURNSTILE_SITE_KEY === 'string' &&
@@ -116,8 +122,43 @@ export function WaitlistForm({ compact = false }: { compact?: boolean }) {
     document.body.appendChild(script);
   }, [siteKey]);
 
+  // Debounced `.gami` availability check.
+  useEffect(() => {
+    if (!gamiHandle) {
+      setHandleState('idle');
+      return;
+    }
+    if (!HANDLE_RE.test(gamiHandle)) {
+      setHandleState('invalid');
+      return;
+    }
+
+    setHandleState('checking');
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      void checkHandleAvailability(gamiHandle, controller.signal).then((available) => {
+        if (controller.signal.aborted) return;
+        // `null` means the name service could not answer — never block signup.
+        if (available === null) {
+          setHandleState('idle');
+          return;
+        }
+        setHandleState(available ? 'available' : 'taken');
+      });
+    }, 450);
+
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [gamiHandle]);
+
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
+    if (gamiHandle && (handleState === 'taken' || handleState === 'invalid')) {
+      setError('Pick an available .gami name, or clear the field to skip it.');
+      return;
+    }
     setError('');
     setSubmitting(true);
 
@@ -129,6 +170,7 @@ export function WaitlistForm({ compact = false }: { compact?: boolean }) {
       wallet_address: wallet || undefined,
       referred_by: referredBy,
       source: 'website',
+      gami_handle: gamiHandle || undefined,
       turnstileToken,
     });
 
@@ -147,6 +189,10 @@ export function WaitlistForm({ compact = false }: { compact?: boolean }) {
     }
 
     setReferralCode(result.referralCode ?? null);
+    // Prefer the server's name; fall back to what was typed when the API is
+    // an older build that does not echo it back.
+    setGamiDnsName(result.gamiDnsName ?? (gamiHandle ? toGamiDnsName(gamiHandle) : null));
+    if (result.dnsError) setError(result.dnsError);
     setAlready(false);
     setSuccess(true);
   }
@@ -169,7 +215,12 @@ export function WaitlistForm({ compact = false }: { compact?: boolean }) {
       <div className="relative py-8 text-center">
         <ConfettiBurst active={!already} />
         <div className="gami-gradient neo-border mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full">
-          <svg className="h-10 w-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg
+            className="h-10 w-10 text-white"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
           </svg>
         </div>
@@ -182,7 +233,9 @@ export function WaitlistForm({ compact = false }: { compact?: boolean }) {
           </>
         ) : (
           <>
-            <h3 className="mb-3 font-display text-3xl font-bold uppercase">Welcome to Gami Protocol</h3>
+            <h3 className="mb-3 font-display text-3xl font-bold uppercase">
+              Welcome to Gami Protocol
+            </h3>
             <p className="mb-2 text-gray-300">You&apos;re officially on the waitlist.</p>
             <p className="mb-8 text-sm text-gray-500">
               We&apos;ll email you the moment the $GAMI raise goes live.
@@ -190,8 +243,34 @@ export function WaitlistForm({ compact = false }: { compact?: boolean }) {
           </>
         )}
 
+        {gamiDnsName ? (
+          <div className="neo-border mb-6 border-2 border-gami-accent/40 bg-gami-accent/10 p-5 text-left">
+            <p className="mb-2 font-mono text-[10px] uppercase tracking-widest text-gray-400">
+              Your Gami name
+            </p>
+            <p className="mb-3 font-display text-2xl font-bold text-gami-accent">{gamiDnsName}</p>
+            <p className="mb-4 text-xs leading-relaxed text-gray-300">
+              Open the Gami Wallet and sign in with <strong>{email}</strong> — the same email you
+              just used. Your name comes with you, and anything you buy in the raise is delivered
+              straight to {gamiDnsName}. No address to copy.
+            </p>
+            <a
+              href={walletReceiveLink(gamiDnsName).app}
+              className="mb-2 block w-full border-2 border-white bg-white py-3 text-center font-display text-sm font-bold uppercase tracking-widest text-black hover:bg-gami-accent hover:text-white"
+            >
+              Open in Gami Wallet
+            </a>
+            <a
+              href={walletReceiveLink(gamiDnsName).web}
+              className="block w-full py-2 text-center font-mono text-[10px] uppercase tracking-widest text-gray-400 hover:text-white"
+            >
+              Don&apos;t have the app? Get it here
+            </a>
+          </div>
+        ) : null}
+
         {referralCode && link ? (
-          <div className="mb-8 border-2 border-white/10 bg-black/40 p-5 text-left neo-border">
+          <div className="neo-border mb-8 border-2 border-white/10 bg-black/40 p-5 text-left">
             <p className="mb-2 font-mono text-[10px] uppercase tracking-widest text-gray-500">
               Invite friends
             </p>
@@ -217,7 +296,7 @@ export function WaitlistForm({ compact = false }: { compact?: boolean }) {
         <div className="flex flex-col gap-3">
           <Link
             to="/sale"
-            className="gami-gradient block w-full py-4 text-center font-display font-bold uppercase tracking-widest neo-border shadow-brutal"
+            className="gami-gradient neo-border block w-full py-4 text-center font-display font-bold uppercase tracking-widest shadow-brutal"
           >
             Sale dashboard
           </Link>
@@ -227,6 +306,9 @@ export function WaitlistForm({ compact = false }: { compact?: boolean }) {
               setSuccess(false);
               setAlready(false);
               setReferralCode(null);
+              setGamiDnsName(null);
+              setGamiHandle('');
+              setHandleState('idle');
               setError('');
             }}
             className="w-full border-2 border-white/40 py-3 font-display text-sm font-bold uppercase tracking-widest hover:bg-white hover:text-black"
@@ -357,6 +439,54 @@ export function WaitlistForm({ compact = false }: { compact?: boolean }) {
 
       <div>
         <label className="mb-2 block font-mono text-[10px] uppercase tracking-[0.2em] text-gray-500">
+          Your Gami name
+        </label>
+        <div className="relative">
+          <input
+            type="text"
+            value={gamiHandle}
+            onChange={(e) =>
+              setGamiHandle(
+                e.target.value
+                  .toLowerCase()
+                  .replace(/[^a-z0-9_]/g, '')
+                  .slice(0, 15),
+              )
+            }
+            className="form-input pr-20"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            placeholder="yourname"
+            disabled={submitting}
+          />
+          <span className="pointer-events-none absolute bottom-2 right-3 top-2 flex items-center font-mono text-xs text-gray-500">
+            .gami
+          </span>
+        </div>
+        <p
+          className={
+            handleState === 'available'
+              ? 'mt-2 font-mono text-[10px] text-emerald-400'
+              : handleState === 'taken' || handleState === 'invalid'
+                ? 'mt-2 font-mono text-[10px] text-red-400'
+                : 'mt-2 font-mono text-[10px] text-gray-500'
+          }
+        >
+          {handleState === 'checking'
+            ? 'checking availability…'
+            : handleState === 'available'
+              ? `✓ ${gamiHandle}.gami is yours — buy $GAMI and it lands here`
+              : handleState === 'taken'
+                ? `✗ ${gamiHandle}.gami is taken — try another`
+                : handleState === 'invalid'
+                  ? '3–15 lowercase letters, numbers, or underscore'
+                  : 'Optional — a readable address so tokens reach your wallet'}
+        </p>
+      </div>
+
+      <div>
+        <label className="mb-2 block font-mono text-[10px] uppercase tracking-[0.2em] text-gray-500">
           Referral code
         </label>
         <input
@@ -386,7 +516,7 @@ export function WaitlistForm({ compact = false }: { compact?: boolean }) {
       <button
         type="submit"
         disabled={submitting || (Boolean(siteKey) && !turnstileToken)}
-        className="gami-gradient flex w-full items-center justify-center gap-3 py-5 font-display text-xl font-bold uppercase tracking-widest neo-border shadow-brutal transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none disabled:cursor-not-allowed disabled:opacity-60"
+        className="gami-gradient neo-border flex w-full items-center justify-center gap-3 py-5 font-display text-xl font-bold uppercase tracking-widest shadow-brutal transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none disabled:cursor-not-allowed disabled:opacity-60"
       >
         {submitting ? (
           <>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -11,6 +11,18 @@ const ROLES = [
   { id: 'investor', label: 'Investor' },
   { id: 'community', label: 'Community' },
 ] as const;
+
+const HANDLE_RE = /^[a-z0-9_]{3,15}$/;
+
+type HandleState = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
+
+const HANDLE_HINT: Record<HandleState, (handle: string) => string> = {
+  idle: () => 'Your wallet address, but readable. Buy $GAMI and it lands here.',
+  checking: () => 'checking availability…',
+  available: (h) => `✓ ${h}.gami is yours — it unlocks in the Gami Wallet with this same email.`,
+  taken: (h) => `✗ ${h}.gami is taken — try another.`,
+  invalid: () => '3–15 lowercase letters, numbers, or underscore.',
+};
 
 const INTERESTS = [
   'Wallet Beta',
@@ -30,8 +42,47 @@ export function WaitlistForm({ compact = false }: { compact?: boolean }) {
   const [role, setRole] = useState<(typeof ROLES)[number]['id']>('community');
   const [interests, setInterests] = useState<string[]>(['Wallet Beta']);
   const [referralCode, setReferralCode] = useState('');
+  const [gamiHandle, setGamiHandle] = useState('');
+  const [handleState, setHandleState] = useState<HandleState>('idle');
   const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle');
   const [error, setError] = useState('');
+
+  // Live `.gami` availability — debounced so typing does not spam the API.
+  useEffect(() => {
+    if (!gamiHandle) {
+      setHandleState('idle');
+      return;
+    }
+    if (!HANDLE_RE.test(gamiHandle)) {
+      setHandleState('invalid');
+      return;
+    }
+
+    setHandleState('checking');
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      fetch(`/api/v1/dns/availability?handle=${encodeURIComponent(gamiHandle)}`, {
+        signal: controller.signal,
+      })
+        .then((res) => res.json())
+        .then((data: { ok?: boolean; available?: boolean }) => {
+          if (!data.ok) {
+            setHandleState('idle');
+            return;
+          }
+          setHandleState(data.available ? 'available' : 'taken');
+        })
+        .catch(() => {
+          // Offline or not configured — do not block the signup.
+          setHandleState('idle');
+        });
+    }, 450);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [gamiHandle]);
 
   function toggleInterest(item: string) {
     setInterests((prev) =>
@@ -41,6 +92,11 @@ export function WaitlistForm({ compact = false }: { compact?: boolean }) {
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
+    if (gamiHandle && (handleState === 'taken' || handleState === 'invalid')) {
+      setStatus('error');
+      setError('Pick an available .gami name, or clear the field to skip it.');
+      return;
+    }
     setStatus('loading');
     setError('');
 
@@ -56,6 +112,7 @@ export function WaitlistForm({ compact = false }: { compact?: boolean }) {
         role,
         interests,
         referralCode,
+        gamiHandle,
       }),
     });
 
@@ -122,8 +179,40 @@ export function WaitlistForm({ compact = false }: { compact?: boolean }) {
         />
       </Field>
 
+      <Field label="Claim your Gami name (optional)">
+        <div className="flex items-center gap-2">
+          <input
+            value={gamiHandle}
+            onChange={(e) =>
+              setGamiHandle(
+                e.target.value
+                  .toLowerCase()
+                  .replace(/[^a-z0-9_]/g, '')
+                  .slice(0, 15),
+              )
+            }
+            className="field font-mono text-sm"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            placeholder="yourname"
+          />
+          <span className="shrink-0 font-mono text-sm text-zinc-500">.gami</span>
+        </div>
+        <p
+          className={cn(
+            'mt-2 text-xs',
+            handleState === 'available' && 'text-emerald-400',
+            (handleState === 'taken' || handleState === 'invalid') && 'text-red-300',
+            (handleState === 'idle' || handleState === 'checking') && 'text-zinc-500',
+          )}
+        >
+          {HANDLE_HINT[handleState](gamiHandle)}
+        </p>
+      </Field>
+
       <div>
-        <p className="mb-2 text-xs uppercase tracking-[0.18em] text-zinc-500">Role</p>
+        <p className="mb-2 text-xs tracking-[0.18em] text-zinc-500 uppercase">Role</p>
         <div className="flex flex-wrap gap-2">
           {ROLES.map((item) => (
             <button
@@ -144,7 +233,7 @@ export function WaitlistForm({ compact = false }: { compact?: boolean }) {
       </div>
 
       <div>
-        <p className="mb-2 text-xs uppercase tracking-[0.18em] text-zinc-500">Interested in</p>
+        <p className="mb-2 text-xs tracking-[0.18em] text-zinc-500 uppercase">Interested in</p>
         <div className="flex flex-wrap gap-2">
           {INTERESTS.map((item) => (
             <button
@@ -189,7 +278,7 @@ export function WaitlistForm({ compact = false }: { compact?: boolean }) {
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="block">
-      <span className="mb-2 block text-xs uppercase tracking-[0.18em] text-zinc-500">{label}</span>
+      <span className="mb-2 block text-xs tracking-[0.18em] text-zinc-500 uppercase">{label}</span>
       {children}
     </label>
   );

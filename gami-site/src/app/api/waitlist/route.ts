@@ -2,10 +2,21 @@ import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { waitlistSchema } from '@/lib/waitlist-schema';
+import { normalizeHandle } from '@/lib/gami-dns';
 
 export const runtime = 'nodejs';
 
 const ALERT_TO = process.env.WAITLIST_ALERT_EMAILS || 'waitlist@gamiprotocol.io';
+
+/** Shape returned by the `upsert_gami_identity` RPC. */
+type GamiIdentityResult = {
+  ok?: boolean;
+  created?: boolean;
+  referral_code?: string | null;
+  gami_dns_name?: string | null;
+  dns_error?: string | null;
+  error?: string;
+};
 
 async function verifyTurnstile(token: string | undefined): Promise<boolean> {
   const secret = process.env.TURNSTILE_SECRET_KEY;
@@ -47,7 +58,7 @@ async function sendAlertEmail(count: number, joinerEmail: string) {
   });
 }
 
-async function sendWelcomeEmail(email: string, fullName: string) {
+async function sendWelcomeEmail(email: string, fullName: string, gamiDnsName?: string | null) {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) return;
 
@@ -64,6 +75,16 @@ async function sendWelcomeEmail(email: string, fullName: string) {
         <p style="color:#a1a1aa;line-height:1.6">
           Hey ${name}, you're officially on the waitlist. We'll email you the moment the $GAMI raise goes live.
         </p>
+        ${
+          gamiDnsName
+            ? `<p style="margin:20px 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:.18em;color:#71717a">Your Gami name</p>
+               <p style="font-size:22px;font-weight:700;color:#22d3ee;margin:0">${gamiDnsName}</p>
+               <p style="color:#a1a1aa;font-size:13px;line-height:1.6;margin:8px 0 0">
+                 Sign in to the Gami Wallet with this same email and your name unlocks there too —
+                 buy $GAMI and it lands straight at ${gamiDnsName}, no address to copy.
+               </p>`
+            : ''
+        }
         <p style="margin:24px 0">
           <a href="https://gamiprotocol.io/waitlist"
              style="display:inline-block;background:#6C3BFF;color:#fff;text-decoration:none;padding:12px 20px;font-weight:700;border-radius:999px">
@@ -105,58 +126,94 @@ export async function POST(req: Request) {
     }
 
     const email = data.email.toLowerCase();
-    const wallet = data.walletAddress?.trim()
-      ? data.walletAddress.trim().toLowerCase()
-      : null;
+    const wallet = data.walletAddress?.trim() ? data.walletAddress.trim().toLowerCase() : null;
     const interests = (data.interests || []).join(',');
+    const gamiHandle = normalizeHandle(data.gamiHandle);
 
-    const row = {
-      email,
-      full_name: data.fullName,
-      wallet_address: wallet,
-      referral_code: data.referralCode || null,
-      source: 'gami-site',
-      country: data.country || null,
-      company: data.company || null,
-      role: data.role || null,
-      interests: interests || null,
-      status: wallet ? 'wallet_linked' : 'registered',
-      updated_at: new Date().toISOString(),
-    };
+    // Canonical path: one shared identity keyed on email, so this signup and a
+    // later Gami Wallet signup resolve to the same row, referral code, and
+    // `.gami` name. Falls back to a plain upsert when the identity migration
+    // has not been applied to this project yet.
+    let identity: GamiIdentityResult | null = null;
 
-    const { error: upsertError } = await supabase.from('waitlist').upsert(row, {
-      onConflict: 'email',
+    const { data: rpcData, error: rpcError } = await supabase.rpc('upsert_gami_identity', {
+      p_email: email,
+      p_full_name: data.fullName,
+      p_handle: gamiHandle || null,
+      p_evm_address: wallet,
+      p_source: 'gami-site',
+      p_signup_surface: 'site',
+      p_country: data.country || null,
+      p_company: data.company || null,
+      p_role: data.role || null,
+      p_interests: interests || null,
+      p_referred_by: data.referralCode || null,
     });
 
-    if (upsertError) {
-      // Older schemas may not have the new columns yet — retry with core fields.
-      const { error: fallbackError } = await supabase.from('waitlist').upsert(
-        {
-          email: row.email,
-          full_name: row.full_name,
-          wallet_address: row.wallet_address,
-          referral_code: row.referral_code,
-          source: row.source,
-          status: row.status,
-        },
-        { onConflict: 'email' },
-      );
-      if (fallbackError) {
-        return NextResponse.json({ ok: false, error: fallbackError.message }, { status: 500 });
+    if (!rpcError) {
+      identity = (rpcData ?? null) as GamiIdentityResult | null;
+      if (identity && identity.ok === false) {
+        return NextResponse.json(
+          { ok: false, error: identity.error || 'Could not join waitlist' },
+          { status: 400 },
+        );
+      }
+    } else {
+      const row = {
+        email,
+        full_name: data.fullName,
+        wallet_address: wallet,
+        referral_code: data.referralCode || null,
+        source: 'gami-site',
+        country: data.country || null,
+        company: data.company || null,
+        role: data.role || null,
+        interests: interests || null,
+        status: wallet ? 'wallet_linked' : 'registered',
+        updated_at: new Date().toISOString(),
+      };
+
+      const { error: upsertError } = await supabase.from('waitlist').upsert(row, {
+        onConflict: 'email',
+      });
+
+      if (upsertError) {
+        // Older schemas may not have the new columns yet — retry with core fields.
+        const { error: fallbackError } = await supabase.from('waitlist').upsert(
+          {
+            email: row.email,
+            full_name: row.full_name,
+            wallet_address: row.wallet_address,
+            referral_code: row.referral_code,
+            source: row.source,
+            status: row.status,
+          },
+          { onConflict: 'email' },
+        );
+        if (fallbackError) {
+          return NextResponse.json({ ok: false, error: fallbackError.message }, { status: 500 });
+        }
       }
     }
 
-    const { count } = await supabase
-      .from('waitlist')
-      .select('id', { count: 'exact', head: true });
+    const { count } = await supabase.from('waitlist').select('id', { count: 'exact', head: true });
 
-    void sendAlertEmail(count ?? 0, email).catch(() => undefined);
-    void sendWelcomeEmail(email, data.fullName).catch(() => undefined);
+    // Never re-welcome a returning signup. When the RPC is unavailable we have
+    // no `created` flag, so fall back to emailing (previous behavior).
+    const isNewSignup = identity ? identity.created !== false : true;
+    if (isNewSignup) {
+      void sendAlertEmail(count ?? 0, email).catch(() => undefined);
+      void sendWelcomeEmail(email, data.fullName, identity?.gami_dns_name).catch(() => undefined);
+    }
 
     return NextResponse.json({
       ok: true,
       count: count ?? null,
       email,
+      created: identity?.created ?? null,
+      referralCode: identity?.referral_code ?? null,
+      gamiDnsName: identity?.gami_dns_name ?? null,
+      dnsError: identity?.dns_error ?? null,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Server error';
