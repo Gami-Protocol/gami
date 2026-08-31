@@ -1,4 +1,5 @@
 import { ConnectWallet } from '@/components/ConnectWallet';
+import { GamiDeliveryCard } from '@/components/sale/GamiDeliveryCard';
 import { usePaymentGateway } from '@/hooks/usePaymentGateway';
 import {
   fiatGatewayAvailable,
@@ -18,6 +19,8 @@ type PaymentGatewayPanelProps = {
   onFunded?: () => void;
   /** Light (SalePage) vs dark (ContributePage) surface. */
   variant?: 'light' | 'dark';
+  /** Known buyer email, so a name claimed here links their Gami identity. */
+  email?: string;
 };
 
 const METHODS: Array<[PaymentMethod, string]> = [
@@ -35,6 +38,7 @@ export function PaymentGatewayPanel({
   amountUsd,
   onFunded,
   variant = 'light',
+  email,
 }: PaymentGatewayPanelProps) {
   const gateway = usePaymentGateway({ address, solanaAddress, amountUsd, onFunded });
   const light = variant === 'light';
@@ -85,6 +89,8 @@ export function PaymentGatewayPanel({
         ))}
       </div>
 
+      {isConnected ? <GamiDeliveryCard address={address} email={email} variant={variant} /> : null}
+
       {paymentMethod === 'usdc' && (
         <p className={`mt-3 ${textMuted}`}>
           Contribute with USDC already in your wallet. Settlement is on {paymentChainLabel()}. This
@@ -95,8 +101,8 @@ export function PaymentGatewayPanel({
       {paymentMethod === 'crypto' && (
         <div className={panelClass}>
           <p className={textMuted}>
-            Accept crypto for the raise: swap ETH, USDT, or any token to USDC on Uniswap (Base), then
-            select USDC to lock your allocation. Sale contract settles in USDC only.
+            Accept crypto for the raise: swap ETH, USDT, or any token to USDC on Uniswap (Base),
+            then select USDC to lock your allocation. Sale contract settles in USDC only.
           </p>
           {!isConnected ? (
             <div className="mt-3">
@@ -138,7 +144,9 @@ export function PaymentGatewayPanel({
               </button>
             </div>
           )}
-          <p className={`mt-3 font-mono text-[10px] uppercase ${light ? 'text-[#77727e]' : 'text-muted'}`}>
+          <p
+            className={`mt-3 font-mono text-[10px] uppercase ${light ? 'text-[#77727e]' : 'text-muted'}`}
+          >
             Uniswap / Aerodrome on Base. After the swap, select USDC and confirm contribution.
           </p>
         </div>
@@ -147,8 +155,8 @@ export function PaymentGatewayPanel({
       {paymentMethod === 'fiat' && (
         <div className={panelClass}>
           <p className={textMuted}>
-            Buy USDC with a debit/credit card via Coinbase — for your Base (EVM) allocation wallet or a
-            linked Solana wallet. Then return here and select USDC to invest.
+            Buy USDC with a debit/credit card via Coinbase — for your Base (EVM) allocation wallet
+            or a linked Solana wallet. Then return here and select USDC to invest.
           </p>
           {!isConnected ? (
             <div className="mt-3">
@@ -214,9 +222,11 @@ export function PaymentGatewayPanel({
               VITE_RAMP_HOST_API_KEY (Ramp).
             </p>
           )}
-          <p className={`mt-3 font-mono text-[10px] uppercase ${light ? 'text-[#77727e]' : 'text-muted'}`}>
-            Sale settles in Base USDC. Solana card buys fund Solana — bridge/swap to your Base wallet
-            before confirming. Never send funds to a sale address.
+          <p
+            className={`mt-3 font-mono text-[10px] uppercase ${light ? 'text-[#77727e]' : 'text-muted'}`}
+          >
+            Sale settles in Base USDC. Solana card buys fund Solana — bridge/swap to your Base
+            wallet before confirming. Never send funds to a sale address.
           </p>
         </div>
       )}

@@ -34,6 +34,10 @@ export type WaitlistJoinResult = {
   status?: string;
   referralCode?: string;
   referralLink?: string;
+  /** `<handle>.gami` reserved for this signup, when one was requested. */
+  gamiDnsName?: string;
+  /** Why the requested name could not be reserved (signup still succeeded). */
+  dnsError?: string;
 };
 
 function sanitize(value: string | undefined | null, max = 200): string | null {
@@ -158,14 +162,11 @@ async function triggerWelcomeEmail(input: {
  * Primary waitlist signup via Supabase (anon insert + RLS).
  * Handles duplicates gracefully and returns a personal referral code.
  */
-export async function joinWaitlistSupabase(
-  input: WaitlistJoinInput,
-): Promise<WaitlistJoinResult> {
+export async function joinWaitlistSupabase(input: WaitlistJoinInput): Promise<WaitlistJoinResult> {
   if (!isSupabaseConfigured()) {
     return {
       ok: false,
-      error:
-        'Backend not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.',
+      error: 'Backend not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.',
     };
   }
 
@@ -181,8 +182,7 @@ export async function joinWaitlistSupabase(
   const company = sanitize(input.company, 120);
   const role = sanitize(input.role, 64);
   const wallet = sanitize(input.wallet, 42)?.toLowerCase() ?? null;
-  const referredBy =
-    sanitize(input.referredBy ?? input.referralCode, 32)?.toUpperCase() ?? null;
+  const referredBy = sanitize(input.referredBy ?? input.referralCode, 32)?.toUpperCase() ?? null;
   const source = sanitize(input.source, 32) ?? 'website';
   const country = sanitize(input.country, 64);
   const referralCode = generateReferralCode();

@@ -15,3 +15,9 @@ verify_jwt = false
 
 [functions.waitlist-notify]
 verify_jwt = false
+
+[functions.gami-identity]
+verify_jwt = false
+
+[functions.gami-dns]
+verify_jwt = false

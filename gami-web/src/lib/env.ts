@@ -22,8 +22,7 @@ const DEFAULT_FIREBASE = {
 export const env = {
   supabaseUrl: () => read('VITE_SUPABASE_URL'),
   /** Prefer new publishable key; fall back to legacy anon key name. */
-  supabaseAnonKey: () =>
-    read('VITE_SUPABASE_PUBLISHABLE_KEY') ?? read('VITE_SUPABASE_ANON_KEY'),
+  supabaseAnonKey: () => read('VITE_SUPABASE_PUBLISHABLE_KEY') ?? read('VITE_SUPABASE_ANON_KEY'),
   supabasePublishableKey: () =>
     read('VITE_SUPABASE_PUBLISHABLE_KEY') ?? read('VITE_SUPABASE_ANON_KEY'),
   /** Optional: point legacy Vite waitlist at gami-site /api/waitlist */
@@ -70,6 +69,21 @@ export const env = {
     const supabase = read('VITE_SUPABASE_URL');
     return supabase ? `${supabase.replace(/\/$/, '')}/functions/v1/waitlist-notify` : undefined;
   },
+  /**
+   * Base URL for the shared Gami identity + `.gami` DNS API.
+   * Defaults to the gami-site routes on the same origin so the sale site works
+   * without extra configuration when both ship together.
+   */
+  gamiApiBase: () => {
+    const explicit = read('VITE_GAMI_API_BASE');
+    if (explicit) return explicit.replace(/\/$/, '');
+    const site = read('VITE_GAMI_SITE_URL');
+    return site ? `${site.replace(/\/$/, '')}/api/v1` : undefined;
+  },
+  /** Deep link scheme for handing an on-ramp purchase to the Gami Wallet app. */
+  walletDeepLinkScheme: () => read('VITE_WALLET_DEEP_LINK_SCHEME') ?? 'gami',
+  /** Universal link fallback when the wallet app is not installed. */
+  walletUniversalLink: () => read('VITE_WALLET_UNIVERSAL_LINK') ?? 'https://gamiprotocol.io/wallet',
   personaTemplateId: () => read('VITE_PERSONA_TEMPLATE_ID'),
   /** `builtin` (default form), `persona`, or other hosted provider label. */
   kycProvider: () => read('VITE_KYC_PROVIDER') ?? 'builtin',

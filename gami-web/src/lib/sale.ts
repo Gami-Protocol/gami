@@ -70,6 +70,8 @@ export async function joinWaitlist(input: {
   source?: string;
   country?: string;
   turnstileToken?: string;
+  /** Optional `<handle>.gami` name reserved at signup. */
+  gami_handle?: string;
 }): Promise<WaitlistJoinResult> {
   const email = input.email.trim().toLowerCase();
   if (!email.includes('@')) {
@@ -80,6 +82,10 @@ export async function joinWaitlist(input: {
   const wallet = (input.wallet ?? input.wallet_address)?.trim().toLowerCase();
   const referredBy = (input.referred_by ?? input.referral_code)?.trim() || undefined;
   const source = input.source ?? 'website';
+  const gamiHandle = (input.gami_handle ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/\.gami$/, '');
 
   // 1) Redesigned Next.js waitlist API (gami-site) when explicitly configured
   const waitlistApi = env.waitlistApiUrl();
@@ -96,6 +102,7 @@ export async function joinWaitlist(input: {
           referralCode: referredBy || '',
           role: input.role || 'community',
           interests: ['Wallet Beta'],
+          gamiHandle,
           turnstileToken: input.turnstileToken,
         }),
       });
@@ -104,6 +111,8 @@ export async function joinWaitlist(input: {
         error?: string;
         referralCode?: string;
         referralLink?: string;
+        gamiDnsName?: string;
+        dnsError?: string;
       };
       if (!res.ok || data.ok === false) {
         return { ok: false, error: data.error || 'Failed to join waitlist' };
@@ -112,6 +121,8 @@ export async function joinWaitlist(input: {
         ok: true,
         referralCode: data.referralCode,
         referralLink: data.referralLink,
+        gamiDnsName: data.gamiDnsName ?? undefined,
+        dnsError: data.dnsError ?? undefined,
       };
     } catch {
       // Fall through.
