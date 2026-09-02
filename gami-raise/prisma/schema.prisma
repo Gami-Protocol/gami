@@ -1,0 +1,263 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  PARTNER
+  DEVELOPER
+  INVESTOR
+  ADMIN
+}
+
+enum KycStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ApplicationStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+}
+
+enum RaisePhase {
+  CLOSED
+  WAITLIST
+  SEED
+  PRIVATE
+  PUBLIC
+  TGE
+}
+
+model User {
+  id             String   @id @default(cuid())
+  privyId        String   @unique
+  email          String?  @unique
+  emailVerified  Boolean  @default(false)
+  displayName    String?
+  avatarUrl      String?
+  role           UserRole @default(USER)
+  referralCode   String   @unique
+  referredByCode String?
+  xp             Int      @default(0)
+  country        String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  profile            Profile?
+  wallets            Wallet[]
+  waitlistEntry      WaitlistEntry?
+  raiseRegistration  RaiseRegistration?
+  tokenAllocations   TokenAllocation[]
+  partnerApplication PartnerApplication?
+  developerProjects  DeveloperProject[]
+  investorProfile    InvestorProfile?
+  notifications      Notification[]
+  auditLogs          AuditLog[]
+  referralsMade      Referral[]          @relation("Referrer")
+  referralReceived   Referral?           @relation("Referee")
+}
+
+model Profile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  fullName    String?
+  company     String?
+  title       String?
+  bio         String?
+  twitter     String?
+  discord     String?
+  github      String?
+  website     String?
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Wallet {
+  id        String   @id @default(cuid())
+  userId    String
+  address   String
+  chainId   Int      @default(8453)
+  isPrimary Boolean  @default(false)
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, address])
+  @@index([address])
+}
+
+model WaitlistEntry {
+  id            String   @id @default(cuid())
+  userId        String?  @unique
+  email         String   @unique
+  walletAddress String?
+  referralCode  String?
+  source        String   @default("raise")
+  intentUsd     Int?
+  createdAt     DateTime @default(now())
+  user          User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+model RaiseRegistration {
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  phase           RaisePhase @default(WAITLIST)
+  kycStatus       KycStatus @default(PENDING)
+  eligible        Boolean   @default(false)
+  accredited      Boolean   @default(false)
+  intendedUsd     Int?
+  contributionUsd Int       @default(0)
+  merkleProof     String[]  @default([])
+  completedSteps  String[]  @default([])
+  registeredAt    DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model TokenAllocation {
+  id            String   @id @default(cuid())
+  userId        String
+  amountGami    Decimal  @db.Decimal(36, 18)
+  vestedGami    Decimal  @default(0) @db.Decimal(36, 18)
+  claimedGami   Decimal  @default(0) @db.Decimal(36, 18)
+  cliffEndsAt   DateTime?
+  vestingEndsAt DateTime?
+  tgeUnlockBps  Int      @default(1500)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model WhitelistEntry {
+  id            String     @id @default(cuid())
+  walletAddress String     @unique
+  phase         RaisePhase
+  merkleLeaf    String?
+  createdAt     DateTime   @default(now())
+}
+
+model TgeEvent {
+  id          String   @id @default(cuid())
+  name        String
+  startsAt    DateTime
+  claimOpensAt DateTime?
+  isLive      Boolean  @default(false)
+  notes       String?
+  createdAt   DateTime @default(now())
+}
+
+model PartnerApplication {
+  id          String            @id @default(cuid())
+  userId      String            @unique
+  company     String
+  website     String?
+  pitch       String
+  sdkInterest Boolean           @default(false)
+  status      ApplicationStatus @default(SUBMITTED)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model DeveloperProject {
+  id           String   @id @default(cuid())
+  userId       String
+  name         String
+  description  String?
+  apiKeyHash   String?
+  webhookUrl   String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model InvestorProfile {
+  id             String            @id @default(cuid())
+  userId         String            @unique
+  firm           String?
+  checkSizeUsd   Int?
+  thesis         String?
+  wantsMeeting   Boolean           @default(false)
+  dataRoomAccess Boolean           @default(false)
+  status         ApplicationStatus @default(SUBMITTED)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Referral {
+  id           String   @id @default(cuid())
+  referrerId   String
+  refereeId    String   @unique
+  code         String
+  xpAwarded    Int      @default(0)
+  createdAt    DateTime @default(now())
+  referrer     User     @relation("Referrer", fields: [referrerId], references: [id], onDelete: Cascade)
+  referee      User     @relation("Referee", fields: [refereeId], references: [id], onDelete: Cascade)
+
+  @@index([referrerId])
+  @@index([code])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  body      String
+  read      Boolean  @default(false)
+  href      String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+}
+
+model EmailLog {
+  id        String   @id @default(cuid())
+  toEmail   String
+  template  String
+  payload   Json?
+  status    String
+  createdAt DateTime @default(now())
+
+  @@index([toEmail])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  entity    String?
+  entityId  String?
+  meta      Json?
+  ip        String?
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([action])
+}
+
+model LeaderboardEntry {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  xp        Int      @default(0)
+  rank      Int?
+  updatedAt DateTime @updatedAt
+}
