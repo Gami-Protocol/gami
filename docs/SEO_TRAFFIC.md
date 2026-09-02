@@ -9,7 +9,8 @@ This repo ships crawlable SEO assets on the live Vercel project (`gami-web`):
 | `/llms.txt` | Short AI citation guide (ChatGPT / answer engines) |
 | `/llms-full.txt` | Longer brand brief for assistants |
 | Homepage FAQ + `FAQPage` JSON-LD | Google rich results + AI Q&A |
-| Organization / WebSite / SoftwareApplication schema | Knowledge graph signals |
+| Organization / WebSite / WebPage / SoftwareApplication schema | Knowledge graph signals |
+| Static `<h1>` + canonical in `index.html` | Crawlable without JS |
 
 ## Live sitemap (submit this URL)
 
@@ -18,6 +19,7 @@ This repo ships crawlable SEO assets on the live Vercel project (`gami-web`):
 | URL | changefreq | priority |
 |-----|------------|----------|
 | https://gamiprotocol.io/ | weekly | 1.0 |
+| https://gamiprotocol.io/foundation | monthly | 0.9 |
 | https://gamiprotocol.io/about | monthly | 0.8 |
 | https://gamiprotocol.io/agents | monthly | 0.8 |
 | https://gamiprotocol.io/wallet | weekly | 0.9 |
@@ -51,8 +53,9 @@ serves HTTPS. Until then, verify on https://gamiwebapp.vercel.app .
    ```
 5. In **Vercel** → project `gamiwebapp` → **Settings → Environment Variables**:
    - Name: `VITE_GOOGLE_SITE_VERIFICATION`
-   - Value: `PASTE_THIS_TOKEN` (the `content` value only)
+   - Value: `PASTE_THIS_TOKEN` (the `content` value only — short alphanumeric, usually under ~50 chars)
    - Environments: Production (and Preview if you want)
+   - **Do not** paste sitemap XML, full meta tags, or long URL lists. Invalid values are ignored at build time.
 6. **Redeploy** Production (env vars are baked into `index.html` at build time)
 7. Confirm the tag is live:
    ```bash

@@ -23,6 +23,7 @@ import { RiskPage } from '@/pages/legal/RiskPage';
 import { TermsPage } from '@/pages/legal/TermsPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { SalePage } from '@/pages/SalePage';
+import { SearchPage } from '@/pages/SearchPage';
 import { StatusPage } from '@/pages/StatusPage';
 import { TokenomicsPage } from '@/pages/TokenomicsPage';
 import { WaitlistLivePage } from '@/pages/WaitlistLivePage';
@@ -48,6 +49,7 @@ function AppShell() {
       <main>
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/search" element={<SearchPage />} />
           <Route path="/foundation" element={<FoundationPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/agents" element={<AgentsPage />} />

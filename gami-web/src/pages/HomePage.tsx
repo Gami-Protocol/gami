@@ -124,7 +124,8 @@ export function HomePage() {
               V2.0 LIVE ON TESTNET // PROTOCOL ACTIVATED
             </div>
             <h1 className="mb-8 font-display text-6xl font-bold leading-none md:text-8xl">
-              THE UNIVERSAL <span className="text-gami-purple">GAMIFICATION</span> LAYER.
+              Gami Protocol:{' '}
+              <span className="text-gami-purple">Universal Gamification</span> Infrastructure
             </h1>
             <p className="mb-10 max-w-xl text-xl font-light leading-relaxed text-gray-400">
               Earn XP, rewards, and tokens across apps, games, and communities with one universal wallet powered by AI

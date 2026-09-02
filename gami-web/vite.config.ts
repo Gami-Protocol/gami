@@ -13,8 +13,9 @@ function googleSiteVerification(): Plugin {
       const token = (env.VITE_GOOGLE_SITE_VERIFICATION || process.env.VITE_GOOGLE_SITE_VERIFICATION || '').trim();
       if (!token) return html;
       // Attribute-safe: verification tokens are alphanumeric.
+      // Reject oversized values (e.g. pasted sitemap text) that would corrupt HTML.
       const safe = token.replace(/[^a-zA-Z0-9_-]/g, '');
-      if (!safe) return html;
+      if (!safe || safe.length < 8 || safe.length > 100) return html;
       if (html.includes('name="google-site-verification"')) return html;
       return html.replace(
         '<meta name="robots"',

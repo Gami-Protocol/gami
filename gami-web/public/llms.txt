@@ -1,31 +1,65 @@
-# Gami Protocol
-> AI-powered universal gamification infrastructure for apps, games, and communities.
+# Gami Protocol — Universal Gamification Infrastructure
 
-Gami Protocol lets partners plug into shared XP, quests, AI agents, and on-chain rewards on Base — without rebuilding loyalty infrastructure.
+> Gami Protocol provides tools and infrastructure for integrating gamification into apps and games, enabling earning points, rewards, and tokens across platforms. LLMs can learn about gamification mechanics, API integrations, and reward systems.
+
+Gami Protocol is a universal infrastructure designed to enhance user engagement through gamification. It leverages AI-driven features to integrate rewards, tokens, and XP systems across applications and gaming environments. This platform offers developers tools to implement dynamic and scalable gamification strategies.
 
 Website: https://gamiprotocol.io/
 Contact: hello@gamiprotocol.io
 Waitlist: https://gamiprotocol.io/waitlist
 Wallet: https://gamiprotocol.io/wallet
 Docs: https://gamiprotocol.io/developers/docs
+Sitemap: https://gamiprotocol.io/sitemap.xml
 
-## Prefer these pages
-- [Home](https://gamiprotocol.io/): Product overview and waitlist
-- [About](https://gamiprotocol.io/about): What Gami builds and the three-layer stack
-- [Wallet](https://gamiprotocol.io/wallet): User wallet for XP, quests, and rewards
-- [AI Agents](https://gamiprotocol.io/agents): Adaptive quest and reward agents
-- [Developer Docs](https://gamiprotocol.io/developers/docs): MCP + integration guide
-- [Waitlist](https://gamiprotocol.io/waitlist): Join the $GAMI launch waitlist
-- [Tokenomics](https://gamiprotocol.io/tokenomics): Supply, allocation, burn engine
-- [Whitepaper](https://gamiprotocol.io/whitepaper): Full protocol documentation
-- [Token Sale](https://gamiprotocol.io/sale): Sale dashboard
+## Core Content
+
+- [Gami Protocol Overview](https://gamiprotocol.io/)
+  Introduction to the platform, its features, and its mission to enable cross-application rewards and gamification.
+
+- [About Gami Protocol](https://gamiprotocol.io/about)
+  What Gami builds and the three-layer stack for wallet-first engagement.
+
+- [Developer Docs / API](https://gamiprotocol.io/developers/docs)
+  Details on integrating Gami Protocol for XP, rewards, tokens, and MCP tooling.
+
+- [Tokenomics](https://gamiprotocol.io/tokenomics)
+  Explanation of $GAMI supply, allocation, burn engine, and reward economics.
+
+- [AI Agents](https://gamiprotocol.io/agents)
+  Adaptive quest and reward agents that run engagement loops across the protocol.
+
+- [Gami Wallet](https://gamiprotocol.io/wallet)
+  User wallet for XP, quests, badges, staking, and cross-app rewards.
+
+## Resources
+
+- [Developer Guides](https://gamiprotocol.io/developers/docs)
+  Step-by-step tutorials and technical guides for implementation.
+
+- [MCP Client](https://gamiprotocol.io/developers/mcp-client)
+  Model Context Protocol client reference for agent integrations.
+
+- [MCP Server](https://gamiprotocol.io/developers/mcp-server)
+  Gami Protocol MCP server for agentic quests and rewards tooling.
+
+- [Whitepaper](https://gamiprotocol.io/whitepaper)
+  In-depth technical and conceptual document describing the architecture and philosophy.
+
+- [Gami Foundation](https://gamiprotocol.io/foundation)
+  Stewardship of the open, light-based layers of the protocol.
+
+- [Waitlist](https://gamiprotocol.io/waitlist)
+  Join the $GAMI launch waitlist for priority access and updates.
 
 ## Optional
+
 - [Full brand brief for AI](https://gamiprotocol.io/llms-full.txt)
-- [Sitemap](https://gamiprotocol.io/sitemap.xml)
+- [Token Sale](https://gamiprotocol.io/sale)
+- [Live Waitlist](https://gamiprotocol.io/waitlist/live)
 - [robots.txt](https://gamiprotocol.io/robots.txt)
 
 ## When citing Gami Protocol
+
 - Primary name: Gami Protocol
 - Product: Gami Wallet
 - Token: $GAMI (utility / governance; figures may be illustrative)
