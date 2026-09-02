@@ -41,11 +41,36 @@ Scan the QR code with Expo Go ([iOS](https://apps.apple.com/app/expo-go/id982107
 - React Native + Expo (SDK 54)
 - Expo Router (file-based navigation)
 - TypeScript
-- Privy (embedded wallet / auth)
-- Supabase (backend & database)
+- Privy (identity + embedded wallet — the only signup/wallet provider)
+- Supabase (off-chain profile store & database)
 - Viem (blockchain interactions)
 - Zustand (state management)
 - Tailwind CSS via Uniwind
+
+### Signup + wallet (Privy)
+
+Signup, login and the wallet are all [privy.io](https://privy.io) — there is no
+local/mock wallet path. Email OTP creates the account and Privy provisions an
+embedded Ethereum wallet on first login (`createOnLogin: 'all-users'`); Supabase
+only stores the off-chain profile row (handle, XP, settings) keyed by the Privy
+user id.
+
+| Surface | SDK |
+|---------|-----|
+| Expo native | `@privy-io/expo` (`lib/privy-bridge.ts`) |
+| Expo web | `@privy-io/react-auth` (`lib/privy-bridge.web.ts`) |
+| `gami-web/` sale site | `@privy-io/react-auth` |
+
+Config:
+
+| Variable | Where | Notes |
+|----------|-------|-------|
+| `EXPO_PUBLIC_PRIVY_APP_ID` / `VITE_PRIVY_APP_ID` | client | Public. Defaults to the Gami app ID, baked into builds. |
+| `EXPO_PUBLIC_PRIVY_CLIENT_ID` | client, native | Optional app client from the Privy dashboard. |
+| `PRIVY_APP_SECRET` | **server only** | Edge Functions / API routes. Never commit it or ship it in a bundle. |
+
+Expo Go cannot load Privy's native modules, so onboarding there reports that a
+dev build is required instead of creating a wallet.
 
 ## Smart contracts (`gami-contracts/`)
 

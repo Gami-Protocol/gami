@@ -4,7 +4,7 @@ function read(name: string): string | undefined {
 }
 
 /** Public Privy App ID (safe for the browser). Override with VITE_PRIVY_APP_ID if needed. */
-const DEFAULT_PRIVY_APP_ID = 'cmr6honh400ee0cjudyfx9hpt';
+const DEFAULT_PRIVY_APP_ID = 'cmrz2f6jc01560djmtczc288n';
 
 /**
  * Public Firebase web config for project `gami-protocol`.

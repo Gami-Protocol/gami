@@ -70,7 +70,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
       // Privy embedded-wallet auth. Read at runtime via expo-constants as a
       // fallback when EXPO_PUBLIC_* inlining is missed in a native build.
-      privyAppId: process.env.EXPO_PUBLIC_PRIVY_APP_ID,
+      // Baked in so EAS / Expo Go builds reach Privy without a local .env.
+      // Public value; the matching PRIVY_APP_SECRET is server-side only.
+      privyAppId: process.env.EXPO_PUBLIC_PRIVY_APP_ID?.trim() || 'cmrz2f6jc01560djmtczc288n',
       privyClientId: process.env.EXPO_PUBLIC_PRIVY_CLIENT_ID,
       icoWebUrl: process.env.EXPO_PUBLIC_ICO_WEB_URL,
       gamiTokenAddress: process.env.EXPO_PUBLIC_GAMI_TOKEN_ADDRESS,

@@ -45,8 +45,8 @@ export default function Splash() {
       const store = useOnboardingStore.getState();
       const userId = await currentUserId();
 
-      // Signed in with a real backend session — restore profile from server.
-      if (userId && hasBackend && !userId.startsWith('local-')) {
+      // Signed in with Privy — restore the profile row from the server.
+      if (userId && hasBackend) {
         store.setAuthUser(userId, store.email);
         const profile = await fetchProfile(userId);
         if (profile) {
@@ -68,9 +68,9 @@ export default function Splash() {
       }
 
       if (cancelled) return;
-      // No session. If a local-only onboarded session exists, honour it.
-      const signedInLocally = Boolean(store.userId) && onboarded;
-      router.replace(signedInLocally ? '/(app)/home' : '/(onboarding)/welcome');
+      // No Privy session recorded. Honour a finished onboarding if one exists,
+      // otherwise start the signup flow.
+      router.replace(userId && onboarded ? '/(app)/home' : '/(onboarding)/welcome');
     };
 
     const timer = setTimeout(() => void route(), 1600);

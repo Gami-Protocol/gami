@@ -94,13 +94,16 @@ export default function Home() {
   useEffect(() => {
     let unsub = () => {};
     let mounted = true;
-    void createGamiWallet().then(async (wallet) => {
-      const s = await wallet.checkMyLevel();
-      if (mounted) setStats(s);
-      unsub = wallet.subscribeToLevelUps(() => {
-        if (mounted) setStats(currentStats());
-      });
-    });
+    void createGamiWallet()
+      .then(async (wallet) => {
+        const s = await wallet.checkMyLevel();
+        if (mounted) setStats(s);
+        unsub = wallet.subscribeToLevelUps(() => {
+          if (mounted) setStats(currentStats());
+        });
+      })
+      // No Privy wallet bound yet — keep the locally derived stats.
+      .catch(() => {});
     return () => {
       mounted = false;
       unsub();

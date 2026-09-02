@@ -17,7 +17,10 @@ export default function Receive() {
 
   useEffect(() => {
     if (!address) {
-      void createGamiWallet().then((w) => setAddress(w.address));
+      void createGamiWallet()
+        .then((w) => setAddress(w.address))
+        // No Privy wallet bound yet — the screen shows the empty state.
+        .catch(() => {});
     }
   }, [address]);
 

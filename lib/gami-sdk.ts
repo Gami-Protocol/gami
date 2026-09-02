@@ -101,13 +101,6 @@ export function currentStats(): LevelStats {
   return statsFromXP(s.xp, s.spentGami);
 }
 
-function randomAddress(): string {
-  const hex = '0123456789abcdef';
-  let out = '0x';
-  for (let i = 0; i < 40; i += 1) out += hex[Math.floor(Math.random() * 16)];
-  return out;
-}
-
 const listeners = new Set<LevelUpListener>();
 let lastNotifiedLevel = levelForXP(useOnboardingStore.getState().xp);
 
@@ -171,13 +164,21 @@ export interface GamiWallet {
   awardXP(amount: number): Promise<LevelStats>;
 }
 
+/**
+ * Bind the SDK to the caller's Privy embedded wallet.
+ *
+ * `address` must come from Privy (`useAuth().ensureWallet()`); the previously
+ * persisted address is accepted for returning users. There is deliberately no
+ * generated fallback — a Gami wallet is a Privy wallet, and pretending
+ * otherwise would hand the user an address they can never sign with.
+ */
 export async function createGamiWallet(preferredAddress?: string | null): Promise<GamiWallet> {
   await new Promise((r) => setTimeout(r, 350));
 
   const store = useOnboardingStore.getState();
-  let address = preferredAddress ?? store.walletAddress;
+  const address = preferredAddress ?? store.walletAddress;
   if (!address) {
-    address = randomAddress();
+    throw new Error('Privy did not return an embedded wallet address.');
   }
   if (address !== store.walletAddress) {
     store.setWalletAddress(address);

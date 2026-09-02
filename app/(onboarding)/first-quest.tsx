@@ -34,8 +34,14 @@ export default function FirstQuest() {
   const claim = async () => {
     setConfetti(true);
     haptics.success();
-    const wallet = await createGamiWallet();
-    await wallet.awardXP(250);
+    // The Privy wallet is bound during onboarding; if it is somehow missing,
+    // still award the quest XP locally rather than dead-ending the flow.
+    try {
+      const wallet = await createGamiWallet();
+      await wallet.awardXP(250);
+    } catch {
+      useOnboardingStore.getState().addXP(250);
+    }
     claimFirstQuest();
     advanceStep(10);
     setTimeout(() => router.push('/(onboarding)/xp'), 1100);

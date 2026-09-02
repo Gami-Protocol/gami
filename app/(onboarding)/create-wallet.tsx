@@ -26,9 +26,9 @@ import { haptics } from '@/lib/haptics';
 import { useOnboardingStore } from '@/lib/store';
 
 const STEPS = [
-  'Generating keypair',
-  'Securing in device keystore',
-  'Creating smart account on gami-1',
+  'Creating your Privy embedded wallet',
+  'Securing recovery shares',
+  'Linking your account on gami-1',
 ];
 
 function Spinner() {
@@ -49,25 +49,29 @@ export default function CreateWallet() {
   const advanceStep = useOnboardingStore((s) => s.advanceStep);
   const { ensureWallet } = useAuth();
   const [done, setDone] = useState(-1);
-  const [failed, setFailed] = useState(false);
+  const [failed, setFailed] = useState<string | null>(null);
   const ran = useRef(false);
 
   const pulse = useSharedValue(1);
   const glyphStyle = useAnimatedStyle(() => ({ transform: [{ scale: pulse.value }] }));
 
   const run = useCallback(() => {
-    setFailed(false);
+    setFailed(null);
     setDone(-1);
     let i = 0;
     const advance = () => {
       i += 1;
       setDone(i - 1);
       if (i === STEPS.length) {
-        // step 3 → resolve the real embedded wallet address (creating it via
-        // Privy if needed) before handing it to the SDK. On the fallback path
-        // ensureWallet returns the stored/mock address (or null → mock gen).
+        // step 3 → resolve the Privy embedded wallet address (creating it if
+        // Privy has not provisioned one yet) before handing it to the SDK.
+        // A null address means Privy could not provision a wallet — surface
+        // that as a retryable failure rather than inventing an address.
         ensureWallet()
-          .then((address) => createGamiWallet(address))
+          .then((address) => {
+            if (!address) throw new Error('Privy did not return a wallet address.');
+            return createGamiWallet(address);
+          })
           .then(() => {
             // Link the freshly created wallet address to the account row.
             void syncProfile();
@@ -75,7 +79,13 @@ export default function CreateWallet() {
             advanceStep(5);
             setTimeout(() => router.replace('/(onboarding)/face-id'), 500);
           })
-          .catch(() => setFailed(true));
+          .catch((e: unknown) =>
+            setFailed(
+              e instanceof Error && e.message
+                ? e.message
+                : 'Something glitched while creating your wallet.',
+            ),
+          );
         return;
       }
       setTimeout(advance, 650);
@@ -126,12 +136,14 @@ export default function CreateWallet() {
         <GHeading size="xl" className="mt-8">
           Forging your{'\n'}wallet…
         </GHeading>
-        <GBody className="mt-3">Generating keys on-device. Nothing leaves your phone.</GBody>
+        <GBody className="mt-3">
+          Privy is minting your embedded wallet. Only you can sign with it.
+        </GBody>
 
         <View className="mt-8 gap-3">
           {STEPS.map((label, i) => {
             const isDone = i <= done;
-            const isActive = i === done + 1 && !failed && done < STEPS.length - 1;
+            const isActive = i === done + 1 && failed === null && done < STEPS.length - 1;
             return (
               <View
                 key={label}
@@ -166,7 +178,7 @@ export default function CreateWallet() {
         {failed ? (
           <View className="mt-6">
             <GBody color="ink" className="mb-3 text-center">
-              Something glitched. Let&apos;s try again.
+              {failed}
             </GBody>
             <GButtonGhost label="RETRY" onPress={run} />
           </View>
