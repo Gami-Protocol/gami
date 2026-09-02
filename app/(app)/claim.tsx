@@ -5,7 +5,16 @@ import { useEffect, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 
 import { PrivyClaimButton } from '@/components/ico/PrivyClaimButton';
-import { GBody, GButtonGhost, GButtonPrimary, GCard, GConfetti, GMono, GScreen, GSticker } from '@/components/gami';
+import {
+  GBody,
+  GButtonGhost,
+  GButtonPrimary,
+  GCard,
+  GConfetti,
+  GMono,
+  GScreen,
+  GSticker,
+} from '@/components/gami';
 import { createGamiWallet } from '@/lib/gami-sdk';
 import { getActiveChain, getVestingAddress } from '@/lib/chain';
 import { privyEnabled } from '@/lib/privy';
@@ -26,13 +35,18 @@ export default function ClaimScreen() {
 
   useEffect(() => {
     let mounted = true;
-    void createGamiWallet(walletAddress).then(async (wallet) => {
-      const amount = await wallet.getClaimable();
-      if (mounted) {
-        setClaimable(amount);
-        setLoading(false);
-      }
-    });
+    void createGamiWallet(walletAddress)
+      .then(async (wallet) => {
+        const amount = await wallet.getClaimable();
+        if (mounted) {
+          setClaimable(amount);
+          setLoading(false);
+        }
+      })
+      // No Privy wallet bound yet — nothing is claimable.
+      .catch(() => {
+        if (mounted) setLoading(false);
+      });
     return () => {
       mounted = false;
     };
@@ -63,7 +77,9 @@ export default function ClaimScreen() {
           </Text>
         </View>
 
-        <GBody>Claim your vested tokens from the ICO. 15% unlocks at TGE, remainder vests over 12 months.</GBody>
+        <GBody>
+          Claim your vested tokens from the ICO. 15% unlocks at TGE, remainder vests over 12 months.
+        </GBody>
 
         <GCard gradient className="mt-6 p-5">
           <Text className="font-mono text-[11px] text-white/70">CLAIMABLE</Text>
@@ -75,7 +91,9 @@ export default function ClaimScreen() {
             </GMono>
           )}
           <View className="mt-3 flex-row items-center gap-2">
-            <View className={`h-2 w-2 rounded-full ${vestingConfigured ? 'bg-green' : 'bg-yellow'}`} />
+            <View
+              className={`h-2 w-2 rounded-full ${vestingConfigured ? 'bg-green' : 'bg-yellow'}`}
+            />
             <Text className="font-mono text-[10px] text-white/70">
               {vestingConfigured ? 'vesting contract connected' : 'awaiting TGE deployment'}
             </Text>

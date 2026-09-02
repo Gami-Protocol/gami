@@ -1,19 +1,20 @@
 /**
- * Auth layer — Supabase email + 6-digit OTP, tied to the wallet profile.
+ * Profile layer — the off-chain account row behind a Privy identity.
  *
- * Flow:
- *   signUp(email)            -> Supabase emails a 6-digit code
- *   verifySignup(email,code) -> session created, profile row exists (trigger)
- *   signIn(email)            -> Supabase emails a 6-digit code (existing user)
- *   verifyLogin(email,code)  -> session created, profile relinked into store
+ * Authentication itself is Privy (see `lib/useAuth.ts` + `lib/privy-bridge.ts`).
+ * This module owns everything that happens *after* a Privy login:
+ *
+ *   relinkProfile(userId, mode) -> hydrate the local store from `profiles`
+ *   syncProfile()               -> push local handle / wallet / XP back up
+ *   signOut()                   -> clear the local profile
  *
  * The `profiles` table is the server source of truth for the wallet address,
- * handle and XP. On login we hydrate the local store from it; while onboarding
- * we push local changes up via syncProfile().
+ * handle and XP, keyed by the Privy user id. Every read/write here is
+ * best-effort: onboarding must never be blocked by a backend hiccup.
  */
 
 import { toAvatarColorId, toNovaTone } from '@/lib/config';
-import { fetchProfile, hasBackend, saveProfile, supabase } from '@/lib/supabase';
+import { fetchProfile, hasBackend, saveProfile } from '@/lib/supabase';
 import { useOnboardingStore } from '@/lib/store';
 
 export type AuthResult = { ok: true } | { ok: false; error: string };
@@ -24,116 +25,10 @@ export type AuthResult = { ok: true } | { ok: false; error: string };
  */
 export type VerifyResult = { ok: true; onboarded: boolean } | { ok: false; error: string };
 
-function message(e: unknown, fallback: string): string {
-  if (e && typeof e === 'object' && 'message' in e) {
-    const m = (e as { message?: unknown }).message;
-    if (typeof m === 'string' && m.length > 0) return m;
-  }
-  return fallback;
-}
-
-/** Shown when no Supabase backend is reachable from this build. */
-function offlineBackendError(): AuthResult {
-  return {
-    ok: false,
-    error: "Can't reach the Gami backend. Check your connection and try again.",
-  };
-}
-
-/** Map a thrown network/fetch failure to a human message. */
-function networkError(e: unknown): string {
-  return message(e, 'Network error. Check your connection and try again.');
-}
-
-/** Map a Supabase auth error to friendlier copy (rate limits are common). */
-function friendlyAuthError(e: unknown): string {
-  const raw = message(e, '');
-  if (/rate limit|too many|seconds/i.test(raw)) {
-    return 'Too many attempts. Wait a minute, then try again.';
-  }
-  if (/expired/i.test(raw)) return 'That code expired. Tap resend for a new one.';
-  if (/invalid|incorrect|token/i.test(raw)) return 'That code did not match. Try again.';
-  return raw.length > 0 ? raw : 'Could not send your code.';
-}
-
-/** Send a signup code to a new email. */
-export async function signUpWithEmail(email: string): Promise<AuthResult> {
-  if (!hasBackend) return offlineBackendError();
-  try {
-    const { error } = await supabase.auth.signInWithOtp({
-      email: email.trim().toLowerCase(),
-      options: { shouldCreateUser: true },
-    });
-    if (error) return { ok: false, error: friendlyAuthError(error) };
-    return { ok: true };
-  } catch (e) {
-    return { ok: false, error: networkError(e) };
-  }
-}
-
-/** Send a login code to an existing email. */
-export async function signInWithEmail(email: string): Promise<AuthResult> {
-  if (!hasBackend) return offlineBackendError();
-  try {
-    const { error } = await supabase.auth.signInWithOtp({
-      email: email.trim().toLowerCase(),
-      options: { shouldCreateUser: false },
-    });
-    if (error) {
-      // Supabase returns variants of these when the email has no account yet.
-      const raw = message(error, '');
-      if (/not allowed|not found|no user|signups? not allowed|otp_disabled/i.test(raw)) {
-        return { ok: false, error: 'No account with that email. Create a wallet first.' };
-      }
-      return { ok: false, error: friendlyAuthError(error) };
-    }
-    return { ok: true };
-  } catch (e) {
-    return { ok: false, error: networkError(e) };
-  }
-}
-
-/** Verify a 6-digit code. `mode` decides whether we relink an existing profile. */
-export async function verifyCode(
-  email: string,
-  token: string,
-  mode: 'signup' | 'login',
-): Promise<VerifyResult> {
-  const store = useOnboardingStore.getState();
-
-  if (!hasBackend) {
-    return {
-      ok: false,
-      error: "Can't reach the Gami backend. Check your connection and try again.",
-    };
-  }
-
-  let userId: string;
-  let userEmail: string;
-  try {
-    const res = await supabase.auth.verifyOtp({
-      email: email.trim().toLowerCase(),
-      token: token.trim(),
-      type: 'email',
-    });
-    if (res.error || !res.data.session || !res.data.user) {
-      return { ok: false, error: friendlyAuthError(res.error) };
-    }
-    userId = res.data.user.id;
-    userEmail = res.data.user.email ?? email;
-  } catch (e) {
-    return { ok: false, error: networkError(e) };
-  }
-
-  store.setAuthUser(userId, userEmail);
-
-  return relinkProfile(userId, mode);
-}
-
 /**
- * After a successful auth (Supabase OR Privy), hydrate the local store from the
- * server `profiles` row. On login we relink an existing wallet/profile; on
- * signup the row may not exist yet, so the caller continues onboarding.
+ * After a successful Privy login, hydrate the local store from the server
+ * `profiles` row. On login we relink an existing wallet/profile; on signup the
+ * row does not exist yet, so the caller continues onboarding.
  */
 export async function relinkProfile(
   userId: string,
@@ -142,9 +37,8 @@ export async function relinkProfile(
   const store = useOnboardingStore.getState();
 
   if (mode === 'login') {
-    // Relink the wallet from the server profile. The signup trigger creates the
-    // row, but on a fresh verify the read can land before the insert is visible,
-    // so retry briefly before giving up.
+    // Relink the wallet from the server profile. On a fresh verify the read can
+    // land before the row is visible, so retry briefly before giving up.
     const profile = await fetchProfileWithRetry(userId);
     if (profile) {
       store.hydrateFromProfile({
@@ -166,8 +60,9 @@ export async function relinkProfile(
   return { ok: true, onboarded: false };
 }
 
-/** Fetch the profile row, retrying a few times to ride out trigger lag. */
+/** Fetch the profile row, retrying a few times to ride out replication lag. */
 async function fetchProfileWithRetry(userId: string) {
+  if (!hasBackend) return null;
   for (let attempt = 0; attempt < 4; attempt++) {
     const profile = await fetchProfile(userId);
     if (profile) return profile;
@@ -179,7 +74,7 @@ async function fetchProfileWithRetry(userId: string) {
 /** Push the current local profile/wallet/XP up to the server row. */
 export async function syncProfile(): Promise<void> {
   const s = useOnboardingStore.getState();
-  if (!hasBackend || !s.userId || s.userId.startsWith('local-')) return;
+  if (!hasBackend || !s.userId) return;
   await saveProfile(s.userId, {
     handle: s.handle || null,
     wallet_address: s.walletAddress,
@@ -192,23 +87,23 @@ export async function syncProfile(): Promise<void> {
   });
 }
 
-/** Sign out of Supabase and clear the local profile. */
+/**
+ * Clear the local profile. The Privy session itself is ended by the caller
+ * (`usePrivyBridge().logout()`), which owns the SDK handle.
+ */
 export async function signOut(): Promise<void> {
-  if (hasBackend) {
-    try {
-      await supabase.auth.signOut();
-    } catch {
-      // ignore network failures on sign-out
-    }
-  }
   useOnboardingStore.getState().signOutLocal();
 }
 
-/** Resolve the current session's user id (used at boot to gate routing). */
+/**
+ * Resolve the signed-in user id (used at boot to gate routing).
+ *
+ * Privy owns the session and only exposes it through React hooks, which the
+ * splash screen cannot call before routing. The store persists the Privy user
+ * id at login, so that is the boot-time source of truth.
+ */
 export async function currentUserId(): Promise<string | null> {
-  if (!hasBackend) return useOnboardingStore.getState().userId;
-  const { data } = await supabase.auth.getSession();
-  return data.session?.user.id ?? null;
+  return useOnboardingStore.getState().userId;
 }
 
 /**
@@ -230,7 +125,7 @@ export function wireProfileSync(): void {
       state.handle !== prev.handle ||
       state.walletAddress !== prev.walletAddress;
     if (!relevantChanged) return;
-    if (!state.userId || state.userId.startsWith('local-')) return;
+    if (!state.userId) return;
     if (syncTimer) clearTimeout(syncTimer);
     syncTimer = setTimeout(() => void syncProfile(), 800);
   });
