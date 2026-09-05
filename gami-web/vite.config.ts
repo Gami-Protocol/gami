@@ -31,6 +31,11 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
       '@react-native-async-storage/async-storage': path.resolve(__dirname, './src/shims/empty.ts'),
       'pino-pretty': path.resolve(__dirname, './src/shims/empty.ts'),
+      // Privy's optional crypto-onramp peer — gami-web doesn't use it, but its
+      // own import of the (also-absent) @stripe/stripe-js crashes Vite's dep
+      // scanner outright if @stripe/crypto is resolvable from anywhere on the
+      // filesystem (e.g. hoisted into a parent directory's node_modules).
+      '@stripe/crypto': path.resolve(__dirname, './src/shims/empty.ts'),
     },
   },
   server: {
