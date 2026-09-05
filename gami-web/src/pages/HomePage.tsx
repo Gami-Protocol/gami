@@ -1,11 +1,10 @@
-import { FormEvent, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 import { DiscoveryFaq } from '@/components/gami/DiscoveryFaq';
 import { GamiFooter } from '@/components/gami/GamiFooter';
 import { GamiLogo } from '@/components/gami/GamiLogo';
+import { CHROME_EXTENSION_URL, DASHBOARD_URL } from '@/components/gami/GamiNav';
 import { QuestNotification } from '@/components/gami/QuestNotification';
-import { joinWaitlist } from '@/lib/sale';
 
 const ECOSYSTEM_CARDS = [
   {
@@ -14,19 +13,21 @@ const ECOSYSTEM_CARDS = [
     icon: 'grid',
     cta: 'Launch App',
     ctaStyle: 'outline' as const,
-    href: '/app',
+    href: '/get-app',
+    external: false,
   },
   {
     title: 'BROWSER EXT.',
-    description: 'Earn rewards while you browse. The Gami Extension will detect partner sites and log verified interactions automatically.',
+    description: 'Earn rewards while you browse. The Gami Extension detects partner sites and logs verified interactions automatically.',
     icon: 'ext',
-    cta: 'Coming Soon',
-    ctaStyle: 'muted' as const,
-    comingSoon: true,
+    cta: 'Add to Chrome',
+    ctaStyle: 'outline' as const,
+    href: CHROME_EXTENSION_URL,
+    external: true,
   },
 ];
 
-const L1_STEPS = [
+const PROTOCOL_STEPS = [
   {
     num: '1',
     title: 'Universal Identity',
@@ -40,14 +41,14 @@ const L1_STEPS = [
   {
     num: '3',
     title: 'On-Chain Settlement',
-    detail: 'Merkle-anchored proofs settle on Base L2 for tamper-resistant claims, verifiable leaderboards, and near-zero fees.',
+    detail: 'Merkle-anchored proofs settle on Base for tamper-resistant claims, verifiable leaderboards, and near-zero fees.',
   },
 ];
 
-const L1_LAYERS = [
-  { label: 'Layer 1', name: '$GAMI', desc: 'Governance, staking, protocol fees, and treasury coordination.' },
-  { label: 'Layer 2', name: 'Universal Points', desc: 'Non-transferable XP earned across quests, shopping, fitness, and referrals.' },
-  { label: 'Layer 3', name: 'Stable Spend', desc: 'Auto-converted stable balance for real-world payments via Gami Wallet.' },
+const TOKEN_TIERS = [
+  { label: 'Token', name: '$GAMI', desc: 'Omnichain token settling from Base — governance, staking, protocol fees, and treasury coordination.' },
+  { label: 'Points', name: 'Universal Points', desc: 'Non-transferable XP earned across quests, shopping, fitness, and referrals.' },
+  { label: 'Spend', name: 'Stable Spend', desc: 'Auto-converted stable balance for real-world payments via Gami Wallet.' },
 ];
 
 function CardIcon({ type }: { type: string }) {
@@ -69,48 +70,6 @@ function CardIcon({ type }: { type: string }) {
 }
 
 export function HomePage() {
-  const [searchParams] = useSearchParams();
-  const [homeEmail, setHomeEmail] = useState('');
-  const [homeStatus, setHomeStatus] = useState<'idle' | 'loading' | 'success' | 'error'>(
-    'idle',
-  );
-  const [homeMessage, setHomeMessage] = useState('');
-
-  async function handleHomeWaitlist(e: FormEvent) {
-    e.preventDefault();
-    setHomeStatus('loading');
-    setHomeMessage('');
-
-    const normalized = homeEmail.trim().toLowerCase();
-    if (!normalized.includes('@') || !normalized.includes('.')) {
-      setHomeStatus('error');
-      setHomeMessage('Enter a valid email');
-      return;
-    }
-
-    const result = await joinWaitlist({
-      email: normalized,
-      name: normalized.split('@')[0] || 'Pilot',
-      role: 'community',
-      referred_by: searchParams.get('ref')?.trim() || undefined,
-      source: 'landing-home',
-    });
-
-    if (!result.ok) {
-      setHomeStatus('error');
-      setHomeMessage(result.error ?? 'Could not join waitlist');
-      return;
-    }
-
-    setHomeStatus('success');
-    setHomeMessage(
-      result.alreadyOnWaitlist
-        ? "You're already on the waitlist — we'll email you when the raise goes live."
-        : "You're on the waitlist. Check your inbox — we'll alert you when the raise goes live.",
-    );
-    setHomeEmail('');
-  }
-
   return (
     <>
       {/* Hero */}
@@ -132,13 +91,13 @@ export function HomePage() {
             </p>
             <div className="flex flex-wrap gap-6">
               <a
-                href="#waitlist"
+                href={DASHBOARD_URL}
                 className="gami-gradient neo-border px-8 py-4 font-display text-lg font-bold uppercase tracking-wider shadow-brutal transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none"
               >
-                Join Waitlist
+                Sign In / Sign Up
               </a>
               <Link
-                to="/app"
+                to="/get-app"
                 className="border-2 border-white px-8 py-4 font-display text-lg font-bold uppercase tracking-wider transition-all hover:bg-white hover:text-black"
               >
                 Launch App
@@ -202,48 +161,50 @@ export function HomePage() {
                 <h3 className="mb-4 font-display text-2xl font-bold">{card.title}</h3>
                 <p className="mb-8 h-20 text-gray-400">{card.description}</p>
 
-                {card.comingSoon ? (
-                  <span className="block w-full cursor-not-allowed border-2 border-white/30 py-3 text-center font-display font-bold uppercase text-gray-500">
+                {card.external ? (
+                  <a
+                    href={card.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block w-full border-2 border-white py-3 text-center font-display font-bold uppercase transition-all hover:bg-white hover:text-black"
+                  >
                     {card.cta}
-                  </span>
-                ) : card.cta && card.href ? (
+                  </a>
+                ) : (
                   <Link
                     to={card.href}
-                    className={`block w-full py-3 text-center font-display font-bold uppercase transition-all ${
-                      card.ctaStyle === 'outline'
-                        ? 'border-2 border-white hover:bg-white hover:text-black'
-                        : 'border-2 border-white/50 hover:border-white'
-                    }`}
+                    className="block w-full border-2 border-white py-3 text-center font-display font-bold uppercase transition-all hover:bg-white hover:text-black"
                   >
                     {card.cta}
                   </Link>
-                ) : null}
+                )}
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Layer 1 Section */}
+      {/* Protocol / token section */}
       <section className="mx-auto grid max-w-7xl items-center gap-20 px-6 py-24 lg:grid-cols-2">
         <div>
           <div className="mb-4 inline-block border border-gami-purple bg-gami-purple/20 px-3 py-1 font-mono text-xs tracking-tighter text-gami-accent">
             PROTOCOL ARCHITECTURE
           </div>
           <h2 className="mb-8 font-display text-5xl font-bold leading-tight">
-            GAMI LAYER 1 <br />
+            GAMI ON BASE <br />
             <span className="text-outline">THE REWARDS FOUNDATION</span>
           </h2>
           <p className="mb-6 text-lg leading-relaxed text-gray-400">
-            Layer 1 is the universal gamification backbone — a shared identity, event, and settlement layer that
-            lets any app plug into quests, XP, and on-chain rewards without rebuilding infrastructure from scratch.
+            Gami is the universal gamification backbone — a shared identity, event, and settlement layer that lets
+            any app plug into quests, XP, and on-chain rewards without rebuilding infrastructure from scratch.
+            $GAMI is an omnichain token settling from Base, bridgeable wherever partners need it.
           </p>
           <p className="mb-8 text-base leading-relaxed text-gray-500">
             Partners connect once through the Gami MCP client. User actions flow through a verified event bus, AI agents
             orchestrate quest logic and reward multipliers, and proofs anchor to Base for auditable settlement.
           </p>
           <div className="space-y-6">
-            {L1_STEPS.map((step) => (
+            {PROTOCOL_STEPS.map((step) => (
               <div key={step.num} className="flex items-start gap-4">
                 <div className="gami-gradient mt-1 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full font-bold">
                   {step.num}
@@ -257,12 +218,12 @@ export function HomePage() {
           </div>
 
           <div className="mt-10 space-y-3 border-t border-white/10 pt-8">
-            <p className="font-mono text-xs uppercase tracking-widest text-gami-accent">Three-Layer Stack</p>
-            {L1_LAYERS.map((layer) => (
-              <div key={layer.label} className="flex flex-col gap-1 sm:flex-row sm:gap-4">
-                <span className="w-20 shrink-0 font-mono text-xs text-gami-purple">{layer.label}</span>
-                <span className="w-36 shrink-0 font-display text-sm font-bold text-white">{layer.name}</span>
-                <span className="text-sm text-gray-500">{layer.desc}</span>
+            <p className="font-mono text-xs uppercase tracking-widest text-gami-accent">Token Stack</p>
+            {TOKEN_TIERS.map((tier) => (
+              <div key={tier.label} className="flex flex-col gap-1 sm:flex-row sm:gap-4">
+                <span className="w-20 shrink-0 font-mono text-xs text-gami-purple">{tier.label}</span>
+                <span className="w-36 shrink-0 font-display text-sm font-bold text-white">{tier.name}</span>
+                <span className="text-sm text-gray-500">{tier.desc}</span>
               </div>
             ))}
           </div>
@@ -276,7 +237,7 @@ export function HomePage() {
                 <div className="h-3 w-3 rounded-full bg-yellow-500" />
                 <div className="h-3 w-3 rounded-full bg-green-500" />
               </div>
-              <span className="font-mono text-xs text-gami-accent">L1_PROTOCOL_METRICS</span>
+              <span className="font-mono text-xs text-gami-accent">BASE_PROTOCOL_METRICS</span>
             </div>
             <div className="space-y-6">
               <div>
@@ -318,8 +279,8 @@ export function HomePage() {
 
       <DiscoveryFaq />
 
-      {/* Waitlist CTA */}
-      <section id="waitlist" className="relative scroll-mt-28 overflow-hidden bg-gami-purple py-32">
+      {/* Sign In / Sign Up CTA */}
+      <section className="relative overflow-hidden bg-gami-purple py-32">
         <div className="absolute right-0 top-0 p-20 opacity-10">
           <svg viewBox="0 0 100 100" className="h-96 w-96 fill-white">
             <path d="M50 0 L93.3 25 L93.3 75 L50 100 L6.7 75 L6.7 25 Z" />
@@ -331,53 +292,17 @@ export function HomePage() {
             Power the Future of Engagement
           </h2>
           <p className="mx-auto mb-12 max-w-2xl text-xl font-medium text-black/80">
-            Join the waitlist and we&apos;ll email you the moment the $GAMI raise goes live. Early members get
-            exclusive launch multipliers.
+            Sign in or sign up to start earning XP, quests, and $GAMI rewards across every connected platform.
           </p>
 
-          <form
-            onSubmit={(e) => void handleHomeWaitlist(e)}
-            className="neo-border flex flex-col gap-2 bg-black p-2 shadow-brutal md:flex-row"
+          <a
+            href={DASHBOARD_URL}
+            className="neo-border inline-block bg-black px-10 py-4 font-display text-lg font-bold uppercase text-white shadow-brutal transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none"
           >
-            <input
-              type="email"
-              name="email"
-              required
-              value={homeEmail}
-              onChange={(e) => setHomeEmail(e.target.value)}
-              placeholder="Enter your email"
-              className="flex-1 bg-transparent p-4 font-bold text-white outline-none placeholder:text-gray-600"
-              autoComplete="email"
-              disabled={homeStatus === 'loading'}
-            />
-            <button
-              type="submit"
-              disabled={homeStatus === 'loading'}
-              className="bg-white px-10 py-4 font-display font-bold uppercase text-black transition-all hover:bg-gami-accent hover:text-white disabled:opacity-60"
-            >
-              {homeStatus === 'loading' ? 'Joining…' : 'Join Waitlist'}
-            </button>
-          </form>
-          {homeMessage ? (
-            <p
-              className={`mt-4 font-mono text-sm ${
-                homeStatus === 'error'
-                  ? 'text-red-900'
-                  : homeStatus === 'success'
-                    ? 'text-black'
-                    : 'text-black/80'
-              }`}
-            >
-              {homeMessage}{' '}
-              {homeStatus === 'success' ? (
-                <Link to="/waitlist" className="underline">
-                  Add wallet for priority →
-                </Link>
-              ) : null}
-            </p>
-          ) : null}
+            Sign In / Sign Up
+          </a>
 
-          <div className="mt-8 flex flex-wrap justify-center gap-10 font-mono font-bold text-black">
+          <div className="mt-12 flex flex-wrap justify-center gap-10 font-mono font-bold text-black">
             <div className="flex flex-col">
               <span className="text-3xl">5M+</span>
               <span className="text-xs uppercase">Target Users</span>

@@ -4,10 +4,15 @@ import { Link, useLocation } from 'react-router-dom';
 import { ConnectWallet } from '@/components/ConnectWallet';
 import { GamiBrandLogo } from '@/components/gami/GamiBrandLogo';
 
+// TODO: replace with the deployed partner dashboard's real origin once it's live.
+export const DASHBOARD_URL = 'https://partners.gami.app';
+// TODO: replace once the extension is published to the Chrome Web Store.
+export const CHROME_EXTENSION_URL =
+  'https://chromewebstore.google.com/detail/dcdiaimemmiijjodblnhobibmjhhngnc';
+
 const NAV_LINKS = [
   { href: '/foundation', label: 'Foundation' },
   { href: '/app', label: 'Product' },
-  { href: '/agents', label: 'Agents' },
   { href: '/wallet', label: 'Wallet' },
   { href: '/developers/docs', label: 'Developers' },
   { href: '/sale', label: 'Raise' },
@@ -63,24 +68,26 @@ export function GamiNav() {
           </div>
 
           <div className="hidden items-center gap-4 lg:flex">
-            <Link
-              to="/auth"
+            <a
+              href={CHROME_EXTENSION_URL}
+              target="_blank"
+              rel="noreferrer"
               className="font-display text-xs font-bold tracking-widest text-gray-300 transition-colors hover:text-gami-accent"
             >
-              SIGN IN
-            </Link>
+              ADD TO CHROME
+            </a>
             <Link
-              to="/waitlist"
+              to="/get-app"
               className="border-2 border-white px-6 py-2 font-display text-xs font-bold tracking-widest transition-all hover:bg-white hover:text-black"
-            >
-              JOIN WAITLIST
-            </Link>
-            <Link
-              to="/wallet"
-              className="gami-gradient neo-border px-6 py-2 font-display text-xs font-bold tracking-widest shadow-brutal transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none"
             >
               LAUNCH APP
             </Link>
+            <a
+              href={DASHBOARD_URL}
+              className="gami-gradient neo-border px-6 py-2 font-display text-xs font-bold tracking-widest shadow-brutal transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none"
+            >
+              SIGN IN / SIGN UP
+            </a>
           </div>
 
           <button
@@ -121,17 +128,20 @@ export function GamiNav() {
               </Link>
             ))}
             <hr className="border-white/10" />
-            <Link to="/auth" onClick={() => setMobileMenu(false)}>
-              Sign In
+            <Link to="/get-app" onClick={() => setMobileMenu(false)}>
+              Launch App
             </Link>
+            <a href={CHROME_EXTENSION_URL} target="_blank" rel="noreferrer" onClick={() => setMobileMenu(false)}>
+              Add to Chrome
+            </a>
             <ConnectWallet />
-            <Link
-              to="/waitlist"
+            <a
+              href={DASHBOARD_URL}
               className="gami-gradient neo-border p-4 text-center shadow-brutal"
               onClick={() => setMobileMenu(false)}
             >
-              Join Waitlist
-            </Link>
+              Sign In / Sign Up
+            </a>
           </div>
         </div>
       )}

@@ -12,6 +12,7 @@ import { AuthPage } from '@/pages/AuthPage';
 import { ClaimPage } from '@/pages/ClaimPage';
 import { ContributePage } from '@/pages/ContributePage';
 import { FoundationPage } from '@/pages/FoundationPage';
+import { GetAppPage } from '@/pages/GetAppPage';
 import { KycPage } from '@/pages/KycPage';
 import { DocsPage } from '@/pages/developers/DocsPage';
 import { McpClientPage } from '@/pages/developers/McpClientPage';
@@ -52,6 +53,7 @@ function AppShell() {
           <Route path="/about" element={<AboutPage />} />
           <Route path="/agents" element={<AgentsPage />} />
           <Route path="/app" element={<WalletPage />} />
+          <Route path="/get-app" element={<GetAppPage />} />
           <Route path="/app/wallet" element={<Navigate to="/wallet" replace />} />
           <Route path="/developers/docs" element={<DocsPage />} />
           <Route path="/developers/mcp-client" element={<McpClientPage />} />
