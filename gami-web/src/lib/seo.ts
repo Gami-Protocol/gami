@@ -70,6 +70,18 @@ const ROUTES: SeoEntry[] = [
     description: 'Access the Gami Protocol MCP server for agentic quests and rewards tooling.',
   },
   {
+    path: '/settlement',
+    title: 'Settlement — Gami Protocol',
+    description:
+      'How Gami rewards settle: USDC and EURC on Base, routed not issued. Gami issues no stablecoin and holds no client money.',
+  },
+  {
+    path: '/base',
+    title: 'Why Base — Gami Protocol',
+    description:
+      'Base is the Gami settlement network, chain ID 8453. What is shipped, what is read-only, and what is still roadmap.',
+  },
+  {
     path: '/status',
     title: 'System Status — Gami Protocol',
     description:

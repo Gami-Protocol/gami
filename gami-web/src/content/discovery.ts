@@ -33,9 +33,9 @@ export const SITE_FAQS: FaqItem[] = [
       'The Gami Wallet is a Base smart wallet, created with a passkey or an email through Privy, with no seed phrase. It holds your .gami name, your XP and badges, and any rewards you collect.',
   },
   {
-    question: 'What is XP and is it worth anything?',
+    question: 'Can XP be bought, sold, or redeemed?',
     answer:
-      'XP is a non-transferable progression record earned by completing quests. It cannot be bought, sold, transferred or redeemed, it is not a financial instrument, and it carries no monetary value.',
+      'No. XP is a non-transferable record of progression earned by completing quests. It cannot be bought, sold, transferred or redeemed, it is not a financial instrument, and it carries no monetary value.',
   },
   {
     question: 'How do developers integrate Gami?',

@@ -13,6 +13,20 @@ import {
   seoForPath,
 } from '@/lib/seo';
 
+/** Longest value any meta tag on this site is allowed to carry. */
+export const MAX_META_VALUE_LENGTH = 200;
+
+/**
+ * Search Console tokens are short, opaque, and contain no URLs or whitespace.
+ * Anything else is a misconfiguration, not a token.
+ */
+function isVerificationTokenShaped(value: string): boolean {
+  if (value.length > 100) return false;
+  if (/\s/.test(value)) return false;
+  if (value.includes('://') || value.includes('<')) return false;
+  return /^[A-Za-z0-9_-]+$/.test(value);
+}
+
 const FAQ_SCRIPT_ID = 'gami-faq-jsonld';
 const BREADCRUMB_SCRIPT_ID = 'gami-breadcrumb-jsonld';
 const ORG_SCRIPT_ID = 'gami-org-jsonld';
@@ -119,12 +133,26 @@ export function Seo() {
       content: DEFAULT_OG_IMAGE,
     });
 
-    const googleVerification = import.meta.env.VITE_GOOGLE_SITE_VERIFICATION as string | undefined;
-    if (googleVerification?.trim()) {
-      upsertMeta('meta[name="google-site-verification"]', {
-        name: 'google-site-verification',
-        content: googleVerification.trim(),
-      });
+    // A Search Console verification token is a short opaque string. Guard the
+    // shape before emitting it: a previous deploy had a value long enough to
+    // hold a whole sitemap, which both broke verification and published the
+    // route inventory in a tag nobody audits. Refuse anything that is not
+    // token-shaped rather than emitting it and silently failing verification.
+    const rawVerification = import.meta.env.VITE_GOOGLE_SITE_VERIFICATION as string | undefined;
+    const googleVerification = rawVerification?.trim();
+    if (googleVerification) {
+      if (isVerificationTokenShaped(googleVerification)) {
+        upsertMeta('meta[name="google-site-verification"]', {
+          name: 'google-site-verification',
+          content: googleVerification,
+        });
+      } else if (import.meta.env.DEV) {
+        console.error(
+          '[seo] VITE_GOOGLE_SITE_VERIFICATION is not a valid verification token ' +
+            `(length ${googleVerification.length}). The tag was not emitted. ` +
+            'Set it to the token Search Console issued, not a URL or a sitemap.',
+        );
+      }
     }
 
     upsertJsonLd(ORG_SCRIPT_ID, buildOrganizationJsonLd());

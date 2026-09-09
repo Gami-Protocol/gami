@@ -9,6 +9,7 @@ import { AboutPage } from '@/pages/AboutPage';
 import { AgentsPage } from '@/pages/AgentsPage';
 import { AuthCallbackPage } from '@/pages/AuthCallbackPage';
 import { AuthPage } from '@/pages/AuthPage';
+import { BasePage } from '@/pages/BasePage';
 import { FoundationPage } from '@/pages/FoundationPage';
 import { GetAppPage } from '@/pages/GetAppPage';
 import { DocsPage } from '@/pages/developers/DocsPage';
@@ -19,6 +20,7 @@ import { LegalLayout } from '@/pages/legal/LegalLayout';
 import { PrivacyPage } from '@/pages/legal/PrivacyPage';
 import { TermsPage } from '@/pages/legal/TermsPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
+import { SettlementPage } from '@/pages/SettlementPage';
 import { StatusPage } from '@/pages/StatusPage';
 import { WaitlistLivePage } from '@/pages/WaitlistLivePage';
 import { WaitlistPage } from '@/pages/WaitlistPage';
@@ -53,6 +55,8 @@ function AppShell() {
           <Route path="/developers/mcp-server" element={<McpServerPage />} />
           <Route path="/developers/sdk" element={<Navigate to="/developers/mcp-client" replace />} />
           <Route path="/developers/api" element={<Navigate to="/developers/mcp-server" replace />} />
+          <Route path="/settlement" element={<SettlementPage />} />
+          <Route path="/base" element={<BasePage />} />
           <Route path="/status" element={<StatusPage />} />
           <Route path="/waitlist" element={<WaitlistPage />} />
           <Route path="/waitlist/live" element={<WaitlistLivePage />} />

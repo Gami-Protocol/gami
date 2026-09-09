@@ -44,8 +44,8 @@ that Gami does not hold today. See https://gamiprotocol.io/settlement.
 - Polygon, Arbitrum — read-only. Shipped, read-only.
 - Solana — roadmap. Not available.
 - Bridging — roadmap. Not available.
-- Gami Chain — a sovereign Cosmos SDK Layer 1. It is not an L2, sidechain, or rollup.
-  Roadmap. Not available.
+- Gami Chain — a sovereign Cosmos SDK Layer 1 with its own validator set and
+  independent consensus. Roadmap. Not available.
 
 ## Conversion paths
 1. Join the developer waitlist: https://gamiprotocol.io/waitlist

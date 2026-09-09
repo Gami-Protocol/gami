@@ -3,64 +3,70 @@ import { Link } from 'react-router-dom';
 import { DiscoveryFaq } from '@/components/gami/DiscoveryFaq';
 import { GamiFooter } from '@/components/gami/GamiFooter';
 import { GamiLogo } from '@/components/gami/GamiLogo';
-import { CHROME_EXTENSION_URL, DASHBOARD_URL } from '@/components/gami/GamiNav';
 import { QuestNotification } from '@/components/gami/QuestNotification';
 
-const ECOSYSTEM_CARDS = [
+/** The four stages a user action passes through. */
+const PIPELINE = [
   {
-    title: 'GAMI APP',
-    description: 'Universal dashboard to track XP, quests, and rewards across every connected platform.',
-    icon: 'grid',
-    cta: 'Launch App',
-    ctaStyle: 'outline' as const,
-    href: '/get-app',
-    external: false,
+    step: 'Event',
+    detail:
+      'Your app emits a verified action through the Gami SDK or the MCP client — a quest step, a purchase, a referral, a workout.',
   },
   {
-    title: 'BROWSER EXT.',
-    description: 'Earn rewards while you browse. The Gami Extension detects partner sites and logs verified interactions automatically.',
-    icon: 'ext',
-    cta: 'Add to Chrome',
-    ctaStyle: 'outline' as const,
-    href: CHROME_EXTENSION_URL,
-    external: true,
-  },
-];
-
-const PROTOCOL_STEPS = [
-  {
-    num: '1',
-    title: 'Universal Identity',
-    detail: 'One Gami handle, XP profile, and soulbound badges that travel across every partner app, game, and community.',
+    step: 'Decide',
+    detail:
+      'Protocol rules determine whether the action qualifies: eligibility, rate limits, anti-abuse checks.',
   },
   {
-    num: '2',
-    title: 'MCP Server & Client',
-    detail: 'Partners emit verified actions — quests, purchases, workouts, referrals — through the Gami MCP client without building custom reward infra.',
+    step: 'Compute',
+    detail:
+      'The XP or reward owed is calculated from the rule you configured. XP is written to the user’s progression record.',
   },
   {
-    num: '3',
-    title: 'On-Chain Settlement',
-    detail: 'Merkle-anchored proofs settle on Base for tamper-resistant claims, verifiable leaderboards, and near-zero fees.',
+    step: 'Settle',
+    detail:
+      'Where an operator has funded a reward, payout settles in USDC or EURC on Base, sponsored so the user never holds gas.',
   },
 ];
 
-function CardIcon({ type }: { type: string }) {
-  if (type === 'grid') {
-    return (
-      <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-      </svg>
-    );
-  }
-  if (type === 'ext') {
-    return (
-      <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-      </svg>
-    );
-  }
-  return null;
+const WHY_BASE = [
+  {
+    title: 'Micro-rewards actually work',
+    body: 'Paymaster sponsorship makes a sub-cent reward economically viable. On most networks the fee exceeds the reward.',
+  },
+  {
+    title: 'Regulated stablecoins, already native',
+    body: 'USDC and EURC are issued natively on Base under MiCA authorisation. We route them; we do not issue anything.',
+  },
+  {
+    title: 'Onboarding without a seed phrase',
+    body: 'Privy and passkeys create a smart wallet from an email or a fingerprint. No extension, nothing to write down.',
+  },
+  {
+    title: 'Distribution through Base App',
+    body: 'Apps built on Base reach an audience already holding a wallet, which removes the hardest step in the funnel.',
+  },
+];
+
+/** Shipped vs roadmap must read differently at a glance. */
+const NETWORKS = [
+  { name: 'Base', note: 'Settlement network · chain ID 8453', state: 'shipped' as const },
+  { name: 'Polygon', note: 'Read-only', state: 'shipped' as const },
+  { name: 'Arbitrum', note: 'Read-only', state: 'shipped' as const },
+  { name: 'Solana', note: 'Not available', state: 'roadmap' as const },
+  { name: 'Gami Chain', note: 'Sovereign Cosmos SDK Layer 1 · not available', state: 'roadmap' as const },
+];
+
+function StateBadge({ state }: { state: 'shipped' | 'roadmap' }) {
+  return state === 'shipped' ? (
+    <span className="inline-flex items-center gap-1.5 border-2 border-green-400 bg-green-400/10 px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-widest text-green-400">
+      <span className="h-1.5 w-1.5 rounded-full bg-green-400" /> Shipped
+    </span>
+  ) : (
+    <span className="inline-flex items-center gap-1.5 border-2 border-dashed border-gray-500 px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-widest text-gray-500">
+      Roadmap
+    </span>
+  );
 }
 
 export function HomePage() {
@@ -74,37 +80,28 @@ export function HomePage() {
         <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-12 px-6 lg:grid-cols-2">
           <div>
             <div className="mb-6 inline-block border border-gami-purple bg-gami-purple/20 px-3 py-1 font-mono text-xs tracking-tighter text-gami-accent">
-              V2.0 LIVE ON TESTNET // PROTOCOL ACTIVATED
+              BUILT ON BASE // CHAIN ID 8453
             </div>
             <h1 className="mb-8 font-display text-6xl font-bold leading-none md:text-8xl">
-              THE UNIVERSAL <span className="text-gami-purple">GAMIFICATION</span> LAYER.
+              LOYALTY THAT <span className="text-gami-purple">SETTLES</span> ONCHAIN.
             </h1>
             <p className="mb-10 max-w-xl text-xl font-light leading-relaxed text-gray-400">
-              One SDK turns user behaviour into XP, quests and stablecoin-settled rewards — Base-native,
-              gasless, no seed phrase.
+              One SDK turns user behaviour into XP, quests and stablecoin-settled rewards —
+              Base-native, gasless, no seed phrase.
             </p>
             <div className="flex flex-wrap gap-6">
-              <a
-                href={DASHBOARD_URL}
+              <Link
+                to="/developers/docs"
                 className="gami-gradient neo-border px-8 py-4 font-display text-lg font-bold uppercase tracking-wider shadow-brutal transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none"
               >
-                Sign In / Sign Up
-              </a>
+                Read the docs
+              </Link>
               <Link
-                to="/get-app"
+                to="/waitlist"
                 className="border-2 border-white px-8 py-4 font-display text-lg font-bold uppercase tracking-wider transition-all hover:bg-white hover:text-black"
               >
-                Launch App
+                Join the developer waitlist
               </Link>
-            </div>
-
-            <div className="mt-16 flex items-center gap-8 opacity-50 grayscale">
-              <span className="font-mono text-xs uppercase tracking-widest text-gray-500">Backers & Partners</span>
-              <div className="flex items-center gap-6">
-                <span className="text-xl font-bold">ETHEREUM</span>
-                <span className="text-xl font-bold">POLYGON</span>
-                <span className="text-xl font-bold">BASE</span>
-              </div>
             </div>
           </div>
 
@@ -128,142 +125,173 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* Ecosystem Bento */}
+      {/* How it works */}
       <section className="relative overflow-hidden border-y-4 border-black bg-black/40 py-24">
         <div className="mx-auto max-w-7xl px-6">
-          <div className="mb-16 flex items-end justify-between">
-            <div>
-              <h2 className="mb-4 font-display text-5xl font-bold uppercase italic">The Ecosystem</h2>
-              <p className="font-mono text-gray-400">/ ROOT / PRODUCTS / CORE_INFRA</p>
-            </div>
-            <div className="mb-4 hidden h-1 w-1/3 bg-gami-purple md:block" />
+          <div className="mb-16">
+            <p className="mb-4 font-mono text-xs uppercase tracking-widest text-gami-accent">
+              How it works
+            </p>
+            <h2 className="mb-4 font-display text-5xl font-bold uppercase italic">
+              Event → Decide → Compute → Settle
+            </h2>
+            <p className="max-w-2xl text-lg text-gray-400">
+              You write the rule. The protocol handles identity, verification and payout.
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-            {ECOSYSTEM_CARDS.map((card) => (
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
+            {PIPELINE.map((stage, index) => (
               <div
-                key={card.title}
-                className="group bg-gami-bg p-8 neo-border shadow-brutal transition-all hover:shadow-brutal-purple"
+                key={stage.step}
+                className="bg-gami-bg p-8 neo-border shadow-brutal transition-all hover:shadow-brutal-purple"
               >
-                <div
-                  className={`neo-border mb-6 flex h-12 w-12 items-center justify-center ${
-                    card.icon === 'grid' ? 'gami-gradient' : 'border-2 border-gami-accent/50'
-                  }`}
-                >
-                  <CardIcon type={card.icon} />
+                <div className="gami-gradient neo-border mb-6 flex h-10 w-10 items-center justify-center font-display font-bold">
+                  {index + 1}
                 </div>
-                <h3 className="mb-4 font-display text-2xl font-bold">{card.title}</h3>
-                <p className="mb-8 h-20 text-gray-400">{card.description}</p>
-
-                {card.external ? (
-                  <a
-                    href={card.href}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="block w-full border-2 border-white py-3 text-center font-display font-bold uppercase transition-all hover:bg-white hover:text-black"
-                  >
-                    {card.cta}
-                  </a>
-                ) : (
-                  <Link
-                    to={card.href}
-                    className="block w-full border-2 border-white py-3 text-center font-display font-bold uppercase transition-all hover:bg-white hover:text-black"
-                  >
-                    {card.cta}
-                  </Link>
-                )}
+                <h3 className="mb-3 font-display text-2xl font-bold uppercase">{stage.step}</h3>
+                <p className="text-sm leading-relaxed text-gray-400">{stage.detail}</p>
               </div>
             ))}
           </div>
+
+          <p className="mt-10 max-w-3xl border-l-2 border-gami-purple pl-4 text-sm leading-relaxed text-gray-500">
+            XP is a non-transferable record of progression. It cannot be bought, sold,
+            transferred or redeemed, and it carries no monetary value. Rewards are a separate
+            thing entirely: they are funded by the app operator and settle in stablecoins.
+          </p>
         </div>
       </section>
 
-      {/* Protocol architecture */}
-      <section className="mx-auto grid max-w-7xl items-center gap-20 px-6 py-24 lg:grid-cols-2">
-        <div>
-          <div className="mb-4 inline-block border border-gami-purple bg-gami-purple/20 px-3 py-1 font-mono text-xs tracking-tighter text-gami-accent">
-            PROTOCOL ARCHITECTURE
-          </div>
-          <h2 className="mb-8 font-display text-5xl font-bold leading-tight">
-            GAMI ON BASE <br />
-            <span className="text-outline">THE REWARDS FOUNDATION</span>
-          </h2>
-          <p className="mb-6 text-lg leading-relaxed text-gray-400">
-            Gami is a shared identity, event, and settlement layer that lets any app plug into quests, XP,
-            and onchain rewards without rebuilding infrastructure from scratch. Reward payouts settle in
-            USDC and EURC on Base.
-          </p>
-          <p className="mb-8 text-base leading-relaxed text-gray-500">
-            Partners connect once through the Gami MCP client. User actions flow through a verified event bus, AI agents
-            orchestrate quest logic and reward multipliers, and proofs anchor to Base for auditable settlement.
-          </p>
-          <div className="space-y-6">
-            {PROTOCOL_STEPS.map((step) => (
-              <div key={step.num} className="flex items-start gap-4">
-                <div className="gami-gradient mt-1 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full font-bold">
-                  {step.num}
-                </div>
-                <div>
-                  <h4 className="mb-1 text-xl font-bold text-white">{step.title}</h4>
-                  <p className="text-sm leading-relaxed text-gray-500">{step.detail}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+      {/* Why Base */}
+      <section className="mx-auto max-w-7xl px-6 py-24">
+        <p className="mb-4 font-mono text-xs uppercase tracking-widest text-gami-accent">
+          Why Base
+        </p>
+        <h2 className="mb-4 font-display text-5xl font-bold uppercase italic">
+          The settlement home
+        </h2>
+        <p className="mb-12 max-w-2xl text-lg text-gray-400">
+          Loyalty economics only work if a small reward costs almost nothing to deliver.
+        </p>
 
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+          {WHY_BASE.map((item) => (
+            <div key={item.title} className="border-2 border-white/10 bg-black/40 p-8 neo-border">
+              <h3 className="mb-3 font-display text-xl font-bold uppercase">{item.title}</h3>
+              <p className="text-sm leading-relaxed text-gray-400">{item.body}</p>
+            </div>
+          ))}
         </div>
 
-        <div className="relative">
-          <div className="neo-border relative z-10 bg-black p-8 shadow-brutal-purple">
+        <div className="mt-12 border-2 border-white/10 bg-black/40 p-8 neo-border">
+          <h3 className="mb-6 font-display text-xl font-bold uppercase">Network support</h3>
+          <ul className="space-y-4">
+            {NETWORKS.map((net) => (
+              <li
+                key={net.name}
+                className="flex flex-col gap-2 border-b border-white/5 pb-4 last:border-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div>
+                  <span className="font-display text-lg font-bold text-white">{net.name}</span>
+                  <span className="ml-3 font-mono text-xs text-gray-500">{net.note}</span>
+                </div>
+                <StateBadge state={net.state} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* Settlement layer */}
+      <section className="border-y-4 border-black bg-black/40 py-24">
+        <div className="mx-auto max-w-7xl px-6">
+          <p className="mb-4 font-mono text-xs uppercase tracking-widest text-gami-accent">
+            Settlement layer
+          </p>
+          <h2 className="mb-6 font-display text-5xl font-bold uppercase italic">
+            We route. We do not issue.
+          </h2>
+          <p className="mb-6 max-w-3xl text-lg leading-relaxed text-gray-400">
+            Rewards settle in USDC and EURC on Base — stablecoins issued by authorised third
+            parties. GUSD, GEURO and GGBP are display denominations: labels for showing a
+            balance in a familiar currency. They are not assets, and Gami issues nothing.
+          </p>
+          <p className="mb-10 max-w-3xl leading-relaxed text-gray-500">
+            Gami holds no client money. Fiat on- and off-ramps run through licensed partners.
+            Anything beyond this depends on authorisation Gami does not hold today.
+          </p>
+          <Link
+            to="/settlement"
+            className="inline-block border-2 border-white px-8 py-4 font-display text-sm font-bold uppercase tracking-wider transition-all hover:bg-white hover:text-black"
+          >
+            How settlement works →
+          </Link>
+        </div>
+      </section>
+
+      {/* For developers */}
+      <section className="mx-auto max-w-7xl px-6 py-24">
+        <div className="grid items-start gap-12 lg:grid-cols-2">
+          <div>
+            <p className="mb-4 font-mono text-xs uppercase tracking-widest text-gami-accent">
+              For developers
+            </p>
+            <h2 className="mb-6 font-display text-5xl font-bold uppercase italic leading-tight">
+              One integration, not a rewards backend
+            </h2>
+            <p className="mb-6 text-lg leading-relaxed text-gray-400">
+              Connect once through the Gami SDK or the MCP client and server. Emit verified
+              actions; get identity, quest logic, anti-abuse and settlement without building
+              or operating any of it.
+            </p>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Link
+                to="/developers/docs"
+                className="gami-gradient neo-border px-6 py-4 text-center font-display text-sm font-bold uppercase tracking-wider"
+              >
+                Documentation
+              </Link>
+              <Link
+                to="/developers/mcp-server"
+                className="border-2 border-white px-6 py-4 text-center font-display text-sm font-bold uppercase tracking-wider hover:bg-white hover:text-black"
+              >
+                MCP server
+              </Link>
+            </div>
+          </div>
+
+          <div className="neo-border bg-black p-8 shadow-brutal-purple">
             <div className="mb-6 flex items-center justify-between">
               <div className="flex gap-2">
                 <div className="h-3 w-3 rounded-full bg-red-500" />
                 <div className="h-3 w-3 rounded-full bg-yellow-500" />
                 <div className="h-3 w-3 rounded-full bg-green-500" />
               </div>
-              <span className="font-mono text-xs text-gami-accent">BASE_PROTOCOL_METRICS</span>
+              <span className="font-mono text-xs text-gami-accent">quickstart.ts</span>
             </div>
-            <div className="space-y-6">
-              <div>
-                <div className="mb-2 flex justify-between font-mono text-xs">
-                  <span>PARTNER EVENTS / SEC</span>
-                  <span className="text-gami-accent">15,402 EPS</span>
-                </div>
-                <div className="neo-border h-3 w-full overflow-hidden bg-white/10">
-                  <div className="gami-gradient h-full" style={{ width: '85%' }} />
-                </div>
-              </div>
-              <div>
-                <div className="mb-2 flex justify-between font-mono text-xs">
-                  <span>QUEST VERIFICATION</span>
-                  <span className="text-gami-accent">REAL-TIME</span>
-                </div>
-                <div className="neo-border h-3 w-full overflow-hidden bg-white/10">
-                  <div className="gami-gradient h-full" style={{ width: '72%' }} />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="border border-white/10 p-4">
-                  <span className="mb-1 block text-xs text-gray-500">SETTLEMENT (BASE)</span>
-                  <span className="text-xl font-bold">~0.8s</span>
-                </div>
-                <div className="border border-white/10 p-4">
-                  <span className="mb-1 block text-xs text-gray-500">AVG GAS FEE</span>
-                  <span className="text-xl font-bold">$0.00001</span>
-                </div>
-              </div>
-              <div className="rounded border border-gami-purple/30 bg-gami-purple/10 p-4 font-mono text-xs text-gami-accent">
-                MCP Client → MCP Server → Rules Engine → Base Settlement
-              </div>
-            </div>
+            <pre className="overflow-x-auto font-mono text-xs leading-relaxed text-gray-300">
+{`import { Gami } from '@gami/sdk';
+
+const gami = new Gami({ apiKey: process.env.GAMI_KEY });
+
+// Report something the user did.
+await gami.events.emit({
+  userId: 'user_123',
+  type: 'workout.completed',
+  metadata: { minutes: 30 },
+});
+
+// Gami decides, computes XP, and settles
+// any funded reward on Base.`}
+            </pre>
           </div>
-          <div className="absolute -bottom-6 -right-6 -z-10 h-full w-full border-2 border-gami-purple" />
         </div>
       </section>
 
       <DiscoveryFaq />
 
-      {/* Sign In / Sign Up CTA */}
+      {/* Waitlist */}
       <section className="relative overflow-hidden bg-gami-purple py-32">
         <div className="absolute right-0 top-0 p-20 opacity-10">
           <svg viewBox="0 0 100 100" className="h-96 w-96 fill-white">
@@ -273,33 +301,24 @@ export function HomePage() {
 
         <div className="relative z-10 mx-auto max-w-4xl px-6 text-center">
           <h2 className="mb-8 font-display text-5xl font-bold uppercase italic leading-none text-black md:text-7xl">
-            Power the Future of Engagement
+            Build on Gami
           </h2>
           <p className="mx-auto mb-12 max-w-2xl text-xl font-medium text-black/80">
-            Add XP, quests and stablecoin-settled rewards to your app with one SDK.
+            Early access to the SDK, a test environment on Base, and support from the
+            engineers building the protocol.
           </p>
 
-          <a
-            href={DASHBOARD_URL}
+          <Link
+            to="/waitlist"
             className="neo-border inline-block bg-black px-10 py-4 font-display text-lg font-bold uppercase text-white shadow-brutal transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none"
           >
-            Sign In / Sign Up
-          </a>
+            Join the developer waitlist
+          </Link>
 
-          <div className="mt-12 flex flex-wrap justify-center gap-10 font-mono font-bold text-black">
-            <div className="flex flex-col">
-              <span className="text-3xl">5M+</span>
-              <span className="text-xs uppercase">Target Users</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-3xl">$30B</span>
-              <span className="text-xs uppercase">Market Size</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-3xl">100+</span>
-              <span className="text-xs uppercase">Partner Apps</span>
-            </div>
-          </div>
+          <p className="mx-auto mt-8 max-w-xl font-mono text-[11px] uppercase leading-relaxed text-black/60">
+            A product waitlist for developers. Not an offer, not a sale, and no entitlement
+            of any kind.
+          </p>
         </div>
       </section>
 

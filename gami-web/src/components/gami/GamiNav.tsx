@@ -15,6 +15,7 @@ const NAV_LINKS = [
   { href: '/app', label: 'Product' },
   { href: '/wallet', label: 'Wallet' },
   { href: '/developers/docs', label: 'Developers' },
+  { href: '/settlement', label: 'Settlement' },
   { href: '/about', label: 'About' },
 ];
 

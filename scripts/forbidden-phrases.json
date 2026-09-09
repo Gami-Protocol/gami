@@ -1,0 +1,70 @@
+{
+  "$comment": [
+    "Shared forbidden-phrase gate for every publishable Gami surface:",
+    "the marketing site (gami-web), the wallet app, the browser extension and the webapp.",
+    "This file is the single source of truth. Copy it, do not fork it.",
+    "",
+    "Patterns are JavaScript regular expression sources, applied case-insensitively",
+    "to rendered text: DOM textContent, meta and Open Graph values, JSON-LD, and",
+    "sitemap contents. Do NOT apply them to bundled source or to class names --",
+    "an SPA's crawlable surface is its rendered DOM, and CSS class names like",
+    "'token-3d' are not published copy.",
+    "",
+    "Adding an exception requires written legal clearance recorded in",
+    "docs/legal-hold/. See SECTION 8 of the site remediation brief."
+  ],
+  "version": 1,
+  "updated": "2026-09-09",
+  "patterns": [
+    {
+      "id": "gami-ticker",
+      "source": "\\$GAMI",
+      "why": "The token is excluded from all publishable assets until legal clearance. A separate listed token already uses the GAMI ticker."
+    },
+    {
+      "id": "token-event",
+      "source": "token\\s*(sale|launch|offering|allocation|presale|ICO|IDO|TGE)",
+      "why": "Communicating an unapproved financial promotion is a criminal offence under s21 FSMA."
+    },
+    {
+      "id": "token-economics",
+      "source": "tokenomics|vesting|circulating\\s*supply|max\\s*supply",
+      "why": "Public token economics imply an offering."
+    },
+    {
+      "id": "staking-return",
+      "source": "stake.{0,30}(XP|multiply|earn|yield|APY|reward)",
+      "why": "Promises a return for staking (securities framing) and destroys the soulbound-XP invariant."
+    },
+    {
+      "id": "governance-rights",
+      "source": "governance\\s*(token|rights)",
+      "why": "Governance rights attached to a purchasable asset is securities framing."
+    },
+    {
+      "id": "xp-monetary",
+      "source": "XP.{0,25}(worth|value|convert|cash|price|\\$|£|€)",
+      "why": "XP must carry no monetary linkage anywhere on any surface."
+    },
+    {
+      "id": "gami-l2",
+      "source": "\\bGAMI\\s*L2\\b",
+      "why": "Gami Chain is a sovereign Cosmos SDK L1, never an L2."
+    },
+    {
+      "id": "sidechain",
+      "source": "sidechain",
+      "why": "Gami Chain is a sovereign Cosmos SDK L1, never a sidechain."
+    },
+    {
+      "id": "rollup",
+      "source": "rollup",
+      "why": "Gami Chain is a sovereign Cosmos SDK L1, never a rollup."
+    }
+  ],
+  "withdrawnRoutes": {
+    "$comment": "Must return 410 Gone, appear in no sitemap, and be linked from nothing. Restoring any of these requires written legal clearance.",
+    "routes": ["/sale", "/tokenomics", "/whitepaper", "/legal/risk", "/claim", "/sale/contribute", "/sale/kyc"]
+  },
+  "maxMetaValueLength": 200
+}

@@ -4,12 +4,16 @@ on:
   pull_request:
     paths:
       - 'gami-web/**'
+      - 'api/**'
+      - 'scripts/forbidden-phrases.json'
       - 'vercel.json'
       - '.github/workflows/gami-web.yml'
   push:
     branches: [main]
     paths:
       - 'gami-web/**'
+      - 'api/**'
+      - 'scripts/forbidden-phrases.json'
       - 'vercel.json'
       - '.github/workflows/gami-web.yml'
 
@@ -30,3 +34,23 @@ jobs:
         run: npm ci --include=dev
       - name: Typecheck and build
         run: npm run build
+
+      # The site published a token-sale funnel that stayed indexed for weeks.
+      # These gates exist so that cannot happen again by accident.
+      - name: Static compliance gate
+        run: npm run check:static
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Serve dist with the real vercel.json rewrites
+        run: npm run preview:vercel -- 4173 &
+
+      - name: Wait for preview server
+        run: npx --yes wait-on http://127.0.0.1:4173/ --timeout 60000
+
+      # gamiprotocol.io is an SPA: the served HTML is an empty shell and every
+      # word Google indexes appears only after hydration. Scanning source would
+      # call the site clean while the rendered page still published the copy.
+      - name: Rendered-DOM compliance gate
+        run: npm run check:rendered
