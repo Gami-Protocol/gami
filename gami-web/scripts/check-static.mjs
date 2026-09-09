@@ -64,8 +64,17 @@ if (!existsSync(distIndex)) {
     if (content.length > MAX_META) {
       fail('dist/index.html', `meta "${name}" is ${content.length} chars (max ${MAX_META})`);
     }
-    if (/^\s*$/.test(content) && name === 'google-site-verification') {
-      fail('dist/index.html', 'google-site-verification is empty');
+    if (name === 'google-site-verification') {
+      // Length alone is not enough: a 150-character sitemap fragment fits under
+      // the meta cap and is still a leak. A real token is short and opaque.
+      if (!/^[A-Za-z0-9_-]+$/.test(content) || content.length > 100) {
+        fail(
+          'dist/index.html',
+          `google-site-verification is not a valid token (${content.length} chars). ` +
+            'A pasted sitemap once shipped here and published the route inventory. ' +
+            'See the googleSiteVerification plugin in vite.config.ts.',
+        );
+      }
     }
   }
 
