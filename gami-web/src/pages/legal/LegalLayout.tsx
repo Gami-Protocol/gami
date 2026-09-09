@@ -11,9 +11,7 @@ export function LegalLayout() {
         <Link to="/legal/privacy" className="mr-4 hover:text-white">
           Privacy
         </Link>
-        <Link to="/legal/risk" className="hover:text-white">
-          Risk Disclosure
-        </Link>
+
       </footer>
     </div>
   );

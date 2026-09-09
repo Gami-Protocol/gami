@@ -122,13 +122,7 @@ export function WalletPage() {
           to="/wallet/guide"
           className="block border-2 border-primary/50 py-3 font-display font-bold uppercase text-gami-accent hover:border-primary"
         >
-          Wallet guide · get tokens allocated
-        </Link>
-        <Link
-          to="/sale"
-          className="block border-2 border-white/20 py-3 font-display font-bold uppercase hover:border-primary"
-        >
-          Invest in the raise
+          Wallet guide · set up in two minutes
         </Link>
         <a
           href={TESTFLIGHT_URL}

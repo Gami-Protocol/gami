@@ -15,8 +15,7 @@ const NAV_LINKS = [
   { href: '/app', label: 'Product' },
   { href: '/wallet', label: 'Wallet' },
   { href: '/developers/docs', label: 'Developers' },
-  { href: '/sale', label: 'Raise' },
-  { href: '/tokenomics', label: 'Tokenomics' },
+  { href: '/about', label: 'About' },
 ];
 
 export function GamiNav() {

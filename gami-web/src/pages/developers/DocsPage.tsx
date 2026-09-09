@@ -50,10 +50,10 @@ export function DocsPage() {
           MCP Server
         </Link>
         <Link
-          to="/whitepaper"
+          to="/waitlist"
           className="gami-gradient neo-border px-6 py-3 font-display text-sm font-bold uppercase tracking-widest text-white"
         >
-          Whitepaper
+          Get SDK access
         </Link>
       </div>
     </SiteContentPage>

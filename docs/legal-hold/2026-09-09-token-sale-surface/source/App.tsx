@@ -9,21 +9,28 @@ import { AboutPage } from '@/pages/AboutPage';
 import { AgentsPage } from '@/pages/AgentsPage';
 import { AuthCallbackPage } from '@/pages/AuthCallbackPage';
 import { AuthPage } from '@/pages/AuthPage';
+import { ClaimPage } from '@/pages/ClaimPage';
+import { ContributePage } from '@/pages/ContributePage';
 import { FoundationPage } from '@/pages/FoundationPage';
 import { GetAppPage } from '@/pages/GetAppPage';
+import { KycPage } from '@/pages/KycPage';
 import { DocsPage } from '@/pages/developers/DocsPage';
 import { McpClientPage } from '@/pages/developers/McpClientPage';
 import { McpServerPage } from '@/pages/developers/McpServerPage';
 import { HomePage } from '@/pages/HomePage';
 import { LegalLayout } from '@/pages/legal/LegalLayout';
 import { PrivacyPage } from '@/pages/legal/PrivacyPage';
+import { RiskPage } from '@/pages/legal/RiskPage';
 import { TermsPage } from '@/pages/legal/TermsPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
+import { SalePage } from '@/pages/SalePage';
 import { StatusPage } from '@/pages/StatusPage';
+import { TokenomicsPage } from '@/pages/TokenomicsPage';
 import { WaitlistLivePage } from '@/pages/WaitlistLivePage';
 import { WaitlistPage } from '@/pages/WaitlistPage';
 import { WalletGuidePage } from '@/pages/WalletGuidePage';
 import { WalletPage } from '@/pages/WalletPage';
+import { WhitepaperPage } from '@/pages/WhitepaperPage';
 
 function AppShell() {
   const { pathname } = useLocation();
@@ -61,11 +68,18 @@ function AppShell() {
           <Route path="/login" element={<AuthPage />} />
           <Route path="/auth/callback" element={<AuthCallbackPage />} />
           <Route path="/callback" element={<AuthCallbackPage />} />
+          <Route path="/sale" element={<SalePage />} />
+          <Route path="/sale/contribute" element={<ContributePage />} />
+          <Route path="/sale/kyc" element={<KycPage />} />
+          <Route path="/claim" element={<ClaimPage />} />
           <Route path="/wallet" element={<WalletPage />} />
           <Route path="/wallet/guide" element={<WalletGuidePage />} />
+          <Route path="/tokenomics" element={<TokenomicsPage />} />
+          <Route path="/whitepaper" element={<WhitepaperPage />} />
           <Route path="/legal" element={<LegalLayout />}>
             <Route path="terms" element={<TermsPage />} />
             <Route path="privacy" element={<PrivacyPage />} />
+            <Route path="risk" element={<RiskPage />} />
           </Route>
           <Route path="*" element={<NotFoundPage />} />
         </Routes>

@@ -45,6 +45,12 @@ const PROTOCOL_STEPS = [
   },
 ];
 
+const TOKEN_TIERS = [
+  { label: 'Token', name: '$GAMI', desc: 'Omnichain token settling from Base — governance, staking, protocol fees, and treasury coordination.' },
+  { label: 'Points', name: 'Universal Points', desc: 'Non-transferable XP earned across quests, shopping, fitness, and referrals.' },
+  { label: 'Spend', name: 'Stable Spend', desc: 'Auto-converted stable balance for real-world payments via Gami Wallet.' },
+];
+
 function CardIcon({ type }: { type: string }) {
   if (type === 'grid') {
     return (
@@ -80,8 +86,8 @@ export function HomePage() {
               THE UNIVERSAL <span className="text-gami-purple">GAMIFICATION</span> LAYER.
             </h1>
             <p className="mb-10 max-w-xl text-xl font-light leading-relaxed text-gray-400">
-              One SDK turns user behaviour into XP, quests and stablecoin-settled rewards — Base-native,
-              gasless, no seed phrase.
+              Earn XP, rewards, and tokens across apps, games, and communities with one universal wallet powered by AI
+              agents and blockchain infrastructure.
             </p>
             <div className="flex flex-wrap gap-6">
               <a
@@ -121,7 +127,7 @@ export function HomePage() {
                 className="neo-border absolute bottom-10 right-0 animate-bounce bg-black/80 px-4 py-2 font-mono text-sm text-green-400"
                 style={{ animationDelay: '1s' }}
               >
-                QUEST COMPLETE
+                $GAMI CLAIMED
               </div>
             </div>
           </div>
@@ -178,7 +184,7 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* Protocol architecture */}
+      {/* Protocol / token section */}
       <section className="mx-auto grid max-w-7xl items-center gap-20 px-6 py-24 lg:grid-cols-2">
         <div>
           <div className="mb-4 inline-block border border-gami-purple bg-gami-purple/20 px-3 py-1 font-mono text-xs tracking-tighter text-gami-accent">
@@ -189,9 +195,9 @@ export function HomePage() {
             <span className="text-outline">THE REWARDS FOUNDATION</span>
           </h2>
           <p className="mb-6 text-lg leading-relaxed text-gray-400">
-            Gami is a shared identity, event, and settlement layer that lets any app plug into quests, XP,
-            and onchain rewards without rebuilding infrastructure from scratch. Reward payouts settle in
-            USDC and EURC on Base.
+            Gami is the universal gamification backbone — a shared identity, event, and settlement layer that lets
+            any app plug into quests, XP, and on-chain rewards without rebuilding infrastructure from scratch.
+            $GAMI is an omnichain token settling from Base, bridgeable wherever partners need it.
           </p>
           <p className="mb-8 text-base leading-relaxed text-gray-500">
             Partners connect once through the Gami MCP client. User actions flow through a verified event bus, AI agents
@@ -211,6 +217,16 @@ export function HomePage() {
             ))}
           </div>
 
+          <div className="mt-10 space-y-3 border-t border-white/10 pt-8">
+            <p className="font-mono text-xs uppercase tracking-widest text-gami-accent">Token Stack</p>
+            {TOKEN_TIERS.map((tier) => (
+              <div key={tier.label} className="flex flex-col gap-1 sm:flex-row sm:gap-4">
+                <span className="w-20 shrink-0 font-mono text-xs text-gami-purple">{tier.label}</span>
+                <span className="w-36 shrink-0 font-display text-sm font-bold text-white">{tier.name}</span>
+                <span className="text-sm text-gray-500">{tier.desc}</span>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="relative">
@@ -253,7 +269,7 @@ export function HomePage() {
                 </div>
               </div>
               <div className="rounded border border-gami-purple/30 bg-gami-purple/10 p-4 font-mono text-xs text-gami-accent">
-                MCP Client → MCP Server → Rules Engine → Base Settlement
+                MCP Client → MCP Server → AI Orchestration → L2 Ledger Anchor
               </div>
             </div>
           </div>
@@ -276,7 +292,7 @@ export function HomePage() {
             Power the Future of Engagement
           </h2>
           <p className="mx-auto mb-12 max-w-2xl text-xl font-medium text-black/80">
-            Add XP, quests and stablecoin-settled rewards to your app with one SDK.
+            Sign in or sign up to start earning XP, quests, and $GAMI rewards across every connected platform.
           </p>
 
           <a

@@ -53,19 +53,13 @@ export function AboutPage() {
           to="/waitlist"
           className="gami-gradient neo-border px-6 py-3 font-display text-sm font-bold uppercase tracking-widest text-white"
         >
-          Join Waitlist
+          Join the developer waitlist
         </Link>
         <Link
-          to="/tokenomics"
+          to="/developers/docs"
           className="border-2 border-white px-6 py-3 font-display text-sm font-bold uppercase tracking-widest transition-all hover:bg-white hover:text-black"
         >
-          Tokenomics
-        </Link>
-        <Link
-          to="/whitepaper"
-          className="border-2 border-white px-6 py-3 font-display text-sm font-bold uppercase tracking-widest transition-all hover:bg-white hover:text-black"
-        >
-          Whitepaper
+          Developer Docs
         </Link>
       </div>
     </SiteContentPage>

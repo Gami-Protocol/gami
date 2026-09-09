@@ -101,8 +101,8 @@ export function FoundationPage() {
             <Link className="foundation-btn foundation-btn-primary" to="/waitlist">
               Join waitlist
             </Link>
-            <Link className="foundation-btn foundation-btn-ghost" to="/sale">
-              Enter the sale
+            <Link className="foundation-btn foundation-btn-ghost" to="/developers/docs">
+              Read the docs
             </Link>
           </div>
         </section>

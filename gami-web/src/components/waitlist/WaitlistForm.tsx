@@ -295,10 +295,10 @@ export function WaitlistForm({ compact = false }: { compact?: boolean }) {
 
         <div className="flex flex-col gap-3">
           <Link
-            to="/sale"
+            to="/developers/docs"
             className="gami-gradient neo-border block w-full py-4 text-center font-display font-bold uppercase tracking-widest shadow-brutal"
           >
-            Sale dashboard
+            Read the docs
           </Link>
           <button
             type="button"

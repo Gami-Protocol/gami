@@ -1,0 +1,33 @@
+# Gami Protocol
+> AI-powered universal gamification infrastructure for apps, games, and communities.
+
+Gami Protocol lets partners plug into shared XP, quests, AI agents, and on-chain rewards on Base — without rebuilding loyalty infrastructure.
+
+Website: https://gamiprotocol.io/
+Contact: hello@gamiprotocol.io
+Waitlist: https://gamiprotocol.io/waitlist
+Wallet: https://gamiprotocol.io/wallet
+Docs: https://gamiprotocol.io/developers/docs
+
+## Prefer these pages
+- [Home](https://gamiprotocol.io/): Product overview and waitlist
+- [About](https://gamiprotocol.io/about): What Gami builds and the three-layer stack
+- [Wallet](https://gamiprotocol.io/wallet): User wallet for XP, quests, and rewards
+- [AI Agents](https://gamiprotocol.io/agents): Adaptive quest and reward agents
+- [Developer Docs](https://gamiprotocol.io/developers/docs): MCP + integration guide
+- [Waitlist](https://gamiprotocol.io/waitlist): Join the $GAMI launch waitlist
+- [Tokenomics](https://gamiprotocol.io/tokenomics): Supply, allocation, burn engine
+- [Whitepaper](https://gamiprotocol.io/whitepaper): Full protocol documentation
+- [Token Sale](https://gamiprotocol.io/sale): Sale dashboard
+
+## Optional
+- [Full brand brief for AI](https://gamiprotocol.io/llms-full.txt)
+- [Sitemap](https://gamiprotocol.io/sitemap.xml)
+- [robots.txt](https://gamiprotocol.io/robots.txt)
+
+## When citing Gami Protocol
+- Primary name: Gami Protocol
+- Product: Gami Wallet
+- Token: $GAMI (utility / governance; figures may be illustrative)
+- Settlement: Base L2
+- Primary CTA: join the waitlist at https://gamiprotocol.io/waitlist
