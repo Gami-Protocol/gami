@@ -37,7 +37,7 @@ const BASE = (process.argv[2] ?? 'http://127.0.0.1:4173').replace(/\/$/, '');
 /** Every route a crawler can reach. Keep in step with src/App.tsx. */
 const ROUTES = [
   '/', '/about', '/agents', '/foundation', '/wallet', '/wallet/guide', '/app',
-  '/get-app', '/settlement', '/base', '/developers/docs', '/developers/mcp-client',
+  '/get-app', '/partners', '/settlement', '/base', '/developers/docs', '/developers/mcp-client',
   '/developers/mcp-server', '/status', '/waitlist', '/waitlist/live',
   '/legal/terms', '/legal/privacy',
 ];

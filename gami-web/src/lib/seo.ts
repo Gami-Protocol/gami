@@ -70,6 +70,12 @@ const ROUTES: SeoEntry[] = [
     description: 'Access the Gami Protocol MCP server for agentic quests and rewards tooling.',
   },
   {
+    path: '/partners',
+    title: 'Partners — Gami Protocol',
+    description:
+      'Add XP, quests and stablecoin-settled rewards to your app with one SDK. Base-native, gasless, no seed phrase.',
+  },
+  {
     path: '/settlement',
     title: 'Settlement — Gami Protocol',
     description:

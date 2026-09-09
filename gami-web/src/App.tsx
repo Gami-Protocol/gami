@@ -20,6 +20,7 @@ import { LegalLayout } from '@/pages/legal/LegalLayout';
 import { PrivacyPage } from '@/pages/legal/PrivacyPage';
 import { TermsPage } from '@/pages/legal/TermsPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
+import { PartnersPage } from '@/pages/PartnersPage';
 import { SettlementPage } from '@/pages/SettlementPage';
 import { StatusPage } from '@/pages/StatusPage';
 import { WaitlistLivePage } from '@/pages/WaitlistLivePage';
@@ -55,6 +56,7 @@ function AppShell() {
           <Route path="/developers/mcp-server" element={<McpServerPage />} />
           <Route path="/developers/sdk" element={<Navigate to="/developers/mcp-client" replace />} />
           <Route path="/developers/api" element={<Navigate to="/developers/mcp-server" replace />} />
+          <Route path="/partners" element={<PartnersPage />} />
           <Route path="/settlement" element={<SettlementPage />} />
           <Route path="/base" element={<BasePage />} />
           <Route path="/status" element={<StatusPage />} />

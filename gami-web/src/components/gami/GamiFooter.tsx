@@ -175,6 +175,11 @@ export function GamiFooter({ variant = 'default' }: { variant?: 'default' | 'ico
                     </Link>
                   </li>
                   <li>
+                    <Link to="/partners" className={linkClass}>
+                      Partners
+                    </Link>
+                  </li>
+                  <li>
                     <Link to="/settlement" className={linkClass}>
                       Settlement
                     </Link>
