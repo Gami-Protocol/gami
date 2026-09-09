@@ -1,8 +1,8 @@
 export const SITE_URL = 'https://gamiprotocol.io';
 export const SITE_NAME = 'Gami Protocol';
-export const DEFAULT_TITLE = 'Gami Protocol — Onchain Loyalty Infrastructure';
+export const DEFAULT_TITLE = 'Gami Protocol — Universal Gamification Infrastructure';
 export const DEFAULT_DESCRIPTION =
-  'Add XP, quests and stablecoin-settled rewards to any app with one SDK. Base-native, gasless, no seed phrase.';
+  "Earn XP, rewards, and tokens across apps and games using Gami Protocol's AI-powered gamification engine.";
 export const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.png`;
 
 export type SeoEntry = {
@@ -22,7 +22,7 @@ const ROUTES: SeoEntry[] = [
     path: '/about',
     title: 'About — Gami Protocol',
     description:
-      'How Gami Protocol turns user behaviour into XP, quests and stablecoin-settled rewards on Base.',
+      'Learn how Gami Protocol powers wallet-first engagement, XP, and rewards across apps and games on Base.',
   },
   {
     path: '/foundation',
@@ -34,25 +34,25 @@ const ROUTES: SeoEntry[] = [
     path: '/agents',
     title: 'AI Agents — Gami Protocol',
     description:
-      'NOVA reads protocol state and simulates quest and reward outcomes. It does not move funds or act on your behalf.',
+      'Discover Gami AI agents that run quests, rewards, and engagement loops across the protocol.',
   },
   {
     path: '/wallet',
     title: 'Wallet — Gami Protocol',
     description:
-      'A Base smart wallet with no seed phrase. Claim your .gami name, earn XP and collect rewards.',
+      'Download the Gami wallet, claim your .gami name via GNS, and earn XP, rewards, and tokens.',
   },
   {
     path: '/wallet/guide',
-    title: 'Wallet Guide — Gami Protocol',
+    title: 'Wallet Guide — Get $GAMI Allocated',
     description:
-      'Set up your Gami Wallet: sign in with an email or passkey, claim your .gami name, and start earning XP.',
+      'Connect Coinbase, EVM, or Solana wallets, invest £100–£10,000 with card, and claim your .gami name.',
   },
   {
     path: '/app',
     title: 'Wallet — Gami Protocol',
     description:
-      'A Base smart wallet with no seed phrase. Claim your .gami name, earn XP and collect rewards.',
+      'Download the Gami wallet, claim your .gami name via GNS, and earn XP, rewards, and tokens.',
   },
   {
     path: '/developers/docs',
@@ -70,39 +70,54 @@ const ROUTES: SeoEntry[] = [
     description: 'Access the Gami Protocol MCP server for agentic quests and rewards tooling.',
   },
   {
-    path: '/partners',
-    title: 'Partners — Gami Protocol',
-    description:
-      'Add XP, quests and stablecoin-settled rewards to your app with one SDK. Base-native, gasless, no seed phrase.',
-  },
-  {
-    path: '/settlement',
-    title: 'Settlement — Gami Protocol',
-    description:
-      'How Gami rewards settle: USDC and EURC on Base, routed not issued. Gami issues no stablecoin and holds no client money.',
-  },
-  {
-    path: '/base',
-    title: 'Why Base — Gami Protocol',
-    description:
-      'Base is the Gami settlement network, chain ID 8453. What is shipped, what is read-only, and what is still roadmap.',
-  },
-  {
     path: '/status',
     title: 'System Status — Gami Protocol',
-    description:
-      'Live status for Gami Protocol services, APIs, and waitlist backends.',
+    description: 'Live status for Gami Protocol services, sale infrastructure, and waitlist backends.',
   },
   {
     path: '/waitlist',
-    title: 'Developer Waitlist — Gami Protocol',
+    title: 'GAMI ICO Launchpad — $GAMI Tokenomics & Genesis',
     description:
-      'Join the developer waitlist for early access to the Gami SDK, a test environment on Base, and integration support.',
+      'Fixed supply. Community-first. XP-driven. Join the $GAMI ICO waitlist for priority access, multipliers, and governance rights.',
   },
   {
     path: '/waitlist/live',
     title: 'Live Waitlist — Gami Protocol',
     description: 'Watch the live Gami Protocol waitlist counter and subscribe to email alerts.',
+  },
+  {
+    path: '/sale',
+    title: 'Token Sale — Gami Protocol',
+    description:
+      'Invest £100–£10,000 in the $GAMI raise with Coinbase card, EVM or Solana wallets, and track your allocation.',
+  },
+  {
+    path: '/sale/contribute',
+    title: 'Contribute — Gami Protocol',
+    description: 'Join the waitlist and contribute USDC to the $GAMI token sale.',
+    noindex: true,
+  },
+  {
+    path: '/sale/kyc',
+    title: 'Identity Verification — Gami Protocol',
+    description: 'Complete KYC to unlock $GAMI token sale contributions.',
+    noindex: true,
+  },
+  {
+    path: '/claim',
+    title: 'Claim — Gami Protocol',
+    description: 'Claim vested $GAMI after TGE from the vesting vault.',
+    noindex: true,
+  },
+  {
+    path: '/tokenomics',
+    title: 'Tokenomics — Gami Protocol',
+    description: 'Explore $GAMI supply, allocation, burn engine, and vesting design.',
+  },
+  {
+    path: '/whitepaper',
+    title: 'Whitepaper — Gami Protocol',
+    description: 'Read the Gami Protocol tokenization and engagement network whitepaper.',
   },
   {
     path: '/legal/terms',
@@ -113,6 +128,11 @@ const ROUTES: SeoEntry[] = [
     path: '/legal/privacy',
     title: 'Privacy Policy — Gami Protocol',
     description: 'How Gami Protocol collects, uses, and protects personal data.',
+  },
+  {
+    path: '/legal/risk',
+    title: 'Risk Disclosure — Gami Protocol',
+    description: 'Important risk disclosures for participating in the $GAMI token sale.',
   },
   {
     path: '/auth',

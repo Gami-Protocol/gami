@@ -10,7 +10,7 @@ export const REFERRAL_REWARD_TIERS = [
   { min: 5, label: 'Early Access' },
   { min: 25, label: 'Genesis Badge' },
   { min: 100, label: 'Founder Role' },
-  { min: 500, label: 'Exclusive NFT' },
+  { min: 500, label: 'Founding Partner Badge' },
 ] as const;
 
 export type WaitlistJoinInput = {

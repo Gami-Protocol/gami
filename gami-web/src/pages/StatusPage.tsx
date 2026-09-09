@@ -6,9 +6,9 @@ const SYSTEMS = [
   { name: 'MCP Server', status: 'Operational' },
   { name: 'MCP Client Hub', status: 'Operational' },
   { name: 'Event Bus', status: 'Operational' },
-  { name: 'Base L2 Settlement', status: 'Operational' },
+  { name: 'Base Settlement', status: 'Operational' },
   { name: 'Gami Wallet', status: 'Operational' },
-  { name: 'Token Sale Portal', status: 'Operational' },
+  { name: 'Waitlist API', status: 'Operational' },
 ];
 
 export function StatusPage() {

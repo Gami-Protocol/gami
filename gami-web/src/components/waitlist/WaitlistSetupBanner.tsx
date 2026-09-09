@@ -38,7 +38,7 @@ export function WaitlistSetupBanner() {
       </p>
       <p className="mb-3 text-sm text-amber-100/90">
         Supabase project is connected, but <code className="text-white">public.waitlist</code> is
-        missing. Apply the bootstrap SQL once to unlock signups, live counters, and TGE wallet
+        missing. Apply the bootstrap SQL once to unlock signups, live counters, and wallet
         export.
       </p>
       <a

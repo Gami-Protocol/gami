@@ -12,25 +12,11 @@ Disallow: /auth/
 Disallow: /login
 Disallow: /callback
 Disallow: /claim
-# Withdrawn 2026-09-09. These return 410 Gone and must not be restored
-# without written legal clearance. See docs/legal-hold/.
-Disallow: /sale
-Disallow: /sale/
-Disallow: /tokenomics
-Disallow: /whitepaper
-Disallow: /legal/risk
+Disallow: /sale/contribute
+Disallow: /sale/kyc
 
 # Google
-# Googlebot is deliberately NOT disallowed on the withdrawn routes below.
-# A disallowed URL is never fetched, so Google would never see the 410 and the
-# pages would linger in the index as URL-only entries. Letting Googlebot fetch
-# them is what actually de-indexes them. Once Search Console reports all four as
-# removed, fold them into the blanket Disallow above and delete this block.
 User-agent: Googlebot
-Allow: /sale
-Allow: /tokenomics
-Allow: /whitepaper
-Allow: /legal/risk
 Allow: /
 
 User-agent: Google-Extended

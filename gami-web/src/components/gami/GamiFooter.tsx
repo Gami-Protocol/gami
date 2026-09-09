@@ -91,8 +91,8 @@ export function GamiFooter({ variant = 'default' }: { variant?: 'default' | 'ico
                 </Link>
               </li>
               <li>
-                <Link to="/whitepaper" className={linkClass}>
-                  Gami L2
+                <Link to="/base" className={linkClass}>
+                  Why Base
                 </Link>
               </li>
             </ul>
@@ -142,23 +142,23 @@ export function GamiFooter({ variant = 'default' }: { variant?: 'default' | 'ico
               {isIco ? (
                 <>
                   <li>
-                    <Link to="/sale" className={linkClass}>
-                      Token Raise
+                    <Link to="/developers/docs" className={linkClass}>
+                      Documentation
                     </Link>
                   </li>
                   <li>
-                    <Link to="/tokenomics" className={linkClass}>
-                      Tokenomics + TGE
+                    <Link to="/wallet" className={linkClass}>
+                      Wallet
                     </Link>
                   </li>
                   <li>
-                    <Link to="/claim" className={linkClass}>
-                      Claim
+                    <Link to="/waitlist" className={linkClass}>
+                      Developer waitlist
                     </Link>
                   </li>
                   <li>
-                    <Link to="/whitepaper" className={linkClass}>
-                      Grants
+                    <Link to="/about" className={linkClass}>
+                      About
                     </Link>
                   </li>
                   <li>
@@ -175,8 +175,13 @@ export function GamiFooter({ variant = 'default' }: { variant?: 'default' | 'ico
                     </Link>
                   </li>
                   <li>
-                    <Link to="/tokenomics" className={linkClass}>
-                      Tokenomics + TGE
+                    <Link to="/partners" className={linkClass}>
+                      Partners
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/settlement" className={linkClass}>
+                      Settlement
                     </Link>
                   </li>
                   <li>

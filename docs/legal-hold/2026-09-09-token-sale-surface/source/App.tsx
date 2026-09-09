@@ -9,24 +9,28 @@ import { AboutPage } from '@/pages/AboutPage';
 import { AgentsPage } from '@/pages/AgentsPage';
 import { AuthCallbackPage } from '@/pages/AuthCallbackPage';
 import { AuthPage } from '@/pages/AuthPage';
-import { BasePage } from '@/pages/BasePage';
+import { ClaimPage } from '@/pages/ClaimPage';
+import { ContributePage } from '@/pages/ContributePage';
 import { FoundationPage } from '@/pages/FoundationPage';
 import { GetAppPage } from '@/pages/GetAppPage';
+import { KycPage } from '@/pages/KycPage';
 import { DocsPage } from '@/pages/developers/DocsPage';
 import { McpClientPage } from '@/pages/developers/McpClientPage';
 import { McpServerPage } from '@/pages/developers/McpServerPage';
 import { HomePage } from '@/pages/HomePage';
 import { LegalLayout } from '@/pages/legal/LegalLayout';
 import { PrivacyPage } from '@/pages/legal/PrivacyPage';
+import { RiskPage } from '@/pages/legal/RiskPage';
 import { TermsPage } from '@/pages/legal/TermsPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
-import { PartnersPage } from '@/pages/PartnersPage';
-import { SettlementPage } from '@/pages/SettlementPage';
+import { SalePage } from '@/pages/SalePage';
 import { StatusPage } from '@/pages/StatusPage';
+import { TokenomicsPage } from '@/pages/TokenomicsPage';
 import { WaitlistLivePage } from '@/pages/WaitlistLivePage';
 import { WaitlistPage } from '@/pages/WaitlistPage';
 import { WalletGuidePage } from '@/pages/WalletGuidePage';
 import { WalletPage } from '@/pages/WalletPage';
+import { WhitepaperPage } from '@/pages/WhitepaperPage';
 
 function AppShell() {
   const { pathname } = useLocation();
@@ -56,9 +60,6 @@ function AppShell() {
           <Route path="/developers/mcp-server" element={<McpServerPage />} />
           <Route path="/developers/sdk" element={<Navigate to="/developers/mcp-client" replace />} />
           <Route path="/developers/api" element={<Navigate to="/developers/mcp-server" replace />} />
-          <Route path="/partners" element={<PartnersPage />} />
-          <Route path="/settlement" element={<SettlementPage />} />
-          <Route path="/base" element={<BasePage />} />
           <Route path="/status" element={<StatusPage />} />
           <Route path="/waitlist" element={<WaitlistPage />} />
           <Route path="/waitlist/live" element={<WaitlistLivePage />} />
@@ -67,11 +68,18 @@ function AppShell() {
           <Route path="/login" element={<AuthPage />} />
           <Route path="/auth/callback" element={<AuthCallbackPage />} />
           <Route path="/callback" element={<AuthCallbackPage />} />
+          <Route path="/sale" element={<SalePage />} />
+          <Route path="/sale/contribute" element={<ContributePage />} />
+          <Route path="/sale/kyc" element={<KycPage />} />
+          <Route path="/claim" element={<ClaimPage />} />
           <Route path="/wallet" element={<WalletPage />} />
           <Route path="/wallet/guide" element={<WalletGuidePage />} />
+          <Route path="/tokenomics" element={<TokenomicsPage />} />
+          <Route path="/whitepaper" element={<WhitepaperPage />} />
           <Route path="/legal" element={<LegalLayout />}>
             <Route path="terms" element={<TermsPage />} />
             <Route path="privacy" element={<PrivacyPage />} />
+            <Route path="risk" element={<RiskPage />} />
           </Route>
           <Route path="*" element={<NotFoundPage />} />
         </Routes>

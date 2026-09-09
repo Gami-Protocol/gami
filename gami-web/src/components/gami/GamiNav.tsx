@@ -5,7 +5,11 @@ import { ConnectWallet } from '@/components/ConnectWallet';
 import { GamiBrandLogo } from '@/components/gami/GamiBrandLogo';
 
 // TODO: replace with the deployed partner dashboard's real origin once it's live.
-export const DASHBOARD_URL = 'https://partners.gami.app';
+/**
+ * Partner entry point. Previously https://partners.gami.app, which has no DNS
+ * record at all — both header CTAs were dead. Now an on-site route.
+ */
+export const PARTNERS_PATH = '/partners';
 // TODO: replace once the extension is published to the Chrome Web Store.
 export const CHROME_EXTENSION_URL =
   'https://chromewebstore.google.com/detail/dcdiaimemmiijjodblnhobibmjhhngnc';
@@ -15,8 +19,8 @@ const NAV_LINKS = [
   { href: '/app', label: 'Product' },
   { href: '/wallet', label: 'Wallet' },
   { href: '/developers/docs', label: 'Developers' },
-  { href: '/sale', label: 'Raise' },
-  { href: '/tokenomics', label: 'Tokenomics' },
+  { href: '/settlement', label: 'Settlement' },
+  { href: '/about', label: 'About' },
 ];
 
 export function GamiNav() {
@@ -82,12 +86,12 @@ export function GamiNav() {
             >
               LAUNCH APP
             </Link>
-            <a
-              href={DASHBOARD_URL}
+            <Link
+              to={PARTNERS_PATH}
               className="gami-gradient neo-border px-6 py-2 font-display text-xs font-bold tracking-widest shadow-brutal transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none"
             >
-              SIGN IN / SIGN UP
-            </a>
+              FOR PARTNERS
+            </Link>
           </div>
 
           <button
@@ -135,13 +139,13 @@ export function GamiNav() {
               Add to Chrome
             </a>
             <ConnectWallet />
-            <a
-              href={DASHBOARD_URL}
+            <Link
+              to={PARTNERS_PATH}
               className="gami-gradient neo-border p-4 text-center shadow-brutal"
               onClick={() => setMobileMenu(false)}
             >
-              Sign In / Sign Up
-            </a>
+              For partners
+            </Link>
           </div>
         </div>
       )}

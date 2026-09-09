@@ -47,6 +47,30 @@
   ],
   "rewrites": [
     {
+      "source": "/sale",
+      "destination": "/api/gone"
+    },
+    {
+      "source": "/sale/(.*)",
+      "destination": "/api/gone"
+    },
+    {
+      "source": "/tokenomics",
+      "destination": "/api/gone"
+    },
+    {
+      "source": "/whitepaper",
+      "destination": "/api/gone"
+    },
+    {
+      "source": "/legal/risk",
+      "destination": "/api/gone"
+    },
+    {
+      "source": "/claim",
+      "destination": "/api/gone"
+    },
+    {
       "source": "/((?!robots\\.txt|sitemap\\.xml|llms\\.txt|llms-full\\.txt).*)",
       "destination": "/index.html"
     }

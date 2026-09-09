@@ -6,8 +6,8 @@ export const BRAND = {
   url: 'https://gamiprotocol.io/',
   email: 'hello@gamiprotocol.io',
   description:
-    'Gami Protocol is AI-powered universal gamification infrastructure. Earn XP, rewards, and tokens across apps and games with a wallet-first engagement network on Base.',
-  tagline: 'Universal AI gamification infrastructure',
+    'Gami Protocol is onchain loyalty infrastructure. One SDK turns user behaviour into XP, quests and stablecoin-settled rewards on Base.',
+  tagline: 'Onchain loyalty infrastructure',
   sameAs: [
     'https://x.com/gamiprotocol',
     'https://t.me/gamiprotocol',
@@ -25,50 +25,54 @@ export const SITE_FAQS: FaqItem[] = [
   {
     question: 'What is Gami Protocol?',
     answer:
-      'Gami Protocol is universal gamification infrastructure for Web2 and Web3. It lets apps, games, and communities plug into shared XP, quests, AI agents, and on-chain rewards without rebuilding loyalty systems from scratch.',
+      'Gami Protocol is onchain loyalty infrastructure. One SDK lets an app turn user behaviour into XP, quests and stablecoin-settled rewards on Base, without building reward infrastructure from scratch.',
   },
   {
     question: 'What is the Gami Wallet?',
     answer:
-      'The Gami Wallet is the user app for XP, quests, badges, staking, and cross-app rewards. It is the wallet-first entry point to the Gami engagement network.',
+      'The Gami Wallet is a Base smart wallet, created with a passkey or an email through Privy, with no seed phrase. It holds your .gami name, your XP and badges, and any rewards you collect.',
   },
   {
-    question: 'What is $GAMI?',
+    question: 'Can XP be bought, sold, or redeemed?',
     answer:
-      '$GAMI is the protocol token designed for governance, staking, protocol fees, treasury coordination, and reward multipliers. Public allocation figures are illustrative and subject to governance.',
+      'No. XP is a non-transferable record of progression earned by completing quests. It cannot be bought, sold, transferred or redeemed, it is not a financial instrument, and it carries no monetary value.',
   },
   {
     question: 'How do developers integrate Gami?',
     answer:
-      'Developers connect through the Gami MCP client/server and developer docs to emit verified actions—quests, purchases, referrals—and settle rewards without custom reward infrastructure.',
+      'Developers connect through the Gami MCP client and server and the developer docs to emit verified actions — quests, purchases, referrals — and settle rewards without custom reward infrastructure.',
   },
   {
     question: 'Which networks does Gami support?',
     answer:
-      'Gami settles on Base L2 for low fees and auditable claims, with multi-chain support planned across major ecosystems including Ethereum and other L2s.',
+      'Base (chain ID 8453) is the settlement network. Polygon and Arbitrum are supported read-only. Solana support is on the roadmap and is not yet available.',
   },
   {
-    question: 'How do I join the Gami waitlist?',
+    question: 'How are rewards paid out?',
     answer:
-      'Join at https://gamiprotocol.io/waitlist with your email (and optional wallet) for priority access to the $GAMI launch, multipliers, and updates.',
+      'Rewards settle in USDC and EURC on Base. Gami routes existing regulated stablecoins and does not issue a stablecoin of its own.',
+  },
+  {
+    question: 'How do I join the Gami developer waitlist?',
+    answer:
+      'Join at https://gamiprotocol.io/waitlist for early access to the Gami SDK, a test environment on Base, and integration support. It is a product waitlist for developers, not an offer or a sale.',
   },
 ];
 
 export const KEY_PAGES = [
-  { path: '/', title: 'Home', summary: 'Product overview and waitlist CTA' },
+  { path: '/', title: 'Home', summary: 'Product overview and developer waitlist' },
   { path: '/about', title: 'About', summary: 'Company and protocol stack' },
-  { path: '/wallet', title: 'Wallet', summary: 'Download wallet and claim .gami name (GNS)' },
+  { path: '/wallet', title: 'Wallet', summary: 'Base smart wallet and .gami name (GNS)' },
   {
     path: '/wallet/guide',
     title: 'Wallet Guide',
-    summary: 'Connect wallets, card buy, £100–£10k allocate tokens',
+    summary: 'Sign in with a passkey, claim a .gami name, earn XP',
   },
-  { path: '/agents', title: 'AI Agents', summary: 'Adaptive quests and reward agents' },
+  { path: '/agents', title: 'AI Agents', summary: 'NOVA reads protocol state and simulates outcomes' },
   { path: '/developers/docs', title: 'Developer Docs', summary: 'Integration guide' },
-  { path: '/waitlist', title: 'ICO Waitlist', summary: 'Join the $GAMI launch waitlist' },
-  { path: '/tokenomics', title: 'Tokenomics', summary: 'Supply, allocation, burn engine' },
-  { path: '/whitepaper', title: 'Whitepaper', summary: 'Full protocol documentation' },
-  { path: '/sale', title: 'Token Sale', summary: 'Sale dashboard and contribution' },
+  { path: '/settlement', title: 'Settlement', summary: 'How rewards settle in USDC and EURC on Base' },
+  { path: '/base', title: 'Why Base', summary: 'Base as the settlement network, chain ID 8453' },
+  { path: '/waitlist', title: 'Developer Waitlist', summary: 'Early SDK access and a test environment' },
 ] as const;
 
 export function buildFaqJsonLd(faqs: FaqItem[] = SITE_FAQS) {
@@ -130,13 +134,13 @@ export function buildOrganizationJsonLd() {
     email: BRAND.email,
     sameAs: [...BRAND.sameAs],
     knowsAbout: [
-      'gamification',
-      'crypto rewards',
+      'loyalty infrastructure',
+      'onchain rewards',
       'XP systems',
-      'Base L2',
-      'AI agents',
+      'Base',
+      'stablecoin settlement',
       'Model Context Protocol',
-      'Web3 wallets',
+      'smart wallets',
     ],
   };
 }

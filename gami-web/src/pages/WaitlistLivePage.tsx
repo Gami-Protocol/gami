@@ -192,7 +192,7 @@ export function WaitlistLivePage() {
               </p>
               {useSupabase ? (
                 <p className="mt-4 font-mono text-sm text-gami-accent">
-                  {stats.walletCount.toLocaleString()} wallets ready for TGE
+                  {stats.walletCount.toLocaleString()} wallets linked
                 </p>
               ) : null}
               <p className="mt-4 font-mono text-xs text-gray-500">
@@ -264,8 +264,8 @@ export function WaitlistLivePage() {
           <Link to="/admin" className="text-gray-400 hover:text-gami-accent">
             Admin
           </Link>
-          <Link to="/sale" className="text-gray-400 hover:text-gami-accent">
-            Sale dashboard
+          <Link to="/developers/docs" className="text-gray-400 hover:text-gami-accent">
+            Developer docs
           </Link>
         </div>
       </div>

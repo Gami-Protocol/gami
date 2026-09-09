@@ -96,7 +96,7 @@ export function WalletPage() {
 
         <div className="flex items-center justify-between border-x-2 border-b-2 border-black bg-[#15121f] px-4 py-3">
           <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-white/50">
-            Powered by $GAMI
+            Settles on Base
           </p>
           <div className="flex gap-1" aria-hidden="true">
             <span className="h-2 w-2 bg-primary" />
@@ -122,13 +122,7 @@ export function WalletPage() {
           to="/wallet/guide"
           className="block border-2 border-primary/50 py-3 font-display font-bold uppercase text-gami-accent hover:border-primary"
         >
-          Wallet guide · get tokens allocated
-        </Link>
-        <Link
-          to="/sale"
-          className="block border-2 border-white/20 py-3 font-display font-bold uppercase hover:border-primary"
-        >
-          Invest in the raise
+          Wallet guide · set up in two minutes
         </Link>
         <a
           href={TESTFLIGHT_URL}
