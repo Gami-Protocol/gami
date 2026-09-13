@@ -3,7 +3,29 @@ import type { Plugin } from 'vite';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 
-/** Inject Search Console meta into static HTML (required — JS injection is too late). */
+/**
+ * Inject the Search Console meta into static HTML (JS injection is too late —
+ * crawlers read the served HTML).
+ *
+ * This plugin previously "sanitised" the value by stripping every character
+ * outside [A-Za-z0-9_-]. That does not make a bad value safe, it makes it
+ * *look* valid: a whole sitemap pasted into the environment variable came out
+ * as a 900-character run-on string and shipped to production, where it both
+ * broke verification and published the site's full route inventory — including
+ * routes that had been withdrawn — in a tag nobody audits.
+ *
+ * So: validate, never launder. A Search Console token is short, opaque, and
+ * contains no whitespace, URLs or markup. Anything else is a misconfiguration
+ * and the tag is omitted rather than repaired. Omitting it only costs
+ * verification, which an invalid value had already lost; injecting it leaks.
+ */
+const MAX_VERIFICATION_TOKEN_LENGTH = 100;
+
+function isVerificationTokenShaped(value: string): boolean {
+  if (!value || value.length > MAX_VERIFICATION_TOKEN_LENGTH) return false;
+  return /^[A-Za-z0-9_-]+$/.test(value);
+}
+
 function googleSiteVerification(): Plugin {
   return {
     name: 'gami-google-site-verification',
@@ -12,13 +34,26 @@ function googleSiteVerification(): Plugin {
       const env = loadEnv(mode, process.cwd(), '');
       const token = (env.VITE_GOOGLE_SITE_VERIFICATION || process.env.VITE_GOOGLE_SITE_VERIFICATION || '').trim();
       if (!token) return html;
-      // Attribute-safe: verification tokens are alphanumeric.
-      const safe = token.replace(/[^a-zA-Z0-9_-]/g, '');
-      if (!safe) return html;
+
+      if (!isVerificationTokenShaped(token)) {
+        // Loud, and on stderr: this is a misconfiguration someone must fix in
+        // the deployment environment. The build continues without the tag so a
+        // bad value can never reach production.
+        console.error(
+          '\n[google-site-verification] REFUSING TO INJECT.\n' +
+            `  VITE_GOOGLE_SITE_VERIFICATION is ${token.length} characters and is not a\n` +
+            '  verification token. Search Console issues a short opaque string; this\n' +
+            '  looks like a URL, a sitemap, or pasted markup.\n' +
+            '  The meta tag has been omitted. Set the variable to the real token, or\n' +
+            '  unset it, in the deployment environment.\n',
+        );
+        return html;
+      }
+
       if (html.includes('name="google-site-verification"')) return html;
       return html.replace(
         '<meta name="robots"',
-        `<meta name="google-site-verification" content="${safe}" />\n    <meta name="robots"`,
+        `<meta name="google-site-verification" content="${token}" />\n    <meta name="robots"`,
       );
     },
   };
