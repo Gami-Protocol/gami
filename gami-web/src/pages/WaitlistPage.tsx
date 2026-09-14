@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { GamiFooter } from '@/components/gami/GamiFooter';
 import { WaitlistForm } from '@/components/waitlist/WaitlistForm';
 import { WaitlistSetupBanner } from '@/components/waitlist/WaitlistSetupBanner';
+import { WaitlistGoal } from '@/components/waitlist/WaitlistGoal';
 import { fetchWaitlistPublicCount } from '@/lib/waitlist';
 
 const WHAT_YOU_GET = [
@@ -55,11 +56,7 @@ export function WaitlistPage() {
                 support while you integrate.
               </p>
 
-              {waitlistCount != null ? (
-                <p className="mb-10 font-mono text-xs uppercase tracking-widest text-gami-accent">
-                  {waitlistCount.toLocaleString()} developers and teams on the list
-                </p>
-              ) : null}
+              <WaitlistGoal count={waitlistCount} className="mb-10 max-w-xl" />
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {WHAT_YOU_GET.map((item) => (

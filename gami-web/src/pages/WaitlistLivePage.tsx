@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 
 import { GamiFooter } from '@/components/gami/GamiFooter';
 import { GamiTokenLogo } from '@/components/gami/GamiTokenLogo';
+import { WaitlistGoal } from '@/components/waitlist/WaitlistGoal';
 import { isFirebaseConfigured } from '@/lib/firebase';
 import {
   subscribeWaitlistCount as subscribeFirebaseCount,
@@ -185,7 +186,7 @@ export function WaitlistLivePage() {
                 </span>
               </div>
               <p className="font-mono text-xs uppercase tracking-widest text-gray-500">
-                People on the waitlist
+                People on the waitlist today
               </p>
               <p className="mt-2 font-display text-7xl font-bold tabular-nums text-white md:text-8xl">
                 {stats.count.toLocaleString()}
@@ -201,6 +202,8 @@ export function WaitlistLivePage() {
                   : 'Waiting for the first signup…'}
               </p>
             </div>
+
+            <WaitlistGoal count={stats.count} className="mb-10" />
 
             <div className="border-2 border-white/10 bg-black/40 p-8 neo-border">
               <h2 className="mb-2 font-display text-2xl font-bold uppercase italic">
