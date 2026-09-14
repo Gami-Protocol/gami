@@ -26,6 +26,42 @@ function isVerificationTokenShaped(value: string): boolean {
   return /^[A-Za-z0-9_-]+$/.test(value);
 }
 
+/**
+ * Write dist/version.json with the commit the bundle was built from.
+ *
+ * A compliance fix can be merged, pass every CI gate, and still never reach
+ * gamiprotocol.io — that is exactly what happened when the production build
+ * for the Search Console fix failed to provision and nothing anywhere noticed
+ * for a day and a half. Nothing published which commit the live site was
+ * serving, so "merged" and "live" could not be told apart from outside.
+ *
+ * This is that missing fact, served as a plain file so check-production.mjs can
+ * fetch it and assert the live site is the commit it is supposed to be.
+ */
+function buildStamp(): Plugin {
+  return {
+    name: 'gami-build-stamp',
+    apply: 'build',
+    generateBundle() {
+      const commit =
+        process.env.VERCEL_GIT_COMMIT_SHA || process.env.GITHUB_SHA || 'unknown';
+      this.emitFile({
+        type: 'asset',
+        fileName: 'version.json',
+        source: `${JSON.stringify(
+          {
+            commit,
+            ref: process.env.VERCEL_GIT_COMMIT_REF || process.env.GITHUB_REF_NAME || 'unknown',
+            builtAt: new Date().toISOString(),
+          },
+          null,
+          2,
+        )}\n`,
+      });
+    },
+  };
+}
+
 function googleSiteVerification(): Plugin {
   return {
     name: 'gami-google-site-verification',
@@ -60,7 +96,7 @@ function googleSiteVerification(): Plugin {
 }
 
 export default defineConfig({
-  plugins: [react(), googleSiteVerification()],
+  plugins: [react(), googleSiteVerification(), buildStamp()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

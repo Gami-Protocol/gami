@@ -1,0 +1,63 @@
+name: production-compliance
+
+# The build gates in gami-web.yml prove the artifact is clean. They cannot
+# prove the clean artifact is the one gamiprotocol.io is serving.
+#
+# When the Search Console fix was merged, every gate passed and the production
+# deployment then failed to provision. The live site kept publishing the
+# withdrawn route inventory for a day and a half and nothing raised a hand,
+# because nothing was looking at the live site.
+#
+# This job looks at the live site.
+
+on:
+  # After a merge, wait for the deployment and assert the commit actually
+  # landed. A failed production build now fails a check instead of going quiet.
+  push:
+    branches: [main]
+    paths:
+      - 'gami-web/**'
+      - 'api/**'
+      - 'scripts/forbidden-phrases.json'
+      - 'vercel.json'
+      - '.github/workflows/production-compliance.yml'
+  # And on a schedule, because the live site can regress without a commit:
+  # an environment variable change, a rollback, or a rewrite edited in the
+  # dashboard all bypass CI entirely.
+  schedule:
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      expect_commit:
+        description: 'Commit SHA the live site must be serving (optional)'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: gami-web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # No dependencies: the gate uses only node:fs and global fetch, so it
+      # keeps working even if an install breaks.
+      - name: Check the live site
+        env:
+          EXPECT: ${{ github.event_name == 'push' && github.sha || inputs.expect_commit }}
+        run: |
+          if [ -n "$EXPECT" ]; then
+            # Vercel needs a few minutes to build and promote. Poll rather than
+            # sleep a fixed amount, and fail if the commit never arrives.
+            node scripts/check-production.mjs --expect-commit="$EXPECT" --wait=900
+          else
+            node scripts/check-production.mjs
+          fi

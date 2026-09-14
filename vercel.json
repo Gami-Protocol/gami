@@ -43,6 +43,19 @@
           "value": "public, max-age=3600, must-revalidate"
         }
       ]
+    },
+    {
+      "source": "/version.json",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, max-age=0"
+        },
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex"
+        }
+      ]
     }
   ],
   "rewrites": [
@@ -71,7 +84,7 @@
       "destination": "/api/gone"
     },
     {
-      "source": "/((?!robots\\.txt|sitemap\\.xml|llms\\.txt|llms-full\\.txt).*)",
+      "source": "/((?!robots\\.txt|sitemap\\.xml|llms\\.txt|llms-full\\.txt|version\\.json).*)",
       "destination": "/index.html"
     }
   ],
