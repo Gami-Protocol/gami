@@ -35,6 +35,10 @@ export function WaitlistLivePage() {
     walletCount: 0,
     updatedAt: null,
   });
+  // stats starts at zero so the counter has something to render, but zero is
+  // also a real possible value. Without this flag the page would announce
+  // "0 on the list today" during every load and after every backend failure.
+  const [statsLoaded, setStatsLoaded] = useState(false);
   const [pulse, setPulse] = useState(false);
   const [email, setEmail] = useState(DEFAULT_ALERT_EMAIL);
   const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
@@ -49,6 +53,7 @@ export function WaitlistLivePage() {
       return subscribeSupabaseWaitlistCount(
         (next) => {
           setStats(next);
+          setStatsLoaded(true);
           setSchemaMissing(false);
           if (prev >= 0 && next.count !== prev) {
             setPulse(true);
@@ -74,6 +79,7 @@ export function WaitlistLivePage() {
         walletCount: 0,
         updatedAt: next.updatedAt,
       });
+      setStatsLoaded(true);
       if (prev >= 0 && next.count !== prev) {
         setPulse(true);
         window.setTimeout(() => setPulse(false), 700);
@@ -161,6 +167,14 @@ export function WaitlistLivePage() {
           </div>
         ) : null}
 
+        {/*
+          Outside the configured/unconfigured split on purpose. The target does
+          not depend on a backend being reachable, and a page that drops it when
+          the counter fails would stop saying what it is for at exactly the
+          moment it has nothing else to show.
+        */}
+        <WaitlistGoal count={statsLoaded ? stats.count : null} className="mb-10" />
+
         {!configured ? (
           <div className="border-2 border-white/20 bg-black/40 p-8 neo-border">
             <p className="text-gray-300">
@@ -202,8 +216,6 @@ export function WaitlistLivePage() {
                   : 'Waiting for the first signup…'}
               </p>
             </div>
-
-            <WaitlistGoal count={stats.count} className="mb-10" />
 
             <div className="border-2 border-white/10 bg-black/40 p-8 neo-border">
               <h2 className="mb-2 font-display text-2xl font-bold uppercase italic">

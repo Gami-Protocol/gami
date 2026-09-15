@@ -58,6 +58,7 @@ const LIVE_ROUTES = [
   '/agents',
   '/wallet',
   '/waitlist',
+  '/waitlist/live',
   '/settlement',
   '/base',
   '/partners',
@@ -72,12 +73,46 @@ const fail = (where, detail) => failures.push({ where, detail });
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+/** Shortest body that could plausibly be one of this site's real pages. */
+const MIN_HTML_BYTES = 500;
+
+/** Did we actually receive a page, or something standing in for one? */
+function isHtmlDocument(body) {
+  if (body.length < MIN_HTML_BYTES) return false;
+  return /<html[\s>]|<!doctype\s+html/i.test(body);
+}
+
 /**
- * A single failed request proves nothing about the site — transport errors and
- * empty bodies happen. Only a repeated result is evidence, so every fetch is
- * retried before its outcome is believed.
+ * Is this response evidence, or noise to retry?
+ *
+ * Getting this wrong in either direction is expensive. Too eager and a real
+ * outage reads as a blip; too trusting and noise reads as the site. Both have
+ * already happened here: a 14-byte `Redirecting...` stub was once read as "the
+ * verification tag is gone", and it was an SSO redirect.
  */
-async function request(path, { attempts = 4, redirect = 'manual' } = {}) {
+function shouldRetry(res, expect) {
+  // Transport failure — no answer at all.
+  if (res.status === 0) return true;
+  // The edge is unwell, not the deployment. One 502 is not a finding.
+  if (res.status >= 500) return true;
+  // Rate limited: our own polling, not the site's state.
+  if (res.status === 429) return true;
+  // A 200 that is not the page it claims to be. A redirect stub, a truncated
+  // transfer and an error interstitial all arrive as a short 200 body, and each
+  // would otherwise be scanned as though it were the page and found clean.
+  if (expect === 'html' && res.status === 200 && !isHtmlDocument(res.body)) return true;
+  return false;
+}
+
+/**
+ * A single failed request proves nothing about the site — transport errors,
+ * edge blips and truncated transfers all happen. Only a repeated result is
+ * evidence, so every fetch is retried before its outcome is believed.
+ *
+ * Pass `expect: 'html'` for routes that must return a real page, so a short or
+ * non-HTML 200 is retried rather than accepted and scanned.
+ */
+async function request(path, { attempts = 4, redirect = 'manual', expect = 'any' } = {}) {
   let last = null;
   for (let i = 0; i < attempts; i += 1) {
     try {
@@ -88,15 +123,10 @@ async function request(path, { attempts = 4, redirect = 'manual' } = {}) {
       });
       const body = await res.text();
       last = { status: res.status, body, headers: res.headers, error: null };
-      // Treat a suspiciously short body for an HTML route as a truncated
-      // response rather than as the page: a 14-byte reply once read as "the
-      // tag is gone" and it was an SSO redirect stub.
-      const looksTruncated =
-        res.status === 200 && path.endsWith('/') === false && body.length === 0;
-      if (!looksTruncated) return last;
     } catch (err) {
       last = { status: 0, body: '', headers: new Headers(), error: String(err) };
     }
+    if (!shouldRetry(last, expect)) return last;
     if (i < attempts - 1) await sleep(1500 * (i + 1));
   }
   return last;
@@ -196,9 +226,22 @@ async function checkWithdrawnRoutes() {
 // ---- live routes -----------------------------------------------------------
 async function checkLiveRoutes() {
   for (const route of LIVE_ROUTES) {
-    const res = await request(route);
+    const res = await request(route, { expect: 'html' });
     if (res.status !== 200) {
       fail(route, `returned ${res.status || `no response (${res.error})`}, expected 200`);
+      continue;
+    }
+    // Retrying a stub is not the same as rejecting one. If a short or non-HTML
+    // 200 survives every retry it is the route's actual behaviour, and scanning
+    // it would report "clean" on a page that was never delivered — which is how
+    // a 14-byte SSO redirect once passed for a homepage.
+    if (!isHtmlDocument(res.body)) {
+      fail(
+        route,
+        `returned 200 with ${res.body.length} bytes that are not an HTML document, ` +
+          'after every retry. Nothing was scanned, so this route is unverified — ' +
+          'treat it as failing rather than clean.',
+      );
       continue;
     }
     // The served HTML is an SPA shell: its <head> is the whole crawlable

@@ -31,12 +31,19 @@ export function WaitlistGoal({ count, className = '' }: Props) {
         built for, not a number reached.
       </p>
 
+      {/*
+        aria-valuenow is omitted entirely when the count is unknown. Passing 0
+        there would tell a screen-reader user we had read the count and it was
+        zero, while a sighted user sees an empty slot — the same false certainty
+        this component exists to avoid, aimed at the people least able to check
+        it. An indeterminate progressbar has no value, which is the truth.
+      */}
       <div
         className="h-2 w-full overflow-hidden border border-white/15 bg-white/5"
         role="progressbar"
         aria-valuemin={0}
         aria-valuemax={WAITLIST_GOAL}
-        aria-valuenow={count ?? 0}
+        {...(count != null ? { 'aria-valuenow': count } : {})}
         aria-label={`Waitlist progress toward ${formatGoal()}`}
       >
         <div

@@ -48,7 +48,7 @@ jobs:
         with:
           node-version: '22'
 
-      # No dependencies: the gate uses only node:fs and global fetch, so it
+      # No dependencies: this gate uses only node:fs and global fetch, so it
       # keeps working even if an install breaks.
       - name: Check the live site
         env:
@@ -61,3 +61,18 @@ jobs:
           else
             node scripts/check-production.mjs
           fi
+
+      # The step above reads the served HTML, which on an SPA is the shell. Route
+      # copy and route-specific metadata only exist after hydration, so a live
+      # artifact could publish a forbidden phrase in the rendered DOM and pass
+      # every check above. Scanning only the non-rendered response and calling
+      # the site clean is the exact mistake the remediation forbids, so the
+      # rendered gate runs against production too — same script, live origin.
+      - name: Install dependencies
+        run: npm ci --include=dev
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Rendered-DOM gate against the live site
+        run: node scripts/check-rendered.mjs "${GAMI_SITE_URL:-https://gamiprotocol.io}"
