@@ -43,7 +43,7 @@ export function WaitlistGoal({ count, className = '' }: Props) {
         role="progressbar"
         aria-valuemin={0}
         aria-valuemax={WAITLIST_GOAL}
-        {...(count != null ? { 'aria-valuenow': count } : {})}
+        {...(count != null ? { 'aria-valuenow': Math.min(count, WAITLIST_GOAL) } : {})}
         aria-label={`Waitlist progress toward ${formatGoal()}`}
       >
         <div

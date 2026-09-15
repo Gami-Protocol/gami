@@ -61,6 +61,10 @@ if (!existsSync(distIndex)) {
     const content = /content=["']([^"']*)["']/i.exec(tag)?.[1];
     if (content == null) continue;
     const name = /(?:name|property)=["']([^"']*)["']/i.exec(tag)?.[1] ?? '(unnamed)';
+    // textOf() strips <meta> before the page scan above, so the values would
+    // otherwise never be checked for forbidden phrases. check-rendered.mjs
+    // already scans them; this closes the same gap in the static gate.
+    scanPhrases(`dist/index.html meta "${name}"`, content);
     if (content.length > MAX_META) {
       fail('dist/index.html', `meta "${name}" is ${content.length} chars (max ${MAX_META})`);
     }

@@ -14,8 +14,18 @@ them is real.
 
 The `gami` project is a trap, not a spare. Pointing `VITE_SUPABASE_URL` at it would not raise an
 error at build time and would not look broken in review — the client would simply fail every
-request at runtime, and signups would be dropped silently with the form still appearing to work.
-The two projects have the same table names, so nothing in the code distinguishes them.
+request at runtime. The two projects have the same table names, so nothing in the code
+distinguishes them.
+
+Two qualifications, because the precise failure matters if you are debugging it:
+
+- **This applies to the Supabase signup path.** `joinWaitlist()` in `gami-web/src/lib/sale.ts`
+  tries `VITE_WAITLIST_API_URL` first and only falls through to Supabase when that is unset. It is
+  unset in production today, so Supabase *is* the live path — but if that API is ever configured,
+  `VITE_SUPABASE_URL` stops governing signups.
+- **The failure is visible, not silent.** `joinWaitlistSupabase()` returns the error and
+  `WaitlistForm` renders it to the user. Signups would be lost, and people would see them fail,
+  which is a different (and more recoverable) problem than a form that appears to succeed.
 
 Verified 2026-09-15: `https://etwmgfmkiousxceislfe.supabase.co/rest/v1/` returns no response
 (`000`, connection refused) across repeated attempts, where a healthy project returns `401`.

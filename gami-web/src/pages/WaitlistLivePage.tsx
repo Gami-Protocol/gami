@@ -68,6 +68,10 @@ export function WaitlistLivePage() {
             err.message.includes('waitlist')
           ) {
             setSchemaMissing(true);
+            // The backend is definitively broken, not merely slow. Whatever
+            // count was last read is no longer something we can stand behind,
+            // so stop presenting it as current.
+            setStatsLoaded(false);
           }
         },
       );

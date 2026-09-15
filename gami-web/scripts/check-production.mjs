@@ -76,10 +76,28 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 /** Shortest body that could plausibly be one of this site's real pages. */
 const MIN_HTML_BYTES = 500;
 
-/** Did we actually receive a page, or something standing in for one? */
+/**
+ * Did we actually receive this application's page, or something standing in for
+ * one? A byte count alone does not prove it: an error interstitial or a parked
+ * page clears any threshold. The SPA mount point is the marker that only this
+ * app's shell carries, so require it alongside a plausible HTML document.
+ */
 function isHtmlDocument(body) {
-  if (body.length < MIN_HTML_BYTES) return false;
-  return /<html[\s>]|<!doctype\s+html/i.test(body);
+  return whyNotOurPage(body) === null;
+}
+
+/** Why a body is not this application's page, or null if it is. */
+function whyNotOurPage(body) {
+  if (body.length < MIN_HTML_BYTES) {
+    return `only ${body.length} bytes — too short to be a page`;
+  }
+  if (!/<html[\s>]|<!doctype\s+html/i.test(body)) {
+    return `${body.length} bytes that are not an HTML document`;
+  }
+  if (!/<div\s[^>]*id=["']root["']/i.test(body)) {
+    return 'an HTML document with no <div id="root"> — HTML, but not this application';
+  }
+  return null;
 }
 
 /**
@@ -154,6 +172,10 @@ function checkMetaTags(where, html) {
     const content = /content=["']([^"']*)["']/i.exec(tag)?.[1];
     if (content == null) continue;
     const name = /(?:name|property)=["']([^"']*)["']/i.exec(tag)?.[1] ?? '(unnamed)';
+    // textOf() strips <meta> before the page scan, so without this the values
+    // are never checked for forbidden phrases — on the one surface this gate
+    // exists to protect. A description or og:title is published copy.
+    scanPhrases(`${where} meta "${name}"`, content);
     if (content.length > MAX_META) {
       fail(where, `meta "${name}" is ${content.length} chars (max ${MAX_META})`);
     }
@@ -171,7 +193,41 @@ function checkMetaTags(where, html) {
 }
 
 // ---- deployed commit -------------------------------------------------------
+
+/** Shortest prefix that identifies a commit rather than a family of them. */
+const MIN_COMMIT_PREFIX = 7;
+
+/**
+ * Compare the served commit against the expected one using the WHOLE supplied
+ * value, not a seven-character slice of it. Truncating meant a full SHA only
+ * ever had to agree on its first seven characters, and a one-character
+ * --expect-commit would have matched any commit starting with that letter —
+ * a gate that says "the merge landed" on the strength of a coin flip.
+ */
+function commitMatches(served, expected) {
+  return served.toLowerCase().startsWith(expected.toLowerCase());
+}
+
+function validateExpectedCommit(value) {
+  if (!/^[0-9a-f]+$/i.test(value)) {
+    return `--expect-commit must be hexadecimal, got ${JSON.stringify(value)}`;
+  }
+  if (value.length < MIN_COMMIT_PREFIX) {
+    return `--expect-commit must be at least ${MIN_COMMIT_PREFIX} characters, got ${value.length}`;
+  }
+  return null;
+}
+
 async function checkDeployedCommit() {
+  if (EXPECT_COMMIT) {
+    const invalid = validateExpectedCommit(EXPECT_COMMIT);
+    if (invalid) {
+      // Refuse rather than silently check something weaker than asked for.
+      console.error(`\n${invalid}\n`);
+      process.exit(2);
+    }
+  }
+
   const deadline = Date.now() + WAIT_SECONDS * 1000;
   let seen = null;
 
@@ -191,7 +247,7 @@ async function checkDeployedCommit() {
       return;
     }
 
-    if (seen?.commit && seen.commit.startsWith(EXPECT_COMMIT.slice(0, 7))) {
+    if (seen?.commit && commitMatches(seen.commit, EXPECT_COMMIT)) {
       notes.push(`serving the expected commit ${seen.commit}`);
       return;
     }
@@ -235,12 +291,12 @@ async function checkLiveRoutes() {
     // 200 survives every retry it is the route's actual behaviour, and scanning
     // it would report "clean" on a page that was never delivered — which is how
     // a 14-byte SSO redirect once passed for a homepage.
-    if (!isHtmlDocument(res.body)) {
+    const notOurPage = whyNotOurPage(res.body);
+    if (notOurPage) {
       fail(
         route,
-        `returned 200 with ${res.body.length} bytes that are not an HTML document, ` +
-          'after every retry. Nothing was scanned, so this route is unverified — ' +
-          'treat it as failing rather than clean.',
+        `returned 200 with ${notOurPage}, after every retry. Nothing was scanned, ` +
+          'so this route is unverified — treat it as failing rather than clean.',
       );
       continue;
     }
