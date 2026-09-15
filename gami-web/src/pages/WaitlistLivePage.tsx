@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 
 import { GamiFooter } from '@/components/gami/GamiFooter';
 import { GamiTokenLogo } from '@/components/gami/GamiTokenLogo';
+import { WaitlistGoal } from '@/components/waitlist/WaitlistGoal';
 import { isFirebaseConfigured } from '@/lib/firebase';
 import {
   subscribeWaitlistCount as subscribeFirebaseCount,
@@ -34,6 +35,10 @@ export function WaitlistLivePage() {
     walletCount: 0,
     updatedAt: null,
   });
+  // stats starts at zero so the counter has something to render, but zero is
+  // also a real possible value. Without this flag the page would announce
+  // "0 on the list today" during every load and after every backend failure.
+  const [statsLoaded, setStatsLoaded] = useState(false);
   const [pulse, setPulse] = useState(false);
   const [email, setEmail] = useState(DEFAULT_ALERT_EMAIL);
   const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
@@ -48,6 +53,7 @@ export function WaitlistLivePage() {
       return subscribeSupabaseWaitlistCount(
         (next) => {
           setStats(next);
+          setStatsLoaded(true);
           setSchemaMissing(false);
           if (prev >= 0 && next.count !== prev) {
             setPulse(true);
@@ -62,6 +68,10 @@ export function WaitlistLivePage() {
             err.message.includes('waitlist')
           ) {
             setSchemaMissing(true);
+            // The backend is definitively broken, not merely slow. Whatever
+            // count was last read is no longer something we can stand behind,
+            // so stop presenting it as current.
+            setStatsLoaded(false);
           }
         },
       );
@@ -73,6 +83,7 @@ export function WaitlistLivePage() {
         walletCount: 0,
         updatedAt: next.updatedAt,
       });
+      setStatsLoaded(true);
       if (prev >= 0 && next.count !== prev) {
         setPulse(true);
         window.setTimeout(() => setPulse(false), 700);
@@ -160,6 +171,14 @@ export function WaitlistLivePage() {
           </div>
         ) : null}
 
+        {/*
+          Outside the configured/unconfigured split on purpose. The target does
+          not depend on a backend being reachable, and a page that drops it when
+          the counter fails would stop saying what it is for at exactly the
+          moment it has nothing else to show.
+        */}
+        <WaitlistGoal count={statsLoaded ? stats.count : null} className="mb-10" />
+
         {!configured ? (
           <div className="border-2 border-white/20 bg-black/40 p-8 neo-border">
             <p className="text-gray-300">
@@ -185,7 +204,7 @@ export function WaitlistLivePage() {
                 </span>
               </div>
               <p className="font-mono text-xs uppercase tracking-widest text-gray-500">
-                People on the waitlist
+                People on the waitlist today
               </p>
               <p className="mt-2 font-display text-7xl font-bold tabular-nums text-white md:text-8xl">
                 {stats.count.toLocaleString()}

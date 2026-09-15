@@ -2,6 +2,39 @@
 
 Production waitlist for `gami-web` uses **Supabase** as the primary backend.
 
+## Which Supabase project (read this before changing any env var)
+
+There are **two** Supabase projects in this account carrying waitlist tables. Only one of
+them is real.
+
+| Project | Ref | State | Use |
+| --- | --- | --- | --- |
+| `gami-wallet` | `xetqhdzvbfeiedbmopew` | `ACTIVE_HEALTHY` | **This is the live waitlist.** gamiprotocol.io's bundle points here, the signups are here, and `waitlist_public_count()` reads from here. |
+| `gami` | `etwmgfmkiousxceislfe` | `INACTIVE` (paused) | Unused duplicate. Holds a second copy of the same migrations and no traffic. Its REST endpoint does not answer at all. |
+
+The `gami` project is a trap, not a spare. Pointing `VITE_SUPABASE_URL` at it would not raise an
+error at build time and would not look broken in review — the client would simply fail every
+request at runtime. The two projects have the same table names, so nothing in the code
+distinguishes them.
+
+Two qualifications, because the precise failure matters if you are debugging it:
+
+- **This applies to the Supabase signup path.** `joinWaitlist()` in `gami-web/src/lib/sale.ts`
+  tries `VITE_WAITLIST_API_URL` first and only falls through to Supabase when that is unset. It is
+  unset in production today, so Supabase *is* the live path — but if that API is ever configured,
+  `VITE_SUPABASE_URL` stops governing signups.
+- **The failure is visible, not silent.** `joinWaitlistSupabase()` returns the error and
+  `WaitlistForm` renders it to the user. Signups would be lost, and people would see them fail,
+  which is a different (and more recoverable) problem than a form that appears to succeed.
+
+Verified 2026-09-15: `https://etwmgfmkiousxceislfe.supabase.co/rest/v1/` returns no response
+(`000`, connection refused) across repeated attempts, where a healthy project returns `401`.
+
+If you want the duplicate gone, restore it first and diff its `public.waitlist` rows against the
+live project — a paused project still holds its data, and deleting it discards anything that was
+only ever written there.
+
+
 ## One-time database setup (required)
 
 If the API returns `Could not find the table 'public.waitlist' in the schema cache`, the project has no waitlist tables yet.

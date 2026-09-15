@@ -11,6 +11,7 @@
     "check:static": "node scripts/check-static.mjs",
     "check:rendered": "node scripts/check-rendered.mjs",
     "preview:vercel": "node scripts/preview-server.mjs",
+    "check:production": "node scripts/check-production.mjs",
     "compliance": "npm run build && npm run check:static && npm run check:rendered"
   },
   "dependencies": {

@@ -1,0 +1,382 @@
+#!/usr/bin/env node
+/**
+ * Compliance gate for the LIVE site.
+ *
+ * check-static.mjs and check-rendered.mjs prove the build is clean. Neither
+ * proves the clean build is the one being served. The Search Console fix made
+ * that distinction expensive: it merged, every gate passed, and the production
+ * deployment then failed to provision. For a day and a half gamiprotocol.io
+ * kept serving the previous build — which published the withdrawn route
+ * inventory inside a meta tag — while the repository, and CI, said the problem
+ * was fixed.
+ *
+ * So this gate asks the live origin, over the public internet, the questions
+ * that actually matter to a regulator and to Google:
+ *
+ *   - are the withdrawn routes returning 410 Gone?
+ *   - is the served HTML free of the forbidden phrases?
+ *   - is the verification meta tag a token, and not something pasted into it?
+ *   - do robots.txt and sitemap.xml still exclude the withdrawn routes?
+ *   - and is the commit being served the commit we think is deployed?
+ *
+ * Usage:
+ *   node scripts/check-production.mjs [--expect-commit=<sha>] [--wait=<seconds>]
+ *
+ * --expect-commit makes the run assert the deployed commit, polling until
+ * --wait elapses so it can be used straight after a merge, while the platform
+ * is still building. Without it the commit is reported and not enforced.
+ *
+ * Environment: GAMI_SITE_URL overrides the origin (default https://gamiprotocol.io).
+ */
+import { readFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const here = dirname(fileURLToPath(import.meta.url));
+const repoRoot = join(here, '..', '..');
+
+const config = JSON.parse(
+  readFileSync(join(repoRoot, 'scripts', 'forbidden-phrases.json'), 'utf8'),
+);
+const PATTERNS = config.patterns.map((p) => ({ ...p, re: new RegExp(p.source, 'i') }));
+const WITHDRAWN = config.withdrawnRoutes.routes;
+const MAX_META = config.maxMetaValueLength;
+const MAX_VERIFICATION_TOKEN_LENGTH = 100;
+
+const ORIGIN = (process.env.GAMI_SITE_URL || 'https://gamiprotocol.io').replace(/\/$/, '');
+
+const args = process.argv.slice(2);
+const argValue = (name) =>
+  args.find((a) => a.startsWith(`--${name}=`))?.slice(name.length + 3) ?? null;
+const EXPECT_COMMIT = argValue('expect-commit');
+const WAIT_SECONDS = Number(argValue('wait') ?? 0);
+
+/** Live routes that must keep answering 200 — a takedown that takes the site down is also a failure. */
+const LIVE_ROUTES = [
+  '/',
+  '/about',
+  '/agents',
+  '/wallet',
+  '/waitlist',
+  '/waitlist/live',
+  '/settlement',
+  '/base',
+  '/partners',
+  '/developers/docs',
+  '/legal/terms',
+  '/legal/privacy',
+];
+
+const failures = [];
+const notes = [];
+const fail = (where, detail) => failures.push({ where, detail });
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/** Shortest body that could plausibly be one of this site's real pages. */
+const MIN_HTML_BYTES = 500;
+
+/**
+ * Did we actually receive this application's page, or something standing in for
+ * one? A byte count alone does not prove it: an error interstitial or a parked
+ * page clears any threshold. The SPA mount point is the marker that only this
+ * app's shell carries, so require it alongside a plausible HTML document.
+ */
+function isHtmlDocument(body) {
+  return whyNotOurPage(body) === null;
+}
+
+/** Why a body is not this application's page, or null if it is. */
+function whyNotOurPage(body) {
+  if (body.length < MIN_HTML_BYTES) {
+    return `only ${body.length} bytes — too short to be a page`;
+  }
+  if (!/<html[\s>]|<!doctype\s+html/i.test(body)) {
+    return `${body.length} bytes that are not an HTML document`;
+  }
+  if (!/<div\s[^>]*id=["']root["']/i.test(body)) {
+    return 'an HTML document with no <div id="root"> — HTML, but not this application';
+  }
+  return null;
+}
+
+/**
+ * Is this response evidence, or noise to retry?
+ *
+ * Getting this wrong in either direction is expensive. Too eager and a real
+ * outage reads as a blip; too trusting and noise reads as the site. Both have
+ * already happened here: a 14-byte `Redirecting...` stub was once read as "the
+ * verification tag is gone", and it was an SSO redirect.
+ */
+function shouldRetry(res, expect) {
+  // Transport failure — no answer at all.
+  if (res.status === 0) return true;
+  // The edge is unwell, not the deployment. One 502 is not a finding.
+  if (res.status >= 500) return true;
+  // Rate limited: our own polling, not the site's state.
+  if (res.status === 429) return true;
+  // A 200 that is not the page it claims to be. A redirect stub, a truncated
+  // transfer and an error interstitial all arrive as a short 200 body, and each
+  // would otherwise be scanned as though it were the page and found clean.
+  if (expect === 'html' && res.status === 200 && !isHtmlDocument(res.body)) return true;
+  return false;
+}
+
+/**
+ * A single failed request proves nothing about the site — transport errors,
+ * edge blips and truncated transfers all happen. Only a repeated result is
+ * evidence, so every fetch is retried before its outcome is believed.
+ *
+ * Pass `expect: 'html'` for routes that must return a real page, so a short or
+ * non-HTML 200 is retried rather than accepted and scanned.
+ */
+async function request(path, { attempts = 4, redirect = 'manual', expect = 'any' } = {}) {
+  let last = null;
+  for (let i = 0; i < attempts; i += 1) {
+    try {
+      const res = await fetch(`${ORIGIN}${path}`, {
+        redirect,
+        headers: { 'User-Agent': 'gami-compliance-gate' },
+        signal: AbortSignal.timeout(30_000),
+      });
+      const body = await res.text();
+      last = { status: res.status, body, headers: res.headers, error: null };
+    } catch (err) {
+      last = { status: 0, body: '', headers: new Headers(), error: String(err) };
+    }
+    if (!shouldRetry(last, expect)) return last;
+    if (i < attempts - 1) await sleep(1500 * (i + 1));
+  }
+  return last;
+}
+
+function textOf(html) {
+  return html
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, (m) =>
+      / type=["']application\/ld\+json["']/i.test(m) ? m : ' ',
+    )
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ');
+}
+
+function scanPhrases(where, text) {
+  for (const p of PATTERNS) {
+    const m = p.re.exec(text);
+    if (m) fail(where, `matches "${p.id}" (${JSON.stringify(m[0])}) — ${p.why}`);
+  }
+}
+
+function checkMetaTags(where, html) {
+  for (const tag of html.match(/<meta\b[^>]*>/gi) ?? []) {
+    const content = /content=["']([^"']*)["']/i.exec(tag)?.[1];
+    if (content == null) continue;
+    const name = /(?:name|property)=["']([^"']*)["']/i.exec(tag)?.[1] ?? '(unnamed)';
+    // textOf() strips <meta> before the page scan, so without this the values
+    // are never checked for forbidden phrases — on the one surface this gate
+    // exists to protect. A description or og:title is published copy.
+    scanPhrases(`${where} meta "${name}"`, content);
+    if (content.length > MAX_META) {
+      fail(where, `meta "${name}" is ${content.length} chars (max ${MAX_META})`);
+    }
+    if (name === 'google-site-verification') {
+      if (!/^[A-Za-z0-9_-]+$/.test(content) || content.length > MAX_VERIFICATION_TOKEN_LENGTH) {
+        fail(
+          where,
+          `google-site-verification is not a valid token (${content.length} chars). ` +
+            'A pasted sitemap once shipped here and published the withdrawn routes. ' +
+            'Fix VITE_GOOGLE_SITE_VERIFICATION in the deployment environment.',
+        );
+      }
+    }
+  }
+}
+
+// ---- deployed commit -------------------------------------------------------
+
+/** Shortest prefix that identifies a commit rather than a family of them. */
+const MIN_COMMIT_PREFIX = 7;
+
+/**
+ * Compare the served commit against the expected one using the WHOLE supplied
+ * value, not a seven-character slice of it. Truncating meant a full SHA only
+ * ever had to agree on its first seven characters, and a one-character
+ * --expect-commit would have matched any commit starting with that letter —
+ * a gate that says "the merge landed" on the strength of a coin flip.
+ */
+function commitMatches(served, expected) {
+  return served.toLowerCase().startsWith(expected.toLowerCase());
+}
+
+function validateExpectedCommit(value) {
+  if (!/^[0-9a-f]+$/i.test(value)) {
+    return `--expect-commit must be hexadecimal, got ${JSON.stringify(value)}`;
+  }
+  if (value.length < MIN_COMMIT_PREFIX) {
+    return `--expect-commit must be at least ${MIN_COMMIT_PREFIX} characters, got ${value.length}`;
+  }
+  return null;
+}
+
+async function checkDeployedCommit() {
+  if (EXPECT_COMMIT) {
+    const invalid = validateExpectedCommit(EXPECT_COMMIT);
+    if (invalid) {
+      // Refuse rather than silently check something weaker than asked for.
+      console.error(`\n${invalid}\n`);
+      process.exit(2);
+    }
+  }
+
+  const deadline = Date.now() + WAIT_SECONDS * 1000;
+  let seen = null;
+
+  for (;;) {
+    const res = await request('/version.json');
+    if (res.status === 200) {
+      try {
+        seen = JSON.parse(res.body);
+      } catch {
+        seen = null;
+      }
+    }
+
+    if (!EXPECT_COMMIT) {
+      if (seen?.commit) notes.push(`serving commit ${seen.commit} (built ${seen.builtAt})`);
+      else notes.push('/version.json not served yet — deployed commit unknown');
+      return;
+    }
+
+    if (seen?.commit && commitMatches(seen.commit, EXPECT_COMMIT)) {
+      notes.push(`serving the expected commit ${seen.commit}`);
+      return;
+    }
+
+    if (Date.now() >= deadline) {
+      fail(
+        '/version.json',
+        `expected commit ${EXPECT_COMMIT} but the live site is serving ` +
+          `${seen?.commit ?? 'no version stamp'}. The merge has not reached ` +
+          'production — check the deployment for a failed build.',
+      );
+      return;
+    }
+    await sleep(20_000);
+  }
+}
+
+// ---- withdrawn routes ------------------------------------------------------
+async function checkWithdrawnRoutes() {
+  for (const route of WITHDRAWN) {
+    const res = await request(route);
+    if (res.status !== 410) {
+      fail(
+        route,
+        `returned ${res.status || `no response (${res.error})`}, expected 410 Gone. ` +
+          'A withdrawn route answering anything else is live surface.',
+      );
+    }
+  }
+}
+
+// ---- live routes -----------------------------------------------------------
+async function checkLiveRoutes() {
+  for (const route of LIVE_ROUTES) {
+    const res = await request(route, { expect: 'html' });
+    if (res.status !== 200) {
+      fail(route, `returned ${res.status || `no response (${res.error})`}, expected 200`);
+      continue;
+    }
+    // Retrying a stub is not the same as rejecting one. If a short or non-HTML
+    // 200 survives every retry it is the route's actual behaviour, and scanning
+    // it would report "clean" on a page that was never delivered — which is how
+    // a 14-byte SSO redirect once passed for a homepage.
+    const notOurPage = whyNotOurPage(res.body);
+    if (notOurPage) {
+      fail(
+        route,
+        `returned 200 with ${notOurPage}, after every retry. Nothing was scanned, ` +
+          'so this route is unverified — treat it as failing rather than clean.',
+      );
+      continue;
+    }
+    // The served HTML is an SPA shell: its <head> is the whole crawlable
+    // surface until hydration, and it is where the leak happened.
+    checkMetaTags(route, res.body);
+    scanPhrases(`${route} (served HTML)`, textOf(res.body));
+  }
+}
+
+// ---- crawler-facing files --------------------------------------------------
+async function checkCrawlerFiles() {
+  const sitemap = await request('/sitemap.xml');
+  if (sitemap.status !== 200) {
+    fail('/sitemap.xml', `returned ${sitemap.status || `no response (${sitemap.error})`}`);
+  } else {
+    for (const route of WITHDRAWN) {
+      if (sitemap.body.includes(`${route}<`) || sitemap.body.includes(`${route}/<`)) {
+        fail('/sitemap.xml', `still lists the withdrawn route ${route}`);
+      }
+    }
+    scanPhrases('/sitemap.xml', sitemap.body);
+  }
+
+  const robots = await request('/robots.txt');
+  if (robots.status !== 200) {
+    fail('/robots.txt', `returned ${robots.status || `no response (${robots.error})`}`);
+  } else {
+    // Disallow is a prefix rule, so "Disallow: /sale" already covers
+    // /sale/contribute and /sale/kyc. Requiring a line per route would
+    // manufacture failures against a correct file.
+    const disallowed = [...robots.body.matchAll(/^\s*Disallow:\s*(\S+)\s*$/gim)].map(
+      (m) => m[1],
+    );
+    for (const route of WITHDRAWN) {
+      const covered = disallowed.some((rule) => route === rule || route.startsWith(rule));
+      if (!covered) fail('/robots.txt', `does not disallow the withdrawn route ${route}`);
+    }
+  }
+
+  for (const file of ['/llms.txt', '/llms-full.txt']) {
+    const res = await request(file);
+    if (res.status !== 200) {
+      fail(file, `returned ${res.status || `no response (${res.error})`}`);
+      continue;
+    }
+    // The "Do not state" and "Accuracy notes" sections name the forbidden
+    // things on purpose — they are the disclaimer. Scan the assertions above
+    // them, exactly as check-static.mjs does for the same files.
+    const assertions = res.body
+      .split(/^##\s+Do not state\s*$/im)[0]
+      .split(/^##\s+Accuracy notes for assistants\s*$/im)[0];
+    scanPhrases(file, assertions);
+    for (const route of WITHDRAWN) {
+      if (res.body.includes(`gamiprotocol.io${route}`)) {
+        fail(file, `links the withdrawn route ${route}`);
+      }
+    }
+  }
+}
+
+// ---- run -------------------------------------------------------------------
+console.log(`Checking live site: ${ORIGIN}\n`);
+
+await checkDeployedCommit();
+await checkWithdrawnRoutes();
+await checkLiveRoutes();
+await checkCrawlerFiles();
+
+for (const note of notes) console.log(`  note: ${note}`);
+
+if (failures.length > 0) {
+  console.error(`\n${failures.length} production compliance failure(s):\n`);
+  for (const f of failures) console.error(`  ${f.where}\n    ${f.detail}\n`);
+  console.error(
+    'The live site does not match the compliance requirements. This is a\n' +
+      'published-state problem, not a build problem: fixing the repository is\n' +
+      'not enough, the fix has to be deployed.\n',
+  );
+  process.exit(1);
+}
+
+console.log(`\nLive site clean: ${WITHDRAWN.length} withdrawn routes gone, ${LIVE_ROUTES.length} live routes serving.`);
