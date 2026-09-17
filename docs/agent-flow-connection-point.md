@@ -74,6 +74,8 @@ The accompanying unit tests cover:
 - successful settlement
 - settlement failure telemetry
 - tenant/app rate limiting
+- tenant-scoped app quota behavior
+- suspicious-velocity manual review
 - retry-safe non-duplication of settlement
 
 Run them with:

@@ -666,12 +666,6 @@ export function createAgentRewardFlow(dependencies: AgentRewardFlowDependencies 
     if (duplicateEvent || duplicateRecommendation) {
       decision = 'deferred';
     } else if (
-      velocity.tenantCount > policy.tenantRateLimitMaxEvents ||
-      velocity.appCount > policy.appRateLimitMaxEvents
-    ) {
-      decision = 'rate_limited';
-      reasonCodes.push('rate_limited');
-    } else if (
       !allowedAction ||
       !minimumConfidencePassed ||
       !tenantQuotaPassed ||
@@ -683,6 +677,12 @@ export function createAgentRewardFlow(dependencies: AgentRewardFlowDependencies 
       decision = 'denied';
     } else if (!suspiciousVelocityPassed) {
       decision = 'manual_review';
+    } else if (
+      velocity.tenantCount > policy.tenantRateLimitMaxEvents ||
+      velocity.appCount > policy.appRateLimitMaxEvents
+    ) {
+      decision = 'rate_limited';
+      reasonCodes.push('rate_limited');
     } else if (recommendation.riskLevel === 'high' || recommendation.riskLevel === 'critical') {
       decision = 'manual_review';
       reasonCodes.push('high_risk');
@@ -777,7 +777,6 @@ export function createAgentRewardFlow(dependencies: AgentRewardFlowDependencies 
       });
       return {
         ...existing,
-        context,
         telemetry: [...existing.telemetry, dedupeTelemetry],
         deduped: true,
       };

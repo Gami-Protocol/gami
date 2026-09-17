@@ -213,6 +213,8 @@ void test('suspicious velocity requires manual review', async () => {
   const flow = createAgentRewardFlow({
     policyConfig: {
       suspiciousVelocityMaxEvents: 1,
+      tenantRateLimitMaxEvents: 1,
+      appRateLimitMaxEvents: 1,
     },
   });
   const firstSignal = makeSignal({
