@@ -136,6 +136,10 @@ npm run format:check
 npm run format
 ```
 
+### Architecture docs
+
+- [Agent flow connection point](docs/agent-flow-connection-point.md)
+
 ### Run on iOS / Android
 
 ```sh
