@@ -209,7 +209,7 @@ void test('app quota stays scoped to the tenant and app pair', async () => {
   assert.equal(second.settlement?.status, 'mock_settled');
 });
 
-void test('suspicious velocity requires manual review', async () => {
+void test('suspicious velocity takes precedence over tenant and app rate limiting', async () => {
   const flow = createAgentRewardFlow({
     policyConfig: {
       suspiciousVelocityMaxEvents: 1,
@@ -253,6 +253,43 @@ void test('suspicious velocity requires manual review', async () => {
     second.policyResult.checks.find((check) => check.name === 'suspicious_velocity')?.status,
     'failed',
   );
+});
+
+void test('concurrent retries collapse to a single settlement execution', async () => {
+  let settleCount = 0;
+  const flow = createAgentRewardFlow({
+    settlementAdapter: {
+      async settle(request) {
+        settleCount += 1;
+        await new Promise((resolve) => setTimeout(resolve, 20));
+        return {
+          settlementId: `settlement_${settleCount}`,
+          requestId: request.requestId,
+          idempotencyKey: request.idempotencyKey,
+          status: 'mock_settled',
+          settledAt: '2026-09-17T18:00:00.000Z',
+        };
+      },
+    },
+  });
+  const signal = makeSignal({
+    eventId: 'evt_concurrent',
+    idempotencyKey: 'idem_concurrent',
+  });
+  const recommendation = makeRecommendation(signal, {
+    recommendationId: 'rec_concurrent',
+  });
+
+  const [first, second] = await Promise.all([
+    flow.runAgentRewardFlow({ signal, recommendation }),
+    flow.runAgentRewardFlow({ signal, recommendation }),
+  ]);
+
+  assert.equal(settleCount, 1);
+  assert.equal(first.settlement?.settlementId, second.settlement?.settlementId);
+  assert.equal(first.context.flowId, second.context.flowId);
+  assert.equal(first.deduped, false);
+  assert.equal(second.deduped, true);
 });
 
 void test('retry-safe flow does not double-settle rewards', async () => {

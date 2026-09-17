@@ -47,6 +47,7 @@ If a future worker or queue layer provides queue depth, `runAgentRewardFlow(...)
 
 - Every signal carries an `idempotencyKey`.
 - The flow stores the first completed result for that key.
+- Concurrent retries reuse the same in-flight execution instead of spawning a second settlement attempt.
 - Replays return the prior settlement receipt instead of creating a second settlement.
 - The mock settlement adapter also reuses receipts per idempotency key.
 
@@ -63,6 +64,8 @@ The repository does not currently contain a generic reward queue or worker syste
 
 Existing integrations can inject that adapter later without changing the policy or settlement API surface.
 
+Tenant and app rate limiting are intended as throughput controls for approved reward processing, while suspicious per-user velocity escalates to manual review before payout.
+
 ## Test coverage
 
 The accompanying unit tests cover:
@@ -75,7 +78,8 @@ The accompanying unit tests cover:
 - settlement failure telemetry
 - tenant/app rate limiting
 - tenant-scoped app quota behavior
-- suspicious-velocity manual review
+- suspicious-velocity manual-review precedence
+- concurrent retry collapse
 - retry-safe non-duplication of settlement
 
 Run them with:

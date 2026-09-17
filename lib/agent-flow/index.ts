@@ -217,6 +217,8 @@ interface RewardFlowStore {
   seenRecommendations: Set<string>;
   settlementReceipts: Map<string, RewardSettlementReceipt>;
   settlementLedger: RewardSettlementRequest[];
+  inFlightSignals: Map<string, Promise<RewardFlowExecutionResult>>;
+  inFlightSettlements: Map<string, Promise<RewardSettlementReceipt | null>>;
   tenantSignalTimestamps: Map<string, number[]>;
   appSignalTimestamps: Map<string, number[]>;
   userSignalTimestamps: Map<string, number[]>;
@@ -291,6 +293,8 @@ function createStore(): RewardFlowStore {
     seenRecommendations: new Set<string>(),
     settlementReceipts: new Map<string, RewardSettlementReceipt>(),
     settlementLedger: [],
+    inFlightSignals: new Map<string, Promise<RewardFlowExecutionResult>>(),
+    inFlightSettlements: new Map<string, Promise<RewardSettlementReceipt | null>>(),
     tenantSignalTimestamps: new Map<string, number[]>(),
     appSignalTimestamps: new Map<string, number[]>(),
     userSignalTimestamps: new Map<string, number[]>(),
@@ -415,7 +419,6 @@ export function createAgentRewardFlow(dependencies: AgentRewardFlowDependencies 
   ): {
     tenantCount: number;
     appCount: number;
-    userCount: number;
   } {
     const tenantEntries = pruneWindow(
       store.tenantSignalTimestamps.get(signal.tenantId),
@@ -434,6 +437,13 @@ export function createAgentRewardFlow(dependencies: AgentRewardFlowDependencies 
     appEntries.push(timestamp);
     store.appSignalTimestamps.set(appKey, appEntries);
 
+    return {
+      tenantCount: tenantEntries.length,
+      appCount: appEntries.length,
+    };
+  }
+
+  function recordObservedUserTimestamp(signal: RewardSignalEvent, timestamp: number): number {
     const userKey = `${signal.tenantId}:${signal.appId}:${signal.userId ?? signal.walletAddress ?? 'anonymous'}`;
     const userEntries = pruneWindow(
       store.userSignalTimestamps.get(userKey),
@@ -442,12 +452,7 @@ export function createAgentRewardFlow(dependencies: AgentRewardFlowDependencies 
     );
     userEntries.push(timestamp);
     store.userSignalTimestamps.set(userKey, userEntries);
-
-    return {
-      tenantCount: tenantEntries.length,
-      appCount: appEntries.length,
-      userCount: userEntries.length,
-    };
+    return userEntries.length;
   }
 
   function previewScopeCounts(
@@ -722,8 +727,11 @@ export function createAgentRewardFlow(dependencies: AgentRewardFlowDependencies 
   }): Promise<RewardSettlementReceipt | null> {
     if (!input.approval.settlementRequired) return null;
 
-    const existing = store.settlementReceipts.get(input.context.signal.idempotencyKey);
+    const idempotencyKey = input.context.signal.idempotencyKey;
+    const existing = store.settlementReceipts.get(idempotencyKey);
     if (existing) return existing;
+    const inFlight = store.inFlightSettlements.get(idempotencyKey);
+    if (inFlight) return inFlight;
 
     const request: RewardSettlementRequest = {
       requestId: createId('request'),
@@ -734,16 +742,24 @@ export function createAgentRewardFlow(dependencies: AgentRewardFlowDependencies 
       userId: input.context.signal.userId ?? input.recommendation.targetUserId,
       walletAddress: input.context.signal.walletAddress ?? input.recommendation.targetWallet,
       proposedAction: input.recommendation.proposedAction,
-      idempotencyKey: input.context.signal.idempotencyKey,
+      idempotencyKey,
       mode: input.settlementMode ?? 'mock',
     };
 
-    const receipt = await settlementAdapter.settle(request);
-    if (receipt.status !== 'failed') {
-      store.settlementReceipts.set(request.idempotencyKey, receipt);
-      store.settlementLedger.push(request);
-    }
-    return receipt;
+    const pendingReceipt = settlementAdapter
+      .settle(request)
+      .then((receipt) => {
+        if (receipt.status !== 'failed') {
+          store.settlementReceipts.set(request.idempotencyKey, receipt);
+          store.settlementLedger.push(request);
+        }
+        return receipt;
+      })
+      .finally(() => {
+        store.inFlightSettlements.delete(idempotencyKey);
+      });
+    store.inFlightSettlements.set(idempotencyKey, pendingReceipt);
+    return pendingReceipt;
   }
 
   async function recordAgentTelemetry(
@@ -761,27 +777,6 @@ export function createAgentRewardFlow(dependencies: AgentRewardFlowDependencies 
   async function executeFlow(input: RunAgentRewardFlowInput): Promise<RewardFlowExecutionResult> {
     const context = submitRewardSignal(input.signal);
     const queueDepth = getQueueDepth(context.signal);
-    const existing = store.seenSignals.get(context.signal.idempotencyKey);
-    if (existing) {
-      const dedupeTelemetry = await recordAgentTelemetry({
-        flowId: context.flowId,
-        tenantId: context.signal.tenantId,
-        appId: context.signal.appId,
-        userId: context.signal.userId,
-        recommendationId: existing.recommendation.recommendationId,
-        type: 'signal.deduped',
-        data: {
-          duplicateOfFlowId: existing.context.flowId,
-          queueDepth,
-        },
-      });
-      return {
-        ...existing,
-        telemetry: [...existing.telemetry, dedupeTelemetry],
-        deduped: true,
-      };
-    }
-
     const telemetry: RewardTelemetryEvent[] = [];
     telemetry.push(
       await recordAgentTelemetry({
@@ -800,6 +795,9 @@ export function createAgentRewardFlow(dependencies: AgentRewardFlowDependencies 
       recommendation: input.recommendation,
     });
     if (policyResult.decision !== 'deferred') {
+      recordObservedUserTimestamp(context.signal, signalTimestampMs(context.signal));
+    }
+    if (policyResult.decision === 'approved') {
       recordScopeTimestamp(context.signal, signalTimestampMs(context.signal));
     }
 
@@ -909,12 +907,64 @@ export function createAgentRewardFlow(dependencies: AgentRewardFlowDependencies 
       appId: input.signal.appId,
       idempotencyKey: input.signal.idempotencyKey,
     };
-
-    if (!scalability?.run) {
-      return executeFlow(input);
+    const existing = store.seenSignals.get(job.idempotencyKey);
+    if (existing) {
+      const dedupeTelemetry = await recordAgentTelemetry({
+        flowId: existing.context.flowId,
+        tenantId: existing.context.signal.tenantId,
+        appId: existing.context.signal.appId,
+        userId: existing.context.signal.userId,
+        recommendationId: existing.recommendation.recommendationId,
+        type: 'signal.deduped',
+        data: {
+          duplicateOfFlowId: existing.context.flowId,
+          queueDepth: getQueueDepth(existing.context.signal),
+        },
+      });
+      return {
+        ...existing,
+        telemetry: [...existing.telemetry, dedupeTelemetry],
+        deduped: true,
+      };
     }
 
-    return scalability.run(job, async () => executeFlow(input));
+    const inFlight = store.inFlightSignals.get(job.idempotencyKey);
+    if (inFlight) {
+      const existingResult = await inFlight;
+      const dedupeTelemetry = await recordAgentTelemetry({
+        flowId: existingResult.context.flowId,
+        tenantId: existingResult.context.signal.tenantId,
+        appId: existingResult.context.signal.appId,
+        userId: existingResult.context.signal.userId,
+        recommendationId: existingResult.recommendation.recommendationId,
+        type: 'signal.deduped',
+        data: {
+          duplicateOfFlowId: existingResult.context.flowId,
+          queueDepth: getQueueDepth(existingResult.context.signal),
+        },
+      });
+      return {
+        ...existingResult,
+        telemetry: [...existingResult.telemetry, dedupeTelemetry],
+        deduped: true,
+      };
+    }
+
+    if (!scalability?.run) {
+      const flowPromise = executeFlow(input).finally(() => {
+        store.inFlightSignals.delete(job.idempotencyKey);
+      });
+      store.inFlightSignals.set(job.idempotencyKey, flowPromise);
+      return flowPromise;
+    }
+
+    const flowPromise = scalability
+      .run(job, async () => executeFlow(input))
+      .finally(() => {
+        store.inFlightSignals.delete(job.idempotencyKey);
+      });
+    store.inFlightSignals.set(job.idempotencyKey, flowPromise);
+    return flowPromise;
   }
 
   return {
