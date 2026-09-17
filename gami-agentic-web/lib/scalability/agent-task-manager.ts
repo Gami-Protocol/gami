@@ -31,6 +31,7 @@ export interface ScopeLimits {
 export interface AgentTaskManagerOptions {
   concurrency: number;
   maxQueueDepth: number;
+  idempotencyTtlMs?: number;
   retryPolicy?: RetryPolicy;
   scopeLimits?: ScopeLimits;
   now?: () => number;
@@ -103,6 +104,7 @@ interface PendingTask<TResult> {
 interface IdempotencyRecord {
   status: 'pending' | 'settled' | 'failed';
   taskId: string;
+  updatedAt: number;
   value?: unknown;
   error?: string;
 }
@@ -292,6 +294,7 @@ export class AgentTaskManager {
   private readonly random: () => number;
   private readonly schedule: (delayMs: number, callback: () => void) => void;
   private readonly metrics: ScalabilityMetrics | null;
+  private readonly idempotencyTtlMs: number;
   private readonly pendingByTaskId = new Map<string, PendingTask<unknown>>();
   private readonly pendingByIdempotency = new Map<string, PendingTask<unknown>>();
   private readonly idempotency = new Map<string, IdempotencyRecord>();
@@ -304,6 +307,7 @@ export class AgentTaskManager {
     this.now = options.now ?? Date.now;
     this.random = options.random ?? Math.random;
     this.schedule = options.schedule ?? ((delayMs, callback) => void setTimeout(callback, delayMs));
+    this.idempotencyTtlMs = options.idempotencyTtlMs ?? 10 * 60_000;
     this.retry = options.retryPolicy ?? {
       baseDelayMs: 150,
       maxDelayMs: 10_000,
@@ -328,7 +332,11 @@ export class AgentTaskManager {
     const scopeKey = normalizeScopeKey(input.tenantId, input.appId);
     const scopedKey = scopedIdempotencyKey(scopeKey, idempotencyKey);
 
-    const existing = this.idempotency.get(scopedKey);
+    let existing = this.idempotency.get(scopedKey);
+    if (existing && this.isIdempotencyExpired(existing)) {
+      this.idempotency.delete(scopedKey);
+      existing = undefined;
+    }
     if (existing?.status === 'settled') {
       return {
         taskId: existing.taskId,
@@ -371,7 +379,7 @@ export class AgentTaskManager {
       runAt: this.now(),
     };
 
-    this.idempotency.set(scopedKey, { status: 'pending', taskId });
+    this.idempotency.set(scopedKey, { status: 'pending', taskId, updatedAt: this.now() });
     this.pendingByTaskId.set(taskId, ticket as PendingTask<unknown>);
     this.pendingByIdempotency.set(scopedKey, ticket as PendingTask<unknown>);
     this.backend.enqueue(task as QueueTask<unknown>);
@@ -442,6 +450,7 @@ export class AgentTaskManager {
     this.idempotency.set(scopedKey, {
       status: 'settled',
       taskId: task.taskId,
+      updatedAt: this.now(),
       value,
     });
 
@@ -464,6 +473,7 @@ export class AgentTaskManager {
     this.idempotency.set(scopedKey, {
       status: 'failed',
       taskId: task.taskId,
+      updatedAt: this.now(),
       error: error.message,
     });
 
@@ -494,7 +504,8 @@ export class AgentTaskManager {
       this.resolveTask(task, value);
       return;
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'task failed';
+      const failure = error instanceof Error ? error : new Error('task failed');
+      const message = failure.message;
       if (task.attempt < task.maxAttempts) {
         const delay = this.computeBackoff(task.attempt);
         const retryTask: QueueTask<unknown> = {
@@ -529,8 +540,13 @@ export class AgentTaskManager {
         failedAt: this.now(),
       };
       this.backend.markDeadLetter(deadLetter);
-      this.rejectTask(task, new Error(message));
+      this.rejectTask(task, failure);
     }
+  }
+
+  private isIdempotencyExpired(record: IdempotencyRecord): boolean {
+    if (record.status === 'pending') return false;
+    return this.now() - record.updatedAt > this.idempotencyTtlMs;
   }
 }
 

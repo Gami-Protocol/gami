@@ -18,8 +18,11 @@ This module adds a dependency-light scalability layer for agent task execution.
 - `idempotencyKey`
 - `priority`
 
+If `tenantId`/`appId` are omitted, the runtime defaults to `tenantId: "default"` and `appId: "agentic-web"` for quota and idempotency scope.
+
 When `idempotencyKey` is omitted, a deterministic key is derived from `sessionId + message`.
 Idempotency is enforced per scope (`tenantId + appId`) so identical keys from different tenants/apps do not collide.
+Settled idempotency records are retained for a bounded replay window (default 10 minutes) and then expire.
 
 ## Horizontal scaling seam
 

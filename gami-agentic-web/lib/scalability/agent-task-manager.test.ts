@@ -168,6 +168,59 @@ void test('idempotency is scoped by tenant and app', async () => {
   assert.equal(runs, 2);
 });
 
+void test('idempotency records expire after TTL', async () => {
+  let logicalNow = 10_000;
+  const manager = new AgentTaskManager({
+    concurrency: 1,
+    now: () => logicalNow,
+    maxQueueDepth: 10,
+    idempotencyTtlMs: 20,
+    scopeLimits: {
+      requestsPerMinute: 100,
+      maxQueued: 10,
+      maxInFlight: 10,
+      maxDaily: 1_000,
+    },
+  });
+
+  let runs = 0;
+  const first = await manager.enqueue({
+    tenantId: 'tenant-a',
+    appId: 'agentic-web',
+    idempotencyKey: 'ttl-key',
+    execute: async () => {
+      runs += 1;
+      return 'ok';
+    },
+  });
+  await first.promise;
+
+  const deduped = await manager.enqueue({
+    tenantId: 'tenant-a',
+    appId: 'agentic-web',
+    idempotencyKey: 'ttl-key',
+    execute: async () => {
+      runs += 1;
+      return 'repeat';
+    },
+  });
+  assert.equal(await deduped.promise, 'ok');
+  assert.equal(runs, 1);
+
+  logicalNow += 25;
+  const afterExpiry = await manager.enqueue({
+    tenantId: 'tenant-a',
+    appId: 'agentic-web',
+    idempotencyKey: 'ttl-key',
+    execute: async () => {
+      runs += 1;
+      return 'fresh';
+    },
+  });
+  assert.equal(await afterExpiry.promise, 'fresh');
+  assert.equal(runs, 2);
+});
+
 void test('rate limits and quota enforcement reject excess scope traffic', async () => {
   const manager = new AgentTaskManager({
     concurrency: 1,
