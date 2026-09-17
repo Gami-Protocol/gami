@@ -267,6 +267,10 @@ function normalizeTimestamp(value?: string): string {
   return Number.isNaN(parsed.getTime()) ? nowIso() : parsed.toISOString();
 }
 
+function signalTimestampMs(signal: RewardSignalEvent): number {
+  return new Date(signal.timestamp).getTime() || Date.now();
+}
+
 function pruneWindow(entries: number[] | undefined, now: number, windowMs: number): number[] {
   return (entries ?? []).filter((entry) => now - entry < windowMs);
 }
@@ -278,11 +282,7 @@ function parseTokenAmount(value?: string): number {
 }
 
 function isSettlementRequired(action: RewardActionProposal): boolean {
-  return (
-    action.type === 'grant_xp' ||
-    action.type === 'mark_quest_complete' ||
-    action.type === 'propose_token_reward'
-  );
+  return action.type === 'propose_token_reward';
 }
 
 function createStore(): RewardFlowStore {
@@ -387,8 +387,10 @@ export function createAgentRewardFlow(dependencies: AgentRewardFlowDependencies 
     return store.settlementLedger.filter((entry) => entry.tenantId === tenantId).length;
   }
 
-  function settlementCountForApp(appId: string): number {
-    return store.settlementLedger.filter((entry) => entry.appId === appId).length;
+  function settlementCountForApp(tenantId: string, appId: string): number {
+    return store.settlementLedger.filter(
+      (entry) => entry.tenantId === tenantId && entry.appId === appId,
+    ).length;
   }
 
   function settlementCountForUser(userId?: string, walletAddress?: string): number {
@@ -448,6 +450,41 @@ export function createAgentRewardFlow(dependencies: AgentRewardFlowDependencies 
     };
   }
 
+  function previewScopeCounts(
+    signal: RewardSignalEvent,
+    timestamp: number,
+  ): {
+    tenantCount: number;
+    appCount: number;
+    userCount: number;
+  } {
+    const tenantCount =
+      pruneWindow(
+        store.tenantSignalTimestamps.get(signal.tenantId),
+        timestamp,
+        policy.tenantRateLimitWindowMs,
+      ).length + 1;
+    const appCount =
+      pruneWindow(
+        store.appSignalTimestamps.get(`${signal.tenantId}:${signal.appId}`),
+        timestamp,
+        policy.appRateLimitWindowMs,
+      ).length + 1;
+    const userCount =
+      pruneWindow(
+        store.userSignalTimestamps.get(
+          `${signal.tenantId}:${signal.appId}:${signal.userId ?? signal.walletAddress ?? 'anonymous'}`,
+        ),
+        timestamp,
+        policy.suspiciousVelocityWindowMs,
+      ).length + 1;
+    return {
+      tenantCount,
+      appCount,
+      userCount,
+    };
+  }
+
   function getQueueDepth(signal: RewardSignalEvent): number | undefined {
     return scalability?.getQueueDepth?.({
       tenantId: signal.tenantId,
@@ -502,7 +539,7 @@ export function createAgentRewardFlow(dependencies: AgentRewardFlowDependencies 
     const { context, recommendation } = input;
     const checks: RewardPolicyCheckResult[] = [];
     const reasonCodes: string[] = [];
-    const timestamp = new Date(context.signal.timestamp).getTime() || Date.now();
+    const timestamp = signalTimestampMs(context.signal);
     const priorResult = store.seenSignals.get(context.signal.idempotencyKey);
 
     const duplicateEvent = Boolean(priorResult);
@@ -552,7 +589,8 @@ export function createAgentRewardFlow(dependencies: AgentRewardFlowDependencies 
     });
     if (!tenantQuotaPassed) reasonCodes.push('tenant_quota');
 
-    const appQuotaPassed = settlementCountForApp(context.signal.appId) < policy.appQuota;
+    const appQuotaPassed =
+      settlementCountForApp(context.signal.tenantId, context.signal.appId) < policy.appQuota;
     checks.push({
       name: 'app_quota',
       status: appQuotaPassed ? 'passed' : 'failed',
@@ -572,7 +610,7 @@ export function createAgentRewardFlow(dependencies: AgentRewardFlowDependencies 
     });
     if (!perUserRewardLimitPassed) reasonCodes.push('per_user_reward_limit');
 
-    const velocity = recordScopeTimestamp(context.signal, timestamp);
+    const velocity = previewScopeCounts(context.signal, timestamp);
     const suspiciousVelocityPassed = velocity.userCount <= policy.suspiciousVelocityMaxEvents;
     checks.push({
       name: 'suspicious_velocity',
@@ -741,6 +779,9 @@ export function createAgentRewardFlow(dependencies: AgentRewardFlowDependencies 
       context,
       recommendation: input.recommendation,
     });
+    if (policyResult.decision !== 'deferred') {
+      recordScopeTimestamp(context.signal, signalTimestampMs(context.signal));
+    }
 
     const telemetryType =
       policyResult.decision === 'approved'

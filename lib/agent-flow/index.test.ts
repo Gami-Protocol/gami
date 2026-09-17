@@ -170,6 +170,45 @@ void test('rate-limited tenant or app does not settle', async () => {
   assert.equal(second.settlement, null);
 });
 
+void test('app quota stays scoped to the tenant and app pair', async () => {
+  const flow = createAgentRewardFlow({
+    policyConfig: {
+      appQuota: 1,
+    },
+  });
+  const sharedAppId = 'shared_app';
+  const firstSignal = makeSignal({
+    tenantId: 'tenant_alpha',
+    appId: sharedAppId,
+    idempotencyKey: 'idem_app_quota_1',
+  });
+  const secondSignal = makeSignal({
+    eventId: 'evt_app_quota_2',
+    tenantId: 'tenant_beta',
+    appId: sharedAppId,
+    userId: 'user_2',
+    walletAddress: '0x2222222222222222222222222222222222222222',
+    idempotencyKey: 'idem_app_quota_2',
+  });
+
+  const first = await flow.runAgentRewardFlow({
+    signal: firstSignal,
+    recommendation: makeRecommendation(firstSignal, {
+      recommendationId: 'rec_app_quota_1',
+    }),
+  });
+  const second = await flow.runAgentRewardFlow({
+    signal: secondSignal,
+    recommendation: makeRecommendation(secondSignal, {
+      recommendationId: 'rec_app_quota_2',
+    }),
+  });
+
+  assert.equal(first.policyResult.decision, 'approved');
+  assert.equal(second.policyResult.decision, 'approved');
+  assert.equal(second.settlement?.status, 'mock_settled');
+});
+
 void test('retry-safe flow does not double-settle rewards', async () => {
   const flow = createAgentRewardFlow();
   const signal = makeSignal({
@@ -179,9 +218,10 @@ void test('retry-safe flow does not double-settle rewards', async () => {
   const recommendation = makeRecommendation(signal, {
     recommendationId: 'rec_retry',
     proposedAction: {
-      type: 'grant_xp',
-      xp: 500,
+      type: 'propose_token_reward',
       questId: 'quest_retry',
+      tokenAmount: '12',
+      tokenSymbol: 'GAMI',
     },
   });
 
