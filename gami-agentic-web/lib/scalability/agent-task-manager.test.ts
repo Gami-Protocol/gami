@@ -289,6 +289,7 @@ void test('dead-letter queue captures terminal failures', async () => {
   assert.equal(dlq.length, 1);
   assert.equal(dlq[0]?.idempotencyKey, 'dlq');
   assert.equal(manager.getHealthSnapshot().failed, 1);
+  assert.equal(manager.getHealthSnapshot().deadLetterDepth, 1);
 });
 
 void test('ttl cache supports invalidation hooks', async () => {

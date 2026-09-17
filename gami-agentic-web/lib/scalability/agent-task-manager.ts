@@ -225,9 +225,13 @@ class InMemoryScopeLimiter {
   ): { ok: true } | { ok: false; code: 'RATE_LIMITED' | 'QUOTA_EXCEEDED'; retryAfterMs?: number } {
     const now = this.now();
     const bucket = this.windows.get(scopeKey) ?? [];
-    const recent = bucket.filter((stamp) => now - stamp < 60_000);
-    if (recent.length >= this.limits.requestsPerMinute) {
-      const oldest = recent[0] ?? now;
+    while (bucket.length > 0) {
+      const head = bucket[0];
+      if (now - head < 60_000) break;
+      bucket.shift();
+    }
+    if (bucket.length >= this.limits.requestsPerMinute) {
+      const oldest = bucket[0] ?? now;
       return { ok: false, code: 'RATE_LIMITED', retryAfterMs: 60_000 - (now - oldest) };
     }
 
@@ -243,8 +247,8 @@ class InMemoryScopeLimiter {
       return { ok: false, code: 'QUOTA_EXCEEDED' };
     }
 
-    recent.push(now);
-    this.windows.set(scopeKey, recent);
+    bucket.push(now);
+    this.windows.set(scopeKey, bucket);
     this.daily.set(scopeKey, { dayKey, count: count + 1 });
     return { ok: true };
   }
@@ -463,8 +467,10 @@ export class AgentTaskManager {
     pending?.resolve(value);
   }
 
-  private rejectTask(task: QueueTask<unknown>, error: Error): void {
-    this.backend.markComplete(task.taskId);
+  private rejectTask(task: QueueTask<unknown>, error: Error, alreadyInDlq = false): void {
+    if (!alreadyInDlq) {
+      this.backend.markComplete(task.taskId);
+    }
     const pending = this.pendingByTaskId.get(task.taskId);
     this.pendingByTaskId.delete(task.taskId);
     const scopeKey = normalizeScopeKey(task.tenantId, task.appId);
@@ -540,7 +546,7 @@ export class AgentTaskManager {
         failedAt: this.now(),
       };
       this.backend.markDeadLetter(deadLetter);
-      this.rejectTask(task, failure);
+      this.rejectTask(task, failure, true);
     }
   }
 

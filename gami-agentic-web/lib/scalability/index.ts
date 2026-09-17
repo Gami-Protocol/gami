@@ -7,14 +7,19 @@ import {
   type TaskPriority,
 } from '@/lib/scalability/agent-task-manager';
 
+function numberFromEnv(value: string | undefined, fallback: number): number {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
 const DEFAULT_OPTIONS: AgentTaskManagerOptions = {
-  concurrency: Number(process.env.GAMI_AGENT_WORKER_CONCURRENCY ?? 4),
-  maxQueueDepth: Number(process.env.GAMI_AGENT_MAX_QUEUE_DEPTH ?? 200),
+  concurrency: numberFromEnv(process.env.GAMI_AGENT_WORKER_CONCURRENCY, 4),
+  maxQueueDepth: numberFromEnv(process.env.GAMI_AGENT_MAX_QUEUE_DEPTH, 200),
   scopeLimits: {
-    requestsPerMinute: Number(process.env.GAMI_AGENT_MAX_RPM ?? 60),
-    maxQueued: Number(process.env.GAMI_AGENT_MAX_QUEUED_PER_SCOPE ?? 40),
-    maxInFlight: Number(process.env.GAMI_AGENT_MAX_INFLIGHT_PER_SCOPE ?? 6),
-    maxDaily: Number(process.env.GAMI_AGENT_MAX_DAILY_PER_SCOPE ?? 2500),
+    requestsPerMinute: numberFromEnv(process.env.GAMI_AGENT_MAX_RPM, 60),
+    maxQueued: numberFromEnv(process.env.GAMI_AGENT_MAX_QUEUED_PER_SCOPE, 40),
+    maxInFlight: numberFromEnv(process.env.GAMI_AGENT_MAX_INFLIGHT_PER_SCOPE, 6),
+    maxDaily: numberFromEnv(process.env.GAMI_AGENT_MAX_DAILY_PER_SCOPE, 2500),
   },
 };
 
