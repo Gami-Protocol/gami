@@ -19,6 +19,7 @@ This module adds a dependency-light scalability layer for agent task execution.
 - `priority`
 
 When `idempotencyKey` is omitted, a deterministic key is derived from `sessionId + message`.
+Idempotency is enforced per scope (`tenantId + appId`) so identical keys from different tenants/apps do not collide.
 
 ## Horizontal scaling seam
 

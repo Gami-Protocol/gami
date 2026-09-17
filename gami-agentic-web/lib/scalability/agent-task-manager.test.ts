@@ -48,10 +48,16 @@ void test('bounded concurrency and priority scheduling', async () => {
 });
 
 void test('retry with exponential backoff and jitter eventually settles', async () => {
+  let logicalNow = 1000;
   const manager = new AgentTaskManager({
     concurrency: 1,
+    now: () => logicalNow,
     maxQueueDepth: 10,
     random: () => 0,
+    schedule: (delayMs, callback) => {
+      logicalNow += delayMs;
+      callback();
+    },
     retryPolicy: {
       baseDelayMs: 10,
       maxDelayMs: 30,
@@ -122,6 +128,44 @@ void test('idempotency dedupes retried submissions', async () => {
   assert.deepEqual(ra, { ok: true });
   assert.deepEqual(rb, { ok: true });
   assert.equal(runs, 1);
+});
+
+void test('idempotency is scoped by tenant and app', async () => {
+  const manager = new AgentTaskManager({
+    concurrency: 1,
+    maxQueueDepth: 10,
+    scopeLimits: {
+      requestsPerMinute: 100,
+      maxQueued: 10,
+      maxInFlight: 10,
+      maxDaily: 1_000,
+    },
+  });
+
+  let runs = 0;
+  const a = await manager.enqueue({
+    tenantId: 'tenant-a',
+    appId: 'agentic-web',
+    idempotencyKey: 'shared-key',
+    execute: async () => {
+      runs += 1;
+      return 'a';
+    },
+  });
+  const b = await manager.enqueue({
+    tenantId: 'tenant-b',
+    appId: 'agentic-web',
+    idempotencyKey: 'shared-key',
+    execute: async () => {
+      runs += 1;
+      return 'b';
+    },
+  });
+
+  const [ra, rb] = await Promise.all([a.promise, b.promise]);
+  assert.equal(ra, 'a');
+  assert.equal(rb, 'b');
+  assert.equal(runs, 2);
 });
 
 void test('rate limits and quota enforcement reject excess scope traffic', async () => {

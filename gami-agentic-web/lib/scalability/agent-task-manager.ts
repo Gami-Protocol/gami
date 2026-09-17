@@ -35,6 +35,7 @@ export interface AgentTaskManagerOptions {
   scopeLimits?: ScopeLimits;
   now?: () => number;
   random?: () => number;
+  schedule?: (delayMs: number, callback: () => void) => void;
   metrics?: ScalabilityMetrics;
 }
 
@@ -118,6 +119,10 @@ function normalizeScopeKey(tenantId: string, appId: string): string {
 
 function normalizeIdempotencyKey(value: string): string {
   return value.trim().toLowerCase();
+}
+
+function scopedIdempotencyKey(scopeKey: string, idempotencyKey: string): string {
+  return `${scopeKey}::${idempotencyKey}`;
 }
 
 function deferred<TResult>(): PendingTask<TResult> {
@@ -285,6 +290,7 @@ export class AgentTaskManager {
   private readonly retry: RetryPolicy;
   private readonly now: () => number;
   private readonly random: () => number;
+  private readonly schedule: (delayMs: number, callback: () => void) => void;
   private readonly metrics: ScalabilityMetrics | null;
   private readonly pendingByTaskId = new Map<string, PendingTask<unknown>>();
   private readonly pendingByIdempotency = new Map<string, PendingTask<unknown>>();
@@ -297,6 +303,7 @@ export class AgentTaskManager {
   constructor(private readonly options: AgentTaskManagerOptions) {
     this.now = options.now ?? Date.now;
     this.random = options.random ?? Math.random;
+    this.schedule = options.schedule ?? ((delayMs, callback) => void setTimeout(callback, delayMs));
     this.retry = options.retryPolicy ?? {
       baseDelayMs: 150,
       maxDelayMs: 10_000,
@@ -319,8 +326,9 @@ export class AgentTaskManager {
     const priority = input.priority ?? 'normal';
     const idempotencyKey = normalizeIdempotencyKey(input.idempotencyKey);
     const scopeKey = normalizeScopeKey(input.tenantId, input.appId);
+    const scopedKey = scopedIdempotencyKey(scopeKey, idempotencyKey);
 
-    const existing = this.idempotency.get(idempotencyKey);
+    const existing = this.idempotency.get(scopedKey);
     if (existing?.status === 'settled') {
       return {
         taskId: existing.taskId,
@@ -329,7 +337,7 @@ export class AgentTaskManager {
       };
     }
 
-    const pending = this.pendingByIdempotency.get(idempotencyKey);
+    const pending = this.pendingByIdempotency.get(scopedKey);
     if (pending) {
       return {
         taskId: pending.taskId,
@@ -363,9 +371,9 @@ export class AgentTaskManager {
       runAt: this.now(),
     };
 
-    this.idempotency.set(idempotencyKey, { status: 'pending', taskId });
+    this.idempotency.set(scopedKey, { status: 'pending', taskId });
     this.pendingByTaskId.set(taskId, ticket as PendingTask<unknown>);
-    this.pendingByIdempotency.set(idempotencyKey, ticket as PendingTask<unknown>);
+    this.pendingByIdempotency.set(scopedKey, ticket as PendingTask<unknown>);
     this.backend.enqueue(task as QueueTask<unknown>);
     this.limiter.markQueued(scopeKey);
     this.observeDepths();
@@ -428,8 +436,10 @@ export class AgentTaskManager {
     this.backend.markComplete(task.taskId);
     const pending = this.pendingByTaskId.get(task.taskId);
     this.pendingByTaskId.delete(task.taskId);
-    this.pendingByIdempotency.delete(task.idempotencyKey);
-    this.idempotency.set(task.idempotencyKey, {
+    const scopeKey = normalizeScopeKey(task.tenantId, task.appId);
+    const scopedKey = scopedIdempotencyKey(scopeKey, task.idempotencyKey);
+    this.pendingByIdempotency.delete(scopedKey);
+    this.idempotency.set(scopedKey, {
       status: 'settled',
       taskId: task.taskId,
       value,
@@ -448,8 +458,10 @@ export class AgentTaskManager {
     this.backend.markComplete(task.taskId);
     const pending = this.pendingByTaskId.get(task.taskId);
     this.pendingByTaskId.delete(task.taskId);
-    this.pendingByIdempotency.delete(task.idempotencyKey);
-    this.idempotency.set(task.idempotencyKey, {
+    const scopeKey = normalizeScopeKey(task.tenantId, task.appId);
+    const scopedKey = scopedIdempotencyKey(scopeKey, task.idempotencyKey);
+    this.pendingByIdempotency.delete(scopedKey);
+    this.idempotency.set(scopedKey, {
       status: 'failed',
       taskId: task.taskId,
       error: error.message,
@@ -500,9 +512,9 @@ export class AgentTaskManager {
         this.backend.requeue(retryTask);
         this.observeDepths();
 
-        setTimeout(() => {
+        this.schedule(delay, () => {
           this.pump();
-        }, delay);
+        });
         return;
       }
 
