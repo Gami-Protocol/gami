@@ -26,6 +26,10 @@ export interface QuestDelta {
 export interface AgenticChatRequest {
   sessionId: string;
   latestUserMessage: string;
+  tenantId?: string;
+  appId?: string;
+  idempotencyKey?: string;
+  priority?: 'high' | 'normal' | 'low';
   messages?: { role: 'user' | 'assistant'; content: string }[];
 }
 
