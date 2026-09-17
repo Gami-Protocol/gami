@@ -209,6 +209,50 @@ void test('app quota stays scoped to the tenant and app pair', async () => {
   assert.equal(second.settlement?.status, 'mock_settled');
 });
 
+void test('suspicious velocity requires manual review', async () => {
+  const flow = createAgentRewardFlow({
+    policyConfig: {
+      suspiciousVelocityMaxEvents: 1,
+    },
+  });
+  const firstSignal = makeSignal({
+    idempotencyKey: 'idem_velocity_1',
+  });
+  const secondSignal = makeSignal({
+    eventId: 'evt_velocity_2',
+    idempotencyKey: 'idem_velocity_2',
+  });
+
+  await flow.runAgentRewardFlow({
+    signal: firstSignal,
+    recommendation: makeRecommendation(firstSignal, {
+      recommendationId: 'rec_velocity_1',
+      proposedAction: {
+        type: 'grant_xp',
+        xp: 250,
+        questId: 'quest_velocity',
+      },
+    }),
+  });
+  const second = await flow.runAgentRewardFlow({
+    signal: secondSignal,
+    recommendation: makeRecommendation(secondSignal, {
+      recommendationId: 'rec_velocity_2',
+      proposedAction: {
+        type: 'grant_xp',
+        xp: 250,
+        questId: 'quest_velocity',
+      },
+    }),
+  });
+
+  assert.equal(second.policyResult.decision, 'manual_review');
+  assert.equal(
+    second.policyResult.checks.find((check) => check.name === 'suspicious_velocity')?.status,
+    'failed',
+  );
+});
+
 void test('retry-safe flow does not double-settle rewards', async () => {
   const flow = createAgentRewardFlow();
   const signal = makeSignal({

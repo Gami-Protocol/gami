@@ -541,6 +541,7 @@ export function createAgentRewardFlow(dependencies: AgentRewardFlowDependencies 
     const reasonCodes: string[] = [];
     const timestamp = signalTimestampMs(context.signal);
     const priorResult = store.seenSignals.get(context.signal.idempotencyKey);
+    const settlementRequired = isSettlementRequired(recommendation.proposedAction);
 
     const duplicateEvent = Boolean(priorResult);
     checks.push({
@@ -581,32 +582,44 @@ export function createAgentRewardFlow(dependencies: AgentRewardFlowDependencies 
     if (!minimumConfidencePassed) reasonCodes.push('minimum_confidence');
 
     const tenantQuotaPassed =
-      settlementCountForTenant(context.signal.tenantId) < policy.tenantQuota;
+      !settlementRequired || settlementCountForTenant(context.signal.tenantId) < policy.tenantQuota;
     checks.push({
       name: 'tenant_quota',
-      status: tenantQuotaPassed ? 'passed' : 'failed',
-      detail: tenantQuotaPassed ? 'Tenant quota available.' : 'Tenant quota exhausted.',
+      status: settlementRequired ? (tenantQuotaPassed ? 'passed' : 'failed') : 'skipped',
+      detail: settlementRequired
+        ? tenantQuotaPassed
+          ? 'Tenant quota available.'
+          : 'Tenant quota exhausted.'
+        : 'Tenant quota applies only to settlement-required actions.',
     });
     if (!tenantQuotaPassed) reasonCodes.push('tenant_quota');
 
     const appQuotaPassed =
+      !settlementRequired ||
       settlementCountForApp(context.signal.tenantId, context.signal.appId) < policy.appQuota;
     checks.push({
       name: 'app_quota',
-      status: appQuotaPassed ? 'passed' : 'failed',
-      detail: appQuotaPassed ? 'App quota available.' : 'App quota exhausted.',
+      status: settlementRequired ? (appQuotaPassed ? 'passed' : 'failed') : 'skipped',
+      detail: settlementRequired
+        ? appQuotaPassed
+          ? 'App quota available.'
+          : 'App quota exhausted.'
+        : 'App quota applies only to settlement-required actions.',
     });
     if (!appQuotaPassed) reasonCodes.push('app_quota');
 
     const perUserRewardLimitPassed =
+      !settlementRequired ||
       settlementCountForUser(context.signal.userId, context.signal.walletAddress) <
-      policy.userRewardLimit;
+        policy.userRewardLimit;
     checks.push({
       name: 'per_user_reward_limit',
-      status: perUserRewardLimitPassed ? 'passed' : 'failed',
-      detail: perUserRewardLimitPassed
-        ? 'Per-user reward limit available.'
-        : 'Per-user reward limit exhausted.',
+      status: settlementRequired ? (perUserRewardLimitPassed ? 'passed' : 'failed') : 'skipped',
+      detail: settlementRequired
+        ? perUserRewardLimitPassed
+          ? 'Per-user reward limit available.'
+          : 'Per-user reward limit exhausted.'
+        : 'Per-user reward limit applies only to settlement-required actions.',
     });
     if (!perUserRewardLimitPassed) reasonCodes.push('per_user_reward_limit');
 
@@ -622,24 +635,30 @@ export function createAgentRewardFlow(dependencies: AgentRewardFlowDependencies 
     if (!suspiciousVelocityPassed) reasonCodes.push('suspicious_velocity');
 
     const rewardBudgetPassed =
+      !settlementRequired ||
       settledTokenTotal() + parseTokenAmount(recommendation.proposedAction.tokenAmount) <=
-      policy.rewardBudgetTokens;
+        policy.rewardBudgetTokens;
     checks.push({
       name: 'reward_budget',
-      status: rewardBudgetPassed ? 'passed' : 'failed',
-      detail: rewardBudgetPassed ? 'Reward budget available.' : 'Reward budget exceeded.',
+      status: settlementRequired ? (rewardBudgetPassed ? 'passed' : 'failed') : 'skipped',
+      detail: settlementRequired
+        ? rewardBudgetPassed
+          ? 'Reward budget available.'
+          : 'Reward budget exceeded.'
+        : 'Reward budget applies only to settlement-required actions.',
     });
     if (!rewardBudgetPassed) reasonCodes.push('reward_budget');
 
     const tokenEligibilityPassed =
-      recommendation.proposedAction.type !== 'propose_token_reward' ||
-      Boolean(context.signal.walletAddress || recommendation.targetWallet);
+      !settlementRequired || Boolean(context.signal.walletAddress || recommendation.targetWallet);
     checks.push({
       name: 'token_settlement_eligibility',
-      status: tokenEligibilityPassed ? 'passed' : 'failed',
-      detail: tokenEligibilityPassed
-        ? 'Settlement target is eligible.'
-        : 'Token settlement requires a target wallet.',
+      status: settlementRequired ? (tokenEligibilityPassed ? 'passed' : 'failed') : 'skipped',
+      detail: settlementRequired
+        ? tokenEligibilityPassed
+          ? 'Settlement target is eligible.'
+          : 'Token settlement requires a target wallet.'
+        : 'Token settlement eligibility applies only to token rewards.',
     });
     if (!tokenEligibilityPassed) reasonCodes.push('token_settlement_eligibility');
 
@@ -662,6 +681,8 @@ export function createAgentRewardFlow(dependencies: AgentRewardFlowDependencies 
       !tokenEligibilityPassed
     ) {
       decision = 'denied';
+    } else if (!suspiciousVelocityPassed) {
+      decision = 'manual_review';
     } else if (recommendation.riskLevel === 'high' || recommendation.riskLevel === 'critical') {
       decision = 'manual_review';
       reasonCodes.push('high_risk');
