@@ -57,6 +57,7 @@ export type PolicyCheckType =
   | 'suspicious_velocity'
   | 'reward_budget'
   | 'token_settlement_eligibility'
+  | 'token_amount_valid'
   | 'minimum_confidence'
   | 'allowed_action_type'
   | 'agent_self_approval';

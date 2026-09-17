@@ -94,7 +94,14 @@ export function createMockSettlementAdapter(options?: {
       }
 
       let receipt: SettlementReceipt;
-      if (mode === 'pending-onchain') {
+      if (request.dryRun) {
+        receipt = {
+          settlementId: request.settlementId,
+          idempotencyKey: request.idempotencyKey,
+          status: 'dry_run',
+          createdAt: new Date().toISOString(),
+        };
+      } else if (mode === 'pending-onchain') {
         receipt = {
           settlementId: request.settlementId,
           idempotencyKey: request.idempotencyKey,
@@ -187,6 +194,7 @@ export function evaluateRewardPolicy(input: {
   const settlementKey = `${input.context.event.idempotencyKey}:${input.recommendation.recommendationId}`;
   const settledDuplicate = input.stateStore.settledIdempotencyKeys.has(settlementKey);
   const rewardUnits = extractRewardUnits(input.recommendation);
+  const normalizedRewardUnits = rewardUnits ?? 0;
 
   const policyContext: RewardPolicyContext = {
     duplicateEvent: input.context.dedupedEvent,
@@ -234,7 +242,7 @@ export function evaluateRewardPolicy(input: {
     ),
     check(
       'per_user_reward_limit',
-      policyContext.userRewardsInWindow + rewardUnits <= policy.userRewardLimit,
+      policyContext.userRewardsInWindow + normalizedRewardUnits <= policy.userRewardLimit,
       'Per-user reward limit exceeded',
     ),
     check(
@@ -244,7 +252,7 @@ export function evaluateRewardPolicy(input: {
     ),
     check(
       'reward_budget',
-      policyContext.rewardBudgetUsed + rewardUnits <= policy.rewardBudget,
+      policyContext.rewardBudgetUsed + normalizedRewardUnits <= policy.rewardBudget,
       'Reward budget exceeded',
     ),
     check(
@@ -252,6 +260,11 @@ export function evaluateRewardPolicy(input: {
       input.recommendation.proposedAction !== 'propose_token_reward' ||
         policyContext.tokenSettlementEligible,
       'Token settlement not eligible',
+    ),
+    check(
+      'token_amount_valid',
+      input.recommendation.proposedAction !== 'propose_token_reward' || rewardUnits !== null,
+      'Token reward amount must be a positive numeric string',
     ),
     check(
       'agent_self_approval',
@@ -263,11 +276,17 @@ export function evaluateRewardPolicy(input: {
   let decision: RewardPolicyResult['decision'] = 'approved';
   let auditableReason = 'Policy checks passed';
 
-  const failed = checks.find((entry) => !entry.passed);
-  if (failed) {
-    decision =
-      failed.check === 'tenant_quota' || failed.check === 'app_quota' ? 'rate_limited' : 'denied';
-    auditableReason = failed.reason ?? 'Policy denied recommendation';
+  const failedChecks = checks.filter((entry) => !entry.passed);
+  if (failedChecks.length > 0) {
+    const duplicateFailure = failedChecks.find(
+      (entry) => entry.check === 'duplicate_event' || entry.check === 'duplicate_recommendation',
+    );
+    const rateLimitFailure = failedChecks.find(
+      (entry) => entry.check === 'tenant_quota' || entry.check === 'app_quota',
+    );
+    const primaryFailure = duplicateFailure ?? rateLimitFailure ?? failedChecks[0];
+    decision = primaryFailure === rateLimitFailure ? 'rate_limited' : 'denied';
+    auditableReason = primaryFailure.reason ?? 'Policy denied recommendation';
   }
 
   if (
@@ -342,6 +361,16 @@ export async function settleRewardAction(input: {
   }
 
   const tokenAmount = stringifyTokenAmount(input.recommendation);
+  if (!tokenAmount) {
+    return {
+      settlementId: `stl_${input.recommendation.recommendationId}`,
+      idempotencyKey: settlementKey,
+      status: 'failed',
+      failureReason: 'Invalid or missing token reward amount',
+      createdAt: new Date().toISOString(),
+    };
+  }
+
   const receipt = await input.settlementAdapter.settle({
     settlementId: `stl_${input.recommendation.recommendationId}`,
     idempotencyKey: settlementKey,
@@ -355,15 +384,11 @@ export async function settleRewardAction(input: {
     tokenSymbol: tokenAmount ? 'GAMI' : undefined,
   });
 
-  if (
-    receipt.status === 'completed' ||
-    receipt.status === 'pending_onchain' ||
-    receipt.status === 'dry_run'
-  ) {
+  if (receipt.status === 'completed' || receipt.status === 'pending_onchain') {
     input.stateStore.settledIdempotencyKeys.add(settlementKey);
     const tenantAppKey = `${input.context.event.tenantId}:${input.context.event.appId}`;
     const userKey = `${tenantAppKey}:${input.context.targetIdentity}`;
-    const rewardUnits = extractRewardUnits(input.recommendation);
+    const rewardUnits = extractRewardUnits(input.recommendation) ?? 0;
     incrementMap(input.stateStore.userRewardCounts, userKey, rewardUnits);
     incrementMap(input.stateStore.budgetUsedByTenantApp, tenantAppKey, rewardUnits);
   }
@@ -549,7 +574,10 @@ export async function runAgentRewardFlow(input: {
           recommendationId: recommendation.recommendationId,
           timestamp: new Date().toISOString(),
           queueDepth,
-          outcome: settlement.status === 'deduped' ? 'skipped' : 'success',
+          outcome:
+            settlement.status === 'deduped' || settlement.status === 'dry_run'
+              ? 'skipped'
+              : 'success',
         },
         input.telemetrySink,
       );
@@ -611,14 +639,16 @@ function check(checkName: RewardPolicyContextCheck, passed: boolean, reason: str
 
 type RewardPolicyContextCheck = RewardPolicyResult['checks'][number]['check'];
 
-function extractRewardUnits(recommendation: AgentRecommendation): number {
+function extractRewardUnits(recommendation: AgentRecommendation): number | null {
   if (recommendation.proposedAction !== 'propose_token_reward') return 0;
   const parsedAmount = Number(recommendation.proposedTokenAmount);
-  if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) return 1;
+  if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) return null;
   return parsedAmount;
 }
 
 function stringifyTokenAmount(recommendation: AgentRecommendation): string | undefined {
   if (recommendation.proposedAction !== 'propose_token_reward') return undefined;
-  return recommendation.proposedTokenAmount ?? '1';
+  const parsedAmount = Number(recommendation.proposedTokenAmount);
+  if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) return undefined;
+  return recommendation.proposedTokenAmount;
 }

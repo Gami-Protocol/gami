@@ -181,6 +181,28 @@ void test('agent cannot approve its own recommendation', async () => {
   assert.equal(result.settlement, undefined);
 });
 
+void test('dry-run settlement returns dry_run and no reward mutation', async () => {
+  const stateStore = createInMemoryRewardFlowStateStore();
+  const result = await runAgentRewardFlow({
+    event: buildEvent({ idempotencyKey: 'idem-dry-run' }),
+    recommendationInput: buildRecommendationInput({ recommendationId: 'rec-dry-run' }),
+    stateStore,
+    settlementAdapter: createMockSettlementAdapter({ mode: 'mock-success' }),
+    telemetrySink: new InMemoryTelemetrySink(),
+    approverId: 'policy-engine-1',
+    dryRun: true,
+  });
+
+  assert.equal(result.settlement?.status, 'dry_run');
+  assert.equal(stateStore.settledIdempotencyKeys.size, 0);
+  assert.equal(
+    result.telemetryEvents.some(
+      (event) => event.type === 'settlement_succeeded' && event.outcome === 'skipped',
+    ),
+    true,
+  );
+});
+
 void test('retry-safe flow does not double-settle rewards', async () => {
   const stateStore = createInMemoryRewardFlowStateStore();
   const settlementAdapter = createMockSettlementAdapter({ mode: 'mock-success' });
