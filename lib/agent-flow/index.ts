@@ -63,6 +63,7 @@ export function createInMemoryRewardFlowStateStore(): RewardFlowStateStore {
   return {
     seenSignalIdempotencyKeys: new Set<string>(),
     seenRecommendationIds: new Set<string>(),
+    recommendationDecisions: new Map(),
     settledIdempotencyKeys: new Set<string>(),
     tenantCounts: new Map<string, number>(),
     appCounts: new Map<string, number>(),
@@ -193,6 +194,9 @@ export function evaluateRewardPolicy(input: {
   const userKey = `${tenantAppKey}:${input.context.targetIdentity}`;
   const settlementKey = `${input.context.event.idempotencyKey}:${input.recommendation.recommendationId}`;
   const settledDuplicate = input.stateStore.settledIdempotencyKeys.has(settlementKey);
+  const priorDecision = input.stateStore.recommendationDecisions.get(
+    input.recommendation.recommendationId,
+  );
   const rewardUnits = extractRewardUnits(input.recommendation);
   const normalizedRewardUnits = rewardUnits ?? 0;
 
@@ -217,7 +221,10 @@ export function evaluateRewardPolicy(input: {
     ),
     check(
       'duplicate_recommendation',
-      !policyContext.duplicateRecommendation || settledDuplicate,
+      !policyContext.duplicateRecommendation ||
+        settledDuplicate ||
+        priorDecision === 'requires_manual_review' ||
+        priorDecision === 'deferred',
       'Duplicate recommendation id',
     ),
     check(
@@ -306,8 +313,17 @@ export function evaluateRewardPolicy(input: {
     auditableReason = `Action ${input.recommendation.proposedAction} deferred for downstream execution`;
   }
 
+  if (
+    decision === 'approved' &&
+    (priorDecision === 'requires_manual_review' || priorDecision === 'deferred')
+  ) {
+    decision = priorDecision;
+    auditableReason = `Replayed recommendation retains decision ${priorDecision}`;
+  }
+
   if (decision === 'approved' || decision === 'requires_manual_review' || decision === 'deferred') {
     input.stateStore.seenRecommendationIds.add(input.recommendation.recommendationId);
+    input.stateStore.recommendationDecisions.set(input.recommendation.recommendationId, decision);
   }
 
   return {
@@ -384,7 +400,7 @@ export async function settleRewardAction(input: {
     tokenSymbol: tokenAmount ? 'GAMI' : undefined,
   });
 
-  if (receipt.status === 'completed' || receipt.status === 'pending_onchain') {
+  if (receipt.status === 'completed') {
     input.stateStore.settledIdempotencyKeys.add(settlementKey);
     const tenantAppKey = `${input.context.event.tenantId}:${input.context.event.appId}`;
     const userKey = `${tenantAppKey}:${input.context.targetIdentity}`;

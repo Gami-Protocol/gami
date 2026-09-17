@@ -181,6 +181,7 @@ export interface RewardPolicyContext {
 export interface RewardFlowStateStore {
   seenSignalIdempotencyKeys: Set<string>;
   seenRecommendationIds: Set<string>;
+  recommendationDecisions: Map<string, PolicyDecision>;
   settledIdempotencyKeys: Set<string>;
   tenantCounts: Map<string, number>;
   appCounts: Map<string, number>;

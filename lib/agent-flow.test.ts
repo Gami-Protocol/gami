@@ -146,12 +146,13 @@ void test('settlement failure emits telemetry', async () => {
 
 void test('rate-limited tenant/app does not settle', async () => {
   const stateStore = createInMemoryRewardFlowStateStore();
+  const sink = new InMemoryTelemetrySink();
   const result = await runAgentRewardFlow({
     event: buildEvent({ idempotencyKey: 'idem-rate-limited' }),
     recommendationInput: buildRecommendationInput({ recommendationId: 'rec-rate-limited' }),
     stateStore,
     settlementAdapter: createMockSettlementAdapter({ mode: 'mock-success' }),
-    telemetrySink: new InMemoryTelemetrySink(),
+    telemetrySink: sink,
     approverId: 'policy-engine-1',
     policyConfig: {
       tenantQuotaPerWindow: 0,
@@ -160,6 +161,10 @@ void test('rate-limited tenant/app does not settle', async () => {
 
   assert.equal(result.policy.decision, 'rate_limited');
   assert.equal(result.settlement, undefined);
+  assert.equal(
+    sink.events.some((event) => event.type === 'rate_limited'),
+    true,
+  );
 });
 
 void test('agent cannot approve its own recommendation', async () => {
