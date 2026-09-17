@@ -36,6 +36,7 @@ function buildRecommendationInput(
     proposedAction: overrides.proposedAction ?? 'propose_token_reward',
     confidence: overrides.confidence ?? 0.9,
     rationale: overrides.rationale ?? 'Grant 12 GAMI for quest completion',
+    proposedTokenAmount: overrides.proposedTokenAmount ?? '12',
     requiredPolicyChecks: overrides.requiredPolicyChecks ?? [
       'minimum_confidence',
       'reward_budget',
@@ -203,6 +204,6 @@ void test('retry-safe flow does not double-settle rewards', async () => {
   });
 
   assert.equal(first.settlement?.status, 'completed');
-  assert.equal(second.settlement, undefined);
+  assert.equal(second.settlement?.status, 'deduped');
   assert.equal(stateStore.settledIdempotencyKeys.size, 1);
 });

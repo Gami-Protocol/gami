@@ -184,6 +184,8 @@ export function evaluateRewardPolicy(input: {
   const policy = { ...DEFAULT_POLICY, ...input.policyConfig };
   const tenantAppKey = `${input.context.event.tenantId}:${input.context.event.appId}`;
   const userKey = `${tenantAppKey}:${input.context.targetIdentity}`;
+  const settlementKey = `${input.context.event.idempotencyKey}:${input.recommendation.recommendationId}`;
+  const settledDuplicate = input.stateStore.settledIdempotencyKeys.has(settlementKey);
   const rewardUnits = extractRewardUnits(input.recommendation);
 
   const policyContext: RewardPolicyContext = {
@@ -200,10 +202,14 @@ export function evaluateRewardPolicy(input: {
   };
 
   const checks = [
-    check('duplicate_event', !policyContext.duplicateEvent, 'Duplicate event idempotency key'),
+    check(
+      'duplicate_event',
+      !policyContext.duplicateEvent || settledDuplicate,
+      'Duplicate event idempotency key',
+    ),
     check(
       'duplicate_recommendation',
-      !policyContext.duplicateRecommendation,
+      !policyContext.duplicateRecommendation || settledDuplicate,
       'Duplicate recommendation id',
     ),
     check(
@@ -281,7 +287,7 @@ export function evaluateRewardPolicy(input: {
     auditableReason = `Action ${input.recommendation.proposedAction} deferred for downstream execution`;
   }
 
-  if (decision === 'approved') {
+  if (decision === 'approved' || decision === 'requires_manual_review' || decision === 'deferred') {
     input.stateStore.seenRecommendationIds.add(input.recommendation.recommendationId);
   }
 
@@ -607,15 +613,12 @@ type RewardPolicyContextCheck = RewardPolicyResult['checks'][number]['check'];
 
 function extractRewardUnits(recommendation: AgentRecommendation): number {
   if (recommendation.proposedAction !== 'propose_token_reward') return 0;
-  const raw = recommendation.requiredPolicyChecks.find(
-    (checkName) => checkName === 'reward_budget',
-  );
-  if (!raw) return 1;
-  return 1;
+  const parsedAmount = Number(recommendation.proposedTokenAmount);
+  if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) return 1;
+  return parsedAmount;
 }
 
 function stringifyTokenAmount(recommendation: AgentRecommendation): string | undefined {
   if (recommendation.proposedAction !== 'propose_token_reward') return undefined;
-  const amount = recommendation.rationale.match(/(\d+(?:\.\d+)?)/)?.[1];
-  return amount ?? '1';
+  return recommendation.proposedTokenAmount ?? '1';
 }

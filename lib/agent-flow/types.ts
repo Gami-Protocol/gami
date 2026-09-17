@@ -42,6 +42,7 @@ export interface AgentRecommendation {
   proposedAction: RecommendationActionType;
   confidence: number;
   rationale: string;
+  proposedTokenAmount?: string;
   requiredPolicyChecks: PolicyCheckType[];
   riskLevel: RiskLevel;
   createdAt: string;
