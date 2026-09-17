@@ -37,6 +37,7 @@ export interface AgentTaskManagerOptions {
   now?: () => number;
   random?: () => number;
   schedule?: (delayMs: number, callback: () => void) => void;
+  createTaskId?: () => string;
   metrics?: ScalabilityMetrics;
 }
 
@@ -86,6 +87,7 @@ interface QueueTask<TResult> {
 interface QueueBackend<TResult> {
   enqueue(task: QueueTask<TResult>): boolean;
   dequeueReady(now: number): QueueTask<TResult> | null;
+  nextReadyAt(): number | null;
   markComplete(taskId: string): void;
   requeue(task: QueueTask<TResult>): void;
   markDeadLetter(record: DeadLetterRecord): void;
@@ -181,6 +183,18 @@ class InMemoryQueueBackend<TResult> implements QueueBackend<TResult> {
     const [task] = this.queued.splice(candidateIndex, 1);
     this.inFlight.set(task.taskId, task);
     return task;
+  }
+
+  nextReadyAt(): number | null {
+    if (this.queued.length === 0) return null;
+    let min = this.queued[0]?.runAt ?? null;
+    for (let i = 1; i < this.queued.length; i += 1) {
+      const runAt = this.queued[i]?.runAt ?? null;
+      if (runAt !== null && min !== null && runAt < min) {
+        min = runAt;
+      }
+    }
+    return min;
   }
 
   markComplete(taskId: string): void {
@@ -297,12 +311,14 @@ export class AgentTaskManager {
   private readonly now: () => number;
   private readonly random: () => number;
   private readonly schedule: (delayMs: number, callback: () => void) => void;
+  private readonly createTaskId: () => string;
   private readonly metrics: ScalabilityMetrics | null;
   private readonly idempotencyTtlMs: number;
   private readonly pendingByTaskId = new Map<string, PendingTask<unknown>>();
   private readonly pendingByIdempotency = new Map<string, PendingTask<unknown>>();
   private readonly idempotency = new Map<string, IdempotencyRecord>();
   private inFlightWorkers = 0;
+  private nextWakeAt: number | null = null;
   private completed = 0;
   private failed = 0;
   private retried = 0;
@@ -311,6 +327,8 @@ export class AgentTaskManager {
     this.now = options.now ?? Date.now;
     this.random = options.random ?? Math.random;
     this.schedule = options.schedule ?? ((delayMs, callback) => void setTimeout(callback, delayMs));
+    this.createTaskId =
+      options.createTaskId ?? (() => `agt_${this.now().toString(36)}_${randomUUID().slice(0, 8)}`);
     this.idempotencyTtlMs = options.idempotencyTtlMs ?? 10 * 60_000;
     this.retry = options.retryPolicy ?? {
       baseDelayMs: 150,
@@ -348,6 +366,13 @@ export class AgentTaskManager {
         promise: Promise.resolve(existing.value as TResult),
       };
     }
+    if (existing?.status === 'failed') {
+      return {
+        taskId: existing.taskId,
+        deduped: true,
+        promise: Promise.reject(new Error(existing.error ?? 'task failed')),
+      };
+    }
 
     const pending = this.pendingByIdempotency.get(scopedKey);
     if (pending) {
@@ -368,7 +393,7 @@ export class AgentTaskManager {
     }
 
     const ticket = deferred<TResult>();
-    const taskId = `agt_${this.now().toString(36)}_${crypto.randomUUID().slice(0, 8)}`;
+    const taskId = this.createTaskId();
     ticket.taskId = taskId;
 
     const task: QueueTask<TResult> = {
@@ -422,9 +447,13 @@ export class AgentTaskManager {
   private pump(): void {
     while (this.inFlightWorkers < Math.max(1, this.options.concurrency)) {
       const task = this.backend.dequeueReady(this.now());
-      if (!task) return;
+      if (!task) {
+        this.scheduleNextWake();
+        return;
+      }
 
       this.inFlightWorkers += 1;
+      this.nextWakeAt = null;
       const scopeKey = normalizeScopeKey(task.tenantId, task.appId);
       this.limiter.moveQueuedToInFlight(scopeKey);
       this.observeDepths();
@@ -436,6 +465,18 @@ export class AgentTaskManager {
           this.pump();
         });
     }
+  }
+
+  private scheduleNextWake(): void {
+    const nextReadyAt = this.backend.nextReadyAt();
+    if (nextReadyAt === null) return;
+    if (this.nextWakeAt !== null && this.nextWakeAt <= nextReadyAt) return;
+    this.nextWakeAt = nextReadyAt;
+    const delay = Math.max(0, nextReadyAt - this.now());
+    this.schedule(delay, () => {
+      this.nextWakeAt = null;
+      this.pump();
+    });
   }
 
   private computeBackoff(attempt: number): number {
@@ -619,3 +660,4 @@ export class TtlCache<K, V> {
     }
   }
 }
+import { randomUUID } from 'node:crypto';

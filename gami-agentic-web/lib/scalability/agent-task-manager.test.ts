@@ -257,10 +257,16 @@ void test('rate limits and quota enforcement reject excess scope traffic', async
 });
 
 void test('dead-letter queue captures terminal failures', async () => {
+  let logicalNow = 50_000;
   const manager = new AgentTaskManager({
     concurrency: 1,
+    now: () => logicalNow,
     maxQueueDepth: 5,
     random: () => 0,
+    schedule: (delayMs, callback) => {
+      logicalNow += delayMs;
+      callback();
+    },
     retryPolicy: {
       baseDelayMs: 1,
       maxDelayMs: 2,
