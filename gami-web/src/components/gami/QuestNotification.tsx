@@ -21,7 +21,7 @@ export function QuestNotification() {
       <div className="gami-gradient flex h-10 w-10 items-center justify-center text-xl font-bold">!</div>
       <div>
         <p className="font-display text-xs font-bold uppercase text-gami-accent">New Quest Available</p>
-        <p className="text-sm font-medium">Verify your wallet to earn 250 $GAMI</p>
+        <p className="text-sm font-medium">Verify your wallet to continue onboarding</p>
       </div>
       <button type="button" className="ml-2 text-gray-500 hover:text-white" onClick={() => setVisible(false)}>
         ✕

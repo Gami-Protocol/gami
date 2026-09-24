@@ -228,7 +228,7 @@ export function WaitlistForm({ compact = false }: { compact?: boolean }) {
           <>
             <h3 className="mb-3 font-display text-2xl font-bold uppercase">Already on the list</h3>
             <p className="mb-6 text-gray-400">
-              You&apos;re already on the waitlist — we&apos;ll email you when the raise goes live.
+              You&apos;re already on the waitlist — we&apos;ll email you as things move forward.
             </p>
           </>
         ) : (
@@ -238,7 +238,7 @@ export function WaitlistForm({ compact = false }: { compact?: boolean }) {
             </h3>
             <p className="mb-2 text-gray-300">You&apos;re officially on the waitlist.</p>
             <p className="mb-8 text-sm text-gray-500">
-              We&apos;ll email you the moment the $GAMI raise goes live.
+              We&apos;ll keep you posted as Gami Protocol moves forward.
             </p>
           </>
         )}
@@ -476,7 +476,7 @@ export function WaitlistForm({ compact = false }: { compact?: boolean }) {
           {handleState === 'checking'
             ? 'checking availability…'
             : handleState === 'available'
-              ? `✓ ${gamiHandle}.gami is yours — buy $GAMI and it lands here`
+              ? `✓ ${gamiHandle}.gami is yours — onchain rewards land here automatically`
               : handleState === 'taken'
                 ? `✗ ${gamiHandle}.gami is taken — try another`
                 : handleState === 'invalid'
