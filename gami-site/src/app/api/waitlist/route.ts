@@ -73,7 +73,7 @@ async function sendWelcomeEmail(email: string, fullName: string, gamiDnsName?: s
         <p style="text-transform:uppercase;letter-spacing:.2em;font-size:11px;color:#a78bfa;font-weight:700">Gami Protocol</p>
         <h1 style="font-size:28px;margin:12px 0 8px">Welcome to Gami Protocol</h1>
         <p style="color:#a1a1aa;line-height:1.6">
-          Hey ${name}, you're officially on the waitlist. We'll email you the moment the $GAMI raise goes live.
+          Hey ${name}, you're officially on the waitlist. We'll keep you posted as Gami Protocol moves forward.
         </p>
         ${
           gamiDnsName
@@ -81,7 +81,7 @@ async function sendWelcomeEmail(email: string, fullName: string, gamiDnsName?: s
                <p style="font-size:22px;font-weight:700;color:#22d3ee;margin:0">${gamiDnsName}</p>
                <p style="color:#a1a1aa;font-size:13px;line-height:1.6;margin:8px 0 0">
                  Sign in to the Gami Wallet with this same email and your name unlocks there too —
-                 buy $GAMI and it lands straight at ${gamiDnsName}, no address to copy.
+                 onchain rewards land straight at ${gamiDnsName}, no address to copy.
                </p>`
             : ''
         }

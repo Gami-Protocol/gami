@@ -251,7 +251,7 @@ export function WaitlistForm({ compact = false }: { compact?: boolean }) {
             <p className="mb-3 font-display text-2xl font-bold text-gami-accent">{gamiDnsName}</p>
             <p className="mb-4 text-xs leading-relaxed text-gray-300">
               Open the Gami Wallet and sign in with <strong>{email}</strong> — the same email you
-              just used. Your name comes with you, and anything you buy in the raise is delivered
+              just used. Your name comes with you, and onchain rewards settle
               straight to {gamiDnsName}. No address to copy.
             </p>
             <a
