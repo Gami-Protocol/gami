@@ -476,7 +476,7 @@ export function WaitlistForm({ compact = false }: { compact?: boolean }) {
           {handleState === 'checking'
             ? 'checking availability…'
             : handleState === 'available'
-              ? `✓ ${gamiHandle}.gami is yours — onchain rewards land here automatically`
+              ? `✓ ${gamiHandle}.gami is available`
               : handleState === 'taken'
                 ? `✗ ${gamiHandle}.gami is taken — try another`
                 : handleState === 'invalid'
