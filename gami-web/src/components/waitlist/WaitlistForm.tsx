@@ -228,7 +228,7 @@ export function WaitlistForm({ compact = false }: { compact?: boolean }) {
           <>
             <h3 className="mb-3 font-display text-2xl font-bold uppercase">Already on the list</h3>
             <p className="mb-6 text-gray-400">
-              You&apos;re already on the waitlist — we&apos;ll email you when the raise goes live.
+              You&apos;re already on the waitlist — we&apos;ll email you as things move forward.
             </p>
           </>
         ) : (
@@ -238,7 +238,7 @@ export function WaitlistForm({ compact = false }: { compact?: boolean }) {
             </h3>
             <p className="mb-2 text-gray-300">You&apos;re officially on the waitlist.</p>
             <p className="mb-8 text-sm text-gray-500">
-              We&apos;ll email you the moment the $GAMI raise goes live.
+              We&apos;ll keep you posted as Gami Protocol moves forward.
             </p>
           </>
         )}
@@ -251,7 +251,7 @@ export function WaitlistForm({ compact = false }: { compact?: boolean }) {
             <p className="mb-3 font-display text-2xl font-bold text-gami-accent">{gamiDnsName}</p>
             <p className="mb-4 text-xs leading-relaxed text-gray-300">
               Open the Gami Wallet and sign in with <strong>{email}</strong> — the same email you
-              just used. Your name comes with you, and anything you buy in the raise is delivered
+              just used. Your name comes with you, and onchain rewards settle
               straight to {gamiDnsName}. No address to copy.
             </p>
             <a
@@ -476,7 +476,7 @@ export function WaitlistForm({ compact = false }: { compact?: boolean }) {
           {handleState === 'checking'
             ? 'checking availability…'
             : handleState === 'available'
-              ? `✓ ${gamiHandle}.gami is yours — buy $GAMI and it lands here`
+              ? `✓ ${gamiHandle}.gami is available`
               : handleState === 'taken'
                 ? `✗ ${gamiHandle}.gami is taken — try another`
                 : handleState === 'invalid'

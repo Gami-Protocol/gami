@@ -17,7 +17,7 @@ const HANDLE_RE = /^[a-z0-9_]{3,15}$/;
 type HandleState = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
 
 const HANDLE_HINT: Record<HandleState, (handle: string) => string> = {
-  idle: () => 'Your wallet address, but readable. Buy $GAMI and it lands here.',
+  idle: () => 'Your wallet address, but readable. Onchain rewards land here automatically.',
   checking: () => 'checking availability…',
   available: (h) => `✓ ${h}.gami is yours — it unlocks in the Gami Wallet with this same email.`,
   taken: (h) => `✗ ${h}.gami is taken — try another.`,
