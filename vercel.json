@@ -58,6 +58,14 @@
       ]
     }
   ],
+  "redirects": [
+    {
+      "source": "/",
+      "has": [{ "type": "host", "value": "raise.gamiprotocol.io" }],
+      "destination": "/raise",
+      "permanent": false
+    }
+  ],
   "rewrites": [
     {
       "source": "/sale",

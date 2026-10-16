@@ -20,6 +20,7 @@ import { LegalLayout } from '@/pages/legal/LegalLayout';
 import { PrivacyPage } from '@/pages/legal/PrivacyPage';
 import { TermsPage } from '@/pages/legal/TermsPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
+import { RaisePage } from '@/pages/RaisePage';
 import { PartnersPage } from '@/pages/PartnersPage';
 import { SettlementPage } from '@/pages/SettlementPage';
 import { StatusPage } from '@/pages/StatusPage';
@@ -60,6 +61,7 @@ function AppShell() {
           <Route path="/settlement" element={<SettlementPage />} />
           <Route path="/base" element={<BasePage />} />
           <Route path="/status" element={<StatusPage />} />
+          <Route path="/raise" element={<RaisePage />} />
           <Route path="/waitlist" element={<WaitlistPage />} />
           <Route path="/waitlist/live" element={<WaitlistLivePage />} />
           <Route path="/admin" element={<AdminPage />} />
