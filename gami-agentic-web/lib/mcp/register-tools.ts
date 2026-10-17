@@ -2,10 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 
 import { processQuestMessage } from '@/lib/mcp/process-quest-message';
-import {
-  getSession,
-  syncLevel,
-} from '@/lib/mock-session-store';
+import { getSession, syncLevel } from '@/lib/mock-session-store';
 
 const sessionIdSchema = z
   .string()
@@ -13,10 +10,24 @@ const sessionIdSchema = z
   .max(64)
   .regex(/^[a-zA-Z0-9_-]+$/);
 
+const tenantIdSchema = z
+  .string()
+  .min(2)
+  .max(64)
+  .regex(/^[a-zA-Z0-9:_-]+$/);
+const idempotencySchema = z
+  .string()
+  .min(8)
+  .max(120)
+  .regex(/^[a-zA-Z0-9:_-]+$/);
+
 function toolResult(data: unknown, isError = false) {
   return {
     content: [{ type: 'text' as const, text: JSON.stringify(data) }],
-    structuredContent: typeof data === 'object' && data !== null ? (data as Record<string, unknown>) : { value: data },
+    structuredContent:
+      typeof data === 'object' && data !== null
+        ? (data as Record<string, unknown>)
+        : { value: data },
     isError,
   };
 }
@@ -31,6 +42,17 @@ export function registerAgenticQuestTools(server: McpServer) {
       inputSchema: {
         sessionId: sessionIdSchema.describe('Stable chat session id'),
         latestUserMessage: z.string().min(1).max(2000).describe('Latest user utterance'),
+        tenantId: tenantIdSchema.optional().describe('Optional tenant key for scoped quotas'),
+        appId: z
+          .string()
+          .min(2)
+          .max(64)
+          .regex(/^[a-zA-Z0-9:_-]+$/)
+          .optional(),
+        idempotencyKey: idempotencySchema
+          .optional()
+          .describe('Optional idempotency key to dedupe retries'),
+        priority: z.enum(['high', 'normal', 'low']).optional(),
         messages: z
           .array(
             z.object({
@@ -43,8 +65,15 @@ export function registerAgenticQuestTools(server: McpServer) {
           .describe('Optional recent conversation history'),
       },
     },
-    async ({ sessionId, latestUserMessage }) => {
-      const result = await processQuestMessage({ sessionId, latestUserMessage });
+    async ({ sessionId, latestUserMessage, tenantId, appId, idempotencyKey, priority }) => {
+      const result = await processQuestMessage({
+        sessionId,
+        latestUserMessage,
+        tenantId,
+        appId,
+        idempotencyKey,
+        priority,
+      });
       if (!result.ok) {
         return toolResult(
           {
@@ -63,19 +92,32 @@ export function registerAgenticQuestTools(server: McpServer) {
     'create_quest',
     {
       title: 'Create Quest',
-      description: 'Forge a new quest campaign from a short intent description (e.g. fitness, shopping, learning).',
+      description:
+        'Forge a new quest campaign from a short intent description (e.g. fitness, shopping, learning).',
       inputSchema: {
         sessionId: sessionIdSchema,
-        intent: z
+        intent: z.string().min(1).max(2000).describe('Quest intent, e.g. "I want a fitness quest"'),
+        tenantId: tenantIdSchema.optional(),
+        appId: z
           .string()
-          .min(1)
-          .max(2000)
-          .describe('Quest intent, e.g. "I want a fitness quest"'),
+          .min(2)
+          .max(64)
+          .regex(/^[a-zA-Z0-9:_-]+$/)
+          .optional(),
+        idempotencyKey: idempotencySchema.optional(),
+        priority: z.enum(['high', 'normal', 'low']).optional(),
       },
     },
-    async ({ sessionId, intent }) => {
+    async ({ sessionId, intent, tenantId, appId, idempotencyKey, priority }) => {
       const message = /quest|campaign/i.test(intent) ? intent : `I want a ${intent} quest`;
-      const result = await processQuestMessage({ sessionId, latestUserMessage: message });
+      const result = await processQuestMessage({
+        sessionId,
+        latestUserMessage: message,
+        tenantId,
+        appId,
+        idempotencyKey,
+        priority,
+      });
       if (!result.ok) {
         return toolResult({ error: result.error, code: result.code }, true);
       }
@@ -96,12 +138,25 @@ export function registerAgenticQuestTools(server: McpServer) {
           .max(2000)
           .optional()
           .describe('Optional completion evidence phrase'),
+        tenantId: tenantIdSchema.optional(),
+        appId: z
+          .string()
+          .min(2)
+          .max(64)
+          .regex(/^[a-zA-Z0-9:_-]+$/)
+          .optional(),
+        idempotencyKey: idempotencySchema.optional(),
+        priority: z.enum(['high', 'normal', 'low']).optional(),
       },
     },
-    async ({ sessionId, evidence }) => {
+    async ({ sessionId, evidence, tenantId, appId, idempotencyKey, priority }) => {
       const result = await processQuestMessage({
         sessionId,
         latestUserMessage: evidence?.trim() || 'I finished my workout',
+        tenantId,
+        appId,
+        idempotencyKey,
+        priority,
       });
       if (!result.ok) {
         return toolResult({ error: result.error, code: result.code }, true);
