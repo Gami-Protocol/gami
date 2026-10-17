@@ -39,6 +39,10 @@ Governance can adjust within ±5% per bucket via timelock.
 - **TGE (Day 0):** 15% of allocation immediately claimable
 - **Months 1–12:** Remaining 85% vests linearly (daily unlock)
 
+## Reward and agent flow integration
+
+- See [`docs/agent-flow-connection-point.md`](../agent-flow-connection-point.md) for the deterministic bridge between reward signals, agent recommendations, policy approval, settlement boundary, and telemetry feedback.
+
 ## Referral Bonuses
 
 | Role | Reward |
