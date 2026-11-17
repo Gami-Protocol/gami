@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ChatPanel } from '@/components/ChatPanel';
 import { XpBar } from '@/components/XpBar';
 import { Leaderboard } from '@/components/Leaderboard';
@@ -7,24 +7,35 @@ import { loadXpState, saveXpState, xpForMessage, todayKey, nextStreakDays } from
 export default function App() {
   const [xpState, setXpState] = useState(loadXpState);
 
+  // Other same-origin tabs can save XP too; pick up their writes so this tab
+  // doesn't render (or later overwrite) a stale total.
+  useEffect(() => {
+    function onStorage() {
+      setXpState(loadXpState());
+    }
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
+
   function handleEarnXp(text: string): number {
     const gain = xpForMessage(text);
     const today = todayKey();
-    setXpState((prev) => {
-      const next = {
-        totalXp: prev.totalXp + gain,
-        messageCount: prev.messageCount + 1,
-        streakDays: nextStreakDays(prev.streakDays, prev.lastActiveDay, today),
-        lastActiveDay: today,
-      };
-      saveXpState(next);
-      return next;
-    });
+    // Merge onto the latest persisted state, not just this tab's in-memory
+    // copy, to narrow the window where a second tab's write gets clobbered.
+    const latest = loadXpState();
+    const next = {
+      totalXp: latest.totalXp + gain,
+      messageCount: latest.messageCount + 1,
+      streakDays: nextStreakDays(latest.streakDays, latest.lastActiveDay, today),
+      lastActiveDay: today,
+    };
+    saveXpState(next);
+    setXpState(next);
     return gain;
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-background font-sans text-white">
+    <div className="flex h-screen flex-col bg-background font-sans text-white">
       <header className="flex items-center justify-between border-b border-white/10 px-6 py-4">
         <div className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gami-purple font-display text-sm font-bold">
@@ -39,10 +50,10 @@ export default function App() {
         </span>
       </header>
 
-      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-4 p-4 md:flex-row">
+      <main className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col gap-4 p-4 md:flex-row">
         <section className="flex min-h-[70vh] flex-1 flex-col gap-3">
           <XpBar totalXp={xpState.totalXp} />
-          <div className="flex-1">
+          <div className="min-h-0 flex-1">
             <ChatPanel onEarnXp={handleEarnXp} />
           </div>
         </section>

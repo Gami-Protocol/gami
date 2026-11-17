@@ -8,7 +8,9 @@ module.exports = {
         secondary: '#FF3D8B',
         background: '#0E0E12',
         surface: '#16161E',
-        muted: '#6B6880',
+        // #6B6880 only hit ~3.4:1 on `surface` (#16161E); lightened to clear
+        // WCAG's 4.5:1 normal-text minimum there and on `background`.
+        muted: '#9D99B8',
         gami: {
           purple: '#6E3CFB',
           dark: '#4B24B8',
