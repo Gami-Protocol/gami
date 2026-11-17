@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ChatPanel } from '@/components/ChatPanel';
 import { XpBar } from '@/components/XpBar';
 import { Leaderboard } from '@/components/Leaderboard';
-import { loadXpState, saveXpState, xpForMessage, todayKey } from '@/lib/xp';
+import { loadXpState, saveXpState, xpForMessage, todayKey, nextStreakDays } from '@/lib/xp';
 
 export default function App() {
   const [xpState, setXpState] = useState(loadXpState);
@@ -14,7 +14,7 @@ export default function App() {
       const next = {
         totalXp: prev.totalXp + gain,
         messageCount: prev.messageCount + 1,
-        streakDays: prev.lastActiveDay === today ? prev.streakDays : prev.streakDays + 1,
+        streakDays: nextStreakDays(prev.streakDays, prev.lastActiveDay, today),
         lastActiveDay: today,
       };
       saveXpState(next);

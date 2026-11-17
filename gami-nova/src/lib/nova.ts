@@ -32,7 +32,7 @@ export function novaGreeting(): string {
 
 export function novaReplyTo(userText: string): string {
   const text = userText.trim();
-  if (/\bquest|mission|daily\b/i.test(text)) {
+  if (/\b(quest|mission|daily)\b/i.test(text)) {
     return `${pick(ACKS)} Here's today's quest bonus — nice instinct to go looking for one.`;
   }
   if (text.length < 12) {

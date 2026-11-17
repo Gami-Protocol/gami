@@ -9,8 +9,10 @@ main `gami-web` site.
 ## Stack
 
 Same as `gami-web`: Vite + React 19 + TypeScript + Tailwind. Deploys as its
-own Vercel project via the root `vercel.json` (`outputDirectory:
-gami-nova/dist`), so it can live on its own domain independently of
+own Vercel project, separate from `gami-web`'s. Set this project's **Root
+Directory to `gami-nova`** in the Vercel dashboard — `vercel.json`'s
+commands and `outputDirectory` are relative to that root, so the project
+builds and serves `gami-nova` on its own domain, independently of
 gamiprotocol.io.
 
 ## What's real vs. mocked

@@ -63,10 +63,27 @@ export function levelFromXp(totalXp: number): {
 export function xpForMessage(text: string): number {
   const base = 8;
   const lengthBonus = Math.min(12, Math.floor(text.trim().length / 40));
-  const questBonus = /\bquest|mission|daily\b/i.test(text) ? 5 : 0;
+  const questBonus = /\b(quest|mission|daily)\b/i.test(text) ? 5 : 0;
   return base + lengthBonus + questBonus;
 }
 
 export function todayKey(): string {
   return new Date().toISOString().slice(0, 10);
+}
+
+/** Next streak count for `today`, given the day last active. Increments only
+ * on a consecutive day, holds steady on a repeat visit today, and resets to 1
+ * after any gap. */
+export function nextStreakDays(
+  streakDays: number,
+  lastActiveDay: string | null,
+  today: string,
+): number {
+  if (lastActiveDay === today) return streakDays;
+  if (!lastActiveDay) return 1;
+  const prev = new Date(`${lastActiveDay}T00:00:00Z`);
+  const yesterday = new Date(`${today}T00:00:00Z`);
+  yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+  const wasYesterday = prev.getTime() === yesterday.getTime();
+  return wasYesterday ? streakDays + 1 : 1;
 }

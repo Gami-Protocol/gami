@@ -17,6 +17,7 @@ export function ChatPanel({
     { id: 'greet', role: 'nova', text: novaGreeting() },
   ]);
   const [input, setInput] = useState('');
+  const [isComposing, setIsComposing] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -35,7 +36,13 @@ export function ChatPanel({
 
   return (
     <div className="flex h-full flex-col rounded-2xl border border-white/10 bg-surface">
-      <div ref={listRef} className="flex-1 space-y-3 overflow-y-auto p-4">
+      <div
+        ref={listRef}
+        role="log"
+        aria-live="polite"
+        aria-label="Conversation with Nova"
+        className="flex-1 space-y-3 overflow-y-auto p-4"
+      >
         {messages.map((m) => (
           <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div
@@ -59,8 +66,10 @@ export function ChatPanel({
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
+          onCompositionStart={() => setIsComposing(true)}
+          onCompositionEnd={() => setIsComposing(false)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter') send();
+            if (e.key === 'Enter' && !isComposing && !e.nativeEvent.isComposing) send();
           }}
           placeholder="Talk to Nova…"
           className="flex-1 rounded-xl bg-background px-4 py-2 text-sm text-white placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-gami-purple"
